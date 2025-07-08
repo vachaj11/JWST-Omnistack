@@ -1,0 +1,7 @@
+*.json
+*.ipynb
+*.csv
+*.txt
+__pycache__/*
+Data/*
+Plots/*
