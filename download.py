@@ -16,7 +16,7 @@ def download_spectra():
     BASE_URL = "https://s3.amazonaws.com/msaexp-nirspec/extractions/"
     PATH_TO_FILE = BASE_URL + "{root}/{file}"
 
-    nrs = utils.read_catalog("./catalog.csv")
+    nrs = utils.read_catalog("../catalog.csv")
 
     print("By grade:")
     un = utils.Unique(nrs["grade"])
@@ -70,6 +70,6 @@ def move_around():
     a = catalog.fetch_json("../catalog.json")["sources"]
     for s in a:
         spectrum = spectr.get_spectrum_n(s)
-        base = "/home/vachaj11/Documents/MPE/2025/Npy/"
+        base = "../Data/Npy/"
         spectr.save_npy(s, spectrum, base=base)
         spectr.rm_npy(s)

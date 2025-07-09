@@ -170,7 +170,7 @@ def ppxf_process(source, save=True, **kwargs):
         print(f'Spectrum of {source["srcid"]} not subtracted.')
         return None
     if save:
-        base = "/home/vachaj11/Documents/MPE/2025/Data/Subtracted/"
+        base = "../Data/Subtracted/"
         spectr.save_npy(source, spectn, base=base)
 
 
