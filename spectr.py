@@ -5,7 +5,7 @@ import astropy.io.fits as fits
 import numpy as np
 
 
-def get_spectrum(source, base="/home/vachaj11/Documents/MPE/2025/Data/Fits/"):
+def get_spectrum(source, base="../Data/Fits/"):
     path = base + source["root"] + "/" + source["file"]
     x = fits.open(path)
     try:
@@ -16,7 +16,7 @@ def get_spectrum(source, base="/home/vachaj11/Documents/MPE/2025/Data/Fits/"):
         return None
 
 
-def save_npy(source, spectrum, base="/home/vachaj11/Documents/MPE/2025/Data/Npy/"):
+def save_npy(source, spectrum, base="../Data/Npy/"):
     path = base + source["root"] + "/"
     if not os.path.exists(path):
         os.makedirs(path)
@@ -24,7 +24,7 @@ def save_npy(source, spectrum, base="/home/vachaj11/Documents/MPE/2025/Data/Npy/
     np.save(path, np.array(spectrum))
 
 
-def rm_npy(source, base="/home/vachaj11/Documents/MPE/2025/Data/Fits/"):
+def rm_npy(source, base="../Data/Fits/"):
     path = base + source["root"] + "/"
     path = path + source["file"][:-5] + ".npy"
     try:
@@ -33,7 +33,7 @@ def rm_npy(source, base="/home/vachaj11/Documents/MPE/2025/Data/Fits/"):
         print(f"File {path} not found and not removed.")
 
 
-def get_spectrum_n(source, base="/home/vachaj11/Documents/MPE/2025/Data/Npy/"):
+def get_spectrum_n(source, base="../Data/Npy/"):
     path = base + source["root"] + "/" + source["file"]
     path = path[:-5] + ".npy"
     try:
