@@ -73,3 +73,33 @@ def move_around():
         base = "../Data/Npy/"
         spectr.save_npy(s, spectrum, base=base)
         spectr.rm_npy(s)
+        
+def add_photometry(sources, pathp):
+    dic = catalog.construct_dict(pathp)
+    print("here")
+    values = [
+        "phot_Av",
+        "phot_mass",
+        "phot_restU",
+        "phot_restV",
+        "phot_restJ",
+        "z_phot",
+        "phot_LHa",
+        "phot_LOIII",
+        "phot_LOII",
+    ]
+    for i, source in enumerate(sources):
+        sid = source["file"]
+        g = None
+        for s in dic:
+            if sid == s["file"].replace("-v4_", "-v3_"):
+                g = s
+                break
+        if g is not None:
+            for v in values:
+                source[v] = g[v]
+        else:
+            for v in values:
+                source[v] = None
+        print(f"\r{i} {type(g)}", end="")
+    return sources

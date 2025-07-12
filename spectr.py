@@ -7,11 +7,11 @@ import numpy as np
 
 def get_spectrum(source, base="../Data/Fits/"):
     path = base + source["root"] + "/" + source["file"]
-    x = fits.open(path)
     try:
+        x = fits.open(path)
         wave = x[1].data["wave"]
         flux = x[1].data["flux"]
-        return (wave, flux)
+        return clipping([wave, flux])
     except:
         return None
 
@@ -37,10 +37,20 @@ def get_spectrum_n(source, base="../Data/Npy/"):
     path = base + source["root"] + "/" + source["file"]
     path = path[:-5] + ".npy"
     try:
-        return np.load(path)
+        spectr = np.load(path)
+        return clipping(spectr)
     except:
         return None
 
+def clipping(spectrum, sup = 30, sdo = 15, ite = 1):
+    flux = spectrum[1]
+    mean = np.nanmean(flux)
+    std = np.nanstd(flux)
+    for i in range(ite):
+        mask = ((mean+std*sup) > flux)*(flux > (mean-std*sdo))
+        flux = np.where(mask, flux, np.nan)
+    return [spectrum[0],flux]
+    
 
 def remove_nan(spectrum):
     wav, flux = spectrum
@@ -53,23 +63,26 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso):
+def resampled_spectra(sources, rang, reso, **kwargs):
     spectra = []
     sourn = []
     space = wave_sp(rang[0], rang[1], reso)
     for i, s in enumerate(sources):
         try:
             t0 = time.time()
-            sp = get_spectrum_n(s)
+            sp = get_spectrum_n(s, **kwargs)
             t1 = time.time()
-            sr = resample(sp, space, s["z"])
-            t2 = time.time()
-            spectra.append(sr)
-            sourn.append(s)
-            print(
-                f'\r\033[KResampled: {s["srcid"]:<14}\t({i} of {len(sources)})\tTime: {(t2-t1)/(t1-t0):.2f}',
-                end="",
-            )
+            if sp is not None:
+                sr = resample(sp, space, s["z"])
+                t2 = time.time()
+                spectra.append(sr)
+                sourn.append(s)
+                print(
+                    f'\r\033[KResampled: {s["srcid"]:<14}\t({i} of {len(sources)})\tTime: {(t2-t1)/(t1-t0):.2f}',
+                    end="",
+                )
+            else:
+                print(f'\r\033[KNo spectral file found for: {str(s["srcid"]):<14}\t({i} of {len(sources)})', end='')
         except:
             print(
                 f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',

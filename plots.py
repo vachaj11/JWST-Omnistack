@@ -1,9 +1,12 @@
+import matplotlib
+matplotlib.use('qtagg')
 import matplotlib.pyplot as plt
 import numpy as np
 
 import catalog
 import spectr
 
+'''
 plt.rcParams.update(
     {
         "text.usetex": True,
@@ -11,6 +14,7 @@ plt.rcParams.update(
         "font.size": 15,
     }
 )
+'''
 
 
 def spectra_plot(spectra, axis=None, norm=True, **kwargs):
@@ -47,15 +51,18 @@ def spectras_plot(spectra, axis=None, norm=True, label="_", **kwargs):
     axis.set_xlabel("Wavelength ($\mu$m)")
 
 
-def histogram_in(sources, value, **kwargs):
-    fig = plt.gcf()
-    axis = plt.gca()
-    hist, bins, _ = catalog.value_bins(sources, value, **kwargs)
-    axis.stairs(hist, bins, color="black", label=f"({hist.sum()})")
+def histogram_in(sources, value, bins = None, range= None, axis=None, label='', **kwargs):
+    if axis is None:
+        fig = plt.gcf()
+        axis = plt.gca()
+    else:
+        fig = plt.gcf()
+        axis = axis
+    hist, bins, _ = catalog.value_bins(sources, value, bins=bins,range=range)
+    axis.stairs(hist, bins, label=f"{label} ({hist.sum()})",**kwargs)
     axis.set_xlabel(value)
     axis.legend()
     fig.set_layout_engine(layout="tight")
-    plt.show()
 
 
 def spectra_resolution(sources):
@@ -82,4 +89,3 @@ def spectra_resolution(sources):
     axs.set_xlabel("Wavelength ($\mu$m)")
     axs.set_ylabel("$\Delta$Wavelength ($\mu$m)")
     fig.set_layout_engine(layout="tight")
-    plt.show()
