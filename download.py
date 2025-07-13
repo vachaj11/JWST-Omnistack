@@ -73,7 +73,8 @@ def move_around():
         base = "../Data/Npy/"
         spectr.save_npy(s, spectrum, base=base)
         spectr.rm_npy(s)
-        
+
+
 def add_photometry(sources, pathp):
     dic = catalog.construct_dict(pathp)
     print("here")

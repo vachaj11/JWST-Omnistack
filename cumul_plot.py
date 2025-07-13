@@ -1,0 +1,191 @@
+import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import LineCollection
+
+import catalog
+import joint
+import plots
+
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "Computer Modern",
+        "font.size": 15,
+    }
+)
+
+lines = {
+    0.9532: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9532\\AA}$", 0.02],
+    0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 0.01],
+    0.6564: ["$\\mathrm{H}_\\mathrm{\\alpha} \\mathrm{\\,\\, 6564\\AA}$", 0.025],
+    0.5008: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5008\\AA}$", 0.025],
+    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 0.01],
+    0.4686: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 4686\\AA}$", 0.005],
+    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 0.01],
+    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 0.02],
+    0.3728: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3728\\AA}$", 0.02],
+    0.1907: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1907\\AA}$", 0.02],
+    0.1883: ["$\\mathrm{Si}_\\mathrm{III} \\mathrm{\\,\\, 1883\\AA}$", 0.02],
+    0.166: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 1660\\AA}$", 0.02],
+    0.164: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 1640\\AA}$", 0.02],
+    0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 0.03],
+}
+
+
+def plot_lines(sources, lines, title=None, save=None):
+    fig, axs = plt.subplots()
+    hists = []
+    tickp = []
+    tickl = []
+    for i, l in enumerate(lines):
+        sourl = catalog.filter_zranges(
+            sources, [[l - lines[l][1], l + lines[l][1]]], z_shift=True
+        )
+        hist, bins, _ = catalog.value_bins(sourl, "z", bins=24, range=[0, 12])
+        hist = np.where(~(hist == 0), hist, np.nan)
+        points = np.array([bins, [i] * len(bins)]).T.reshape(-1, 1, 2)
+        lines[l].append(np.concatenate([points[:-1], points[1:]], axis=1))
+        lines[l].append(hist)
+        hists.append(hist)
+        tickp.append(i)
+        tickl.append("$" + lines[l][0] + "$")
+    hists = np.array(hists)
+    hmax = max(np.nanmax(hists), 1)
+    for l in lines:
+        lc = LineCollection(lines[l][-2], cmap="Reds", lw=8)
+        lc.set_array(lines[l][-1])
+        # lc.set_norm(colors.LogNorm(vmin = 1, vmax = hmax))
+        lc.set_clim(1, hmax)
+        line = axs.add_collection(lc)
+    axs.set_xlim(0, 12)
+    axs.set_ylim(-0.5, len(lines) - 0.5)
+    axs.set_yticks(tickp, labels=tickl)
+    axs.set_xticks([i for i in range(13)])
+    axs.grid()
+    axs.tick_params(
+        direction="in",
+        grid_linestyle=":",
+        grid_linewidth=1,
+        grid_color="black",
+        grid_alpha=0.5,
+    )
+    axs.set_xlabel(r"$\mathrm{Redshift}$")
+    axs.set_ylabel(r"$\mathrm{Feature}$")
+    fig.colorbar(line, ax=axs, label="Number of sources", pad=0.12)
+    ax2 = axs.twinx()
+    ax2.set_ylim(-0.5, len(lines) - 0.5)
+    rlabels = np.char.add(
+        np.char.add("(", np.nansum(hists, axis=1).astype(int).astype(str)), ")"
+    )
+    ax2.set_yticks(tickp, labels=rlabels)
+    ax2.tick_params(direction="in")
+    axs.set_title(title)
+    fig.set_size_inches(10, 6)
+    fig.tight_layout()
+    if save is not None:
+        fig.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def plot_histograms(sources, lines, title=None, save=None, ymax=2600):
+    fig = plt.figure()
+    gs = fig.add_gridspec(len(lines) // 3 + 1, 3, hspace=0, wspace=0)
+    axes = gs.subplots(sharex="col", sharey="row")
+    axs = axes.flatten()
+    for i, l in enumerate(lines):
+        lin = lines[l]
+        al = catalog.filter_zranges(sources, [[l - lin[1], l + lin[1]]])
+        plots.histogram_in(
+            al,
+            "z",
+            axis=axs[i],
+            range=[0, 12],
+            bins=24,
+            color="black",
+            lw=2,
+            label=lin[0] + " ",
+        )
+    for i in range(3):
+        axs[-i - 1].set_xlabel(r"$\mathrm{Redshift}$")
+        axs[-i - 1].set_xlim(-1, 13)
+    for i in range(len(lines) // 3 + 1):
+        axs[i * 3].set_ylabel(r"No. of sources")
+        axs[i * 3].set_ylim(0, ymax)
+    for ax in axs:
+        leg = ax.get_legend()
+        if leg is not None:
+            txt = leg.texts[0].get_text()
+            leg.remove()
+            ax.set_title(txt, y=0.75)
+    fig.suptitle(title)
+    fig.set_size_inches(8, 9)
+    fig.tight_layout()
+    if save is not None:
+        fig.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
+    fig = plt.figure()
+    gs = fig.add_gridspec(3, 5, hspace=0)
+    axs = gs.subplots(sharex="col")
+    keys = list(lines.keys())[ite * 5 : (ite + 1) * 5]
+    z = [[0, 1.5], [1.5, 3], [3, 4.5], [4.5, 20]]
+    bases = ["../Data/Npy/", "../Data/Subtracted/", "../Data/Subtracted_b/"]
+    for i, l in enumerate(keys):
+        lin = lines[l]
+        rangs = [[l - lin[1] / narrow, l + lin[1] / narrow]]
+        al = catalog.filter_zranges(sources, rangs)
+        for b, bas in enumerate(bases):
+            joint.plot_zstacks(al, rangs, z, 300, base=bas, axis=axs[b, i])
+            if b != 2:
+                axs[b, i].get_legend().remove()
+            else:
+                axs[b, i].get_legend().set(loc=1)
+        axs[0, i].set_title(lin[0])
+    axs[0, 0].set_ylabel("Flux\n ($\mu$J)")
+    axs[1, 0].set_ylabel("Flux (Ppxf-subtracted)\n ($\mu$J)")
+    axs[2, 0].set_ylabel("Flux (Smooth-subtracted)\n ($\mu$J)")
+    fig.set_size_inches(19, 10)
+    fig.tight_layout()
+    if save is not None:
+        fig.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    a = catalog.fetch_json("../catalog.json")["sources"]
+    af = catalog.rm_bad(a)
+    afp = [s for s in af if s["grat"] == "prism"]
+    afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
+    afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
+    path0 = "../Plots/"
+    srs = {"medium": afm, "high": afh, "prism": afp}
+    sources = {
+        "npy": "../Data/Npy/",
+        "ppxf": "../Data/Subtracted/",
+        "smoo": "../Data/Subtracted_b/",
+    }
+    """
+    for i in range(3):
+        # plot_stacks(afp,lines, ite = i, save = f'../Plots/lines4/spectr_prism_{i}.png')
+        plot_stacks(
+            afm, lines, ite=i, save=f"../Plots/lines4/spectr_medium_{i}.png", narrow=3
+        )
+        plot_stacks(
+            afh, lines, ite=i, save=f"../Plots/lines4/spectr_high_{i}.png", narrow=5
+        )
+    plot_histograms(afp, lines, title='Coverage of lines in prism', save = '../Plots/lines4/hist_prism.png',ymax=2600)
+    plot_histograms(afm, lines, title='Coverage of lines in medium resolution', save = '../Plots/lines4/hist_medium.png',ymax=950)
+    plot_histograms(afh, lines, title='Coverage of lines in high resolution', save = '../Plots/lines4/hist_high.png',ymax=500)
+    plot_lines(afh, lines, title="Coverage of lines in high resolution", save = '../Plots/lines4/lines_high.png')
+    plot_lines(afm, lines, title="Coverage of lines in medium resolution", save = '../Plots/lines4/lines_medium.png')
+    plot_lines(afp, lines, title="Coverage of lines in prism", save = '../Plots/lines4/lines_prism.png')
+    """

@@ -42,15 +42,16 @@ def get_spectrum_n(source, base="../Data/Npy/"):
     except:
         return None
 
-def clipping(spectrum, sup = 30, sdo = 15, ite = 1):
+
+def clipping(spectrum, sup=30, sdo=15, ite=1):
     flux = spectrum[1]
     mean = np.nanmean(flux)
     std = np.nanstd(flux)
     for i in range(ite):
-        mask = ((mean+std*sup) > flux)*(flux > (mean-std*sdo))
+        mask = ((mean + std * sup) > flux) * (flux > (mean - std * sdo))
         flux = np.where(mask, flux, np.nan)
-    return [spectrum[0],flux]
-    
+    return [spectrum[0], flux]
+
 
 def remove_nan(spectrum):
     wav, flux = spectrum
@@ -82,7 +83,10 @@ def resampled_spectra(sources, rang, reso, **kwargs):
                     end="",
                 )
             else:
-                print(f'\r\033[KNo spectral file found for: {str(s["srcid"]):<14}\t({i} of {len(sources)})', end='')
+                print(
+                    f'\r\033[KNo spectral file found for: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
+                    end="",
+                )
         except:
             print(
                 f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',

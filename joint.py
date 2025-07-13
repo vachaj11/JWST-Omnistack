@@ -1,5 +1,6 @@
 import matplotlib
-matplotlib.use('qtagg')
+
+matplotlib.use("qtagg")
 
 import csv
 
@@ -12,7 +13,8 @@ import spectr
 
 colors = ["b", "g", "r", "c", "m", "y"]
 
-def plot_zstack(rangs, resos, norm=False, base = "../Data/Npy/",save = None):
+
+def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
     a = catalog.fetch_json("../catalog.json")["sources"]
     # plots.histogram_in(catalog.rm_bad(a), 'z')
     ah = catalog.filter_zranges(a, rangs)
@@ -24,14 +26,16 @@ def plot_zstack(rangs, resos, norm=False, base = "../Data/Npy/",save = None):
     print(f"In low z bin:\t{len(ahflz)}\nIn high z bin:\t{len(ahfhz)}")
 
     for sources in [ahflz, ahfhz]:
-        fig, axs = plt.subplots() 
+        fig, axs = plt.subplots()
         for i, rang in enumerate(rangs):
             if type(resos) is list:
                 reso = resos[i]
             else:
                 reso = resos
-            spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base = base)
-            assert np.array(spectra).size > 0, 'No sources fall within the chosen range.'
+            spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base)
+            assert (
+                np.array(spectra).size > 0
+            ), "No sources fall within the chosen range."
             stack = spectr.combine_spectra(spectra)
 
             stacked = spectr.stack(stack, sourn, typ="median")
@@ -41,23 +45,23 @@ def plot_zstack(rangs, resos, norm=False, base = "../Data/Npy/",save = None):
         fig.savefig(save)
     else:
         plt.show()
-        
-        
-def plot_simple(sources, rangs, resos, typ='median', base='../Data/Npy/', save = None):
-    fig, axs = plt.subplots() 
+
+
+def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=None):
+    fig, axs = plt.subplots()
     sources = catalog.filter_zranges(sources, rangs)
     for i, rang in enumerate(rangs):
         if type(resos) is list:
             reso = resos[i]
         else:
             reso = resos
-        spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base = base)
-        assert np.array(spectra).size > 0, 'No sources fall within the chosen range.'
+        spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base)
+        assert np.array(spectra).size > 0, "No sources fall within the chosen range."
         stack = spectr.combine_spectra(spectra)
 
         stacked = spectr.stack(stack, sourn, typ=typ)
         plots.spectra_plot(stacked, axis=axs, c="black", label=str(typ), norm=False)
-    axs.axhline(y=0,c='gray', ls=':')
+    axs.axhline(y=0, c="gray", ls=":")
     fig.set_layout_engine(layout="tight")
     if save is not None:
         fig.savefig(save)
@@ -65,11 +69,17 @@ def plot_simple(sources, rangs, resos, typ='median', base='../Data/Npy/', save =
         plt.show()
 
 
-def plot_zstacks(sources, rangs, zrangs, resos, base='../Data/Npy/', save = None):
-    fig, axs = plt.subplots() 
+def plot_zstacks(
+    sources, rangs, zrangs, resos, base="../Data/Npy/", save=None, axis=None
+):
+    if axis is None:
+        fig, axs = plt.subplots()
+    else:
+        fig = plt.gcf()
+        axs = axis
     sources = catalog.filter_zranges(sources, rangs)
     ahfr = [catalog.value_range(sources, "z", r) for r in zrangs]
-    print(save)
+    print("")
     print([len(s) for s in ahfr])
     for k, sours in enumerate(ahfr):
         if len(sours) != 0:
@@ -87,13 +97,13 @@ def plot_zstacks(sources, rangs, zrangs, resos, base='../Data/Npy/', save = None
                 stacked, axis=axs, c=c, label=f"{zrangs[k]} ({len(sours)})", norm=False
             )
     axs.legend()
-    axs.axhline(y=0,c='gray', ls=':')
+    axs.axhline(y=0, c="gray", ls=":")
     fig.set_layout_engine(layout="tight")
     if save is not None:
         fig.savefig(save)
         plt.close(fig)
     else:
-        plt.show()
+        return axs
 
 
 def plot_stacks(rang, reso, save=None):
@@ -102,7 +112,7 @@ def plot_stacks(rang, reso, save=None):
     ah = catalog.filter_zranges(a, [rang])
     sources = catalog.rm_bad(ah)
 
-    fig, axs = plt.subplots() 
+    fig, axs = plt.subplots()
     spectra, sourn = spectr.resampled_spectra(sources, rang, reso)
     sp_stack = spectr.combine_spectra(spectra)
     stacked = spectr.stack(sp_stack, sourn, typ="median")
@@ -133,18 +143,39 @@ def histograms():
     plots.histogram_in(af, "phot_restU", bins=20, range=(-0.5, 3))
     plots.histogram_in(af, "z_phot", bins=20, range=(0, 14))
     plots.histogram_in(af, "phot_mass", bins=20, range=(0, 2 * 10**10))
-    
+
+
 def hist_region(sources, rangs, save=None):
-    fig, axs = plt.subplots() 
-    zr = [0,12]
+    fig, axs = plt.subplots()
+    zr = [0, 12]
     aa = catalog.filter_zranges(sources, rangs)
-    plots.histogram_in(aa, 'z', color = 'black', axis=axs, label = str(rangs), range = zr, bins=20, lw=2.5)
-    rj = [min([x for r in rangs for x in r]),max([x for r in rangs for x in r])]
-    aj = catalog.filter_zranges(sources,[rj])
-    plots.histogram_in(aj, 'z', color = 'grey', axis=axs, label = str([rj]), range = zr, bins=20, lw=2.5,ls=':')
+    plots.histogram_in(
+        aa, "z", color="black", axis=axs, label=str(rangs), range=zr, bins=20, lw=2.5
+    )
+    rj = [min([x for r in rangs for x in r]), max([x for r in rangs for x in r])]
+    aj = catalog.filter_zranges(sources, [rj])
+    plots.histogram_in(
+        aj,
+        "z",
+        color="grey",
+        axis=axs,
+        label=str([rj]),
+        range=zr,
+        bins=20,
+        lw=2.5,
+        ls=":",
+    )
     for i, rang in enumerate(rangs):
         al = catalog.filter_zranges(sources, [rang])
-        plots.histogram_in(al, 'z', color = colors[i % len(colors)], axis=axs, label=str([rang]), range = zr, bins=20)
+        plots.histogram_in(
+            al,
+            "z",
+            color=colors[i % len(colors)],
+            axis=axs,
+            label=str([rang]),
+            range=zr,
+            bins=20,
+        )
     fig.set_layout_engine(layout="tight")
     if save is not None:
         fig.savefig(save)
@@ -152,22 +183,49 @@ def hist_region(sources, rangs, save=None):
     else:
         plt.show()
 
+
 def plot_all_lines():
     a = catalog.fetch_json("../catalog.json")["sources"]
     af = catalog.rm_bad(a)
-    afp = [s for s in af if s['grat']=='prism']
-    afm = [s for s in af if s['grat'][-1]=='m' and s['grat'][0]=='g']
-    afh = [s for s in af if s['grat'][-1]=='h' and s['grat'][0]=='g']
-    path0 = '../Plots/'
-    srs = {'medium': afm, 'high':afh, 'prism':afp}
-    sources = {'npy': '../Data/Npy/', 'ppxf':'../Data/Subtracted/','smoo':'../Data/Subtracted_b/'}
-    lines = {'S23': [[0.45,0.52],[0.63,0.69],[0.89,0.95]], 'N2O2': [[0.35,0.4],[0.63,0.69]], 'N2S2': [[0.63,0.71]], 'R3':[[0.45,0.52]],'O3N2':[[0.45,0.52],[0.63,0.69]],'R2':[[0.35,0.4],[0.46,0.52]]}
-    z = {'S23': [[0,1.5],[1.5,2.5],[2.5,4],[4,20]], 'N2O2': [[0,1.5],[1.5,2.5],[2.5,3.5],[3.5,4.5],[4.5,20]],'N2S2':[[0,1.5],[1.5,2.5],[2.5,3.5],[3.5,4.5],[4.5,20]], 'R3':[[0,1.5],[1.5,2.5],[2.5,4],[4,6],[6,20]],'O3N2':[[0,1.5],[1.5,2.5],[2.5,3.5],[3.5,4.5],[4.5,20]],'R2':[[0,1.5],[1.5,2.5],[2.5,4],[4,6],[6,20]]}
+    afp = [s for s in af if s["grat"] == "prism"]
+    afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
+    afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
+    path0 = "../Plots/"
+    srs = {"medium": afm, "high": afh, "prism": afp}
+    sources = {
+        "npy": "../Data/Npy/",
+        "ppxf": "../Data/Subtracted/",
+        "smoo": "../Data/Subtracted_b/",
+    }
+    lines = {
+        "S23": [[0.45, 0.52], [0.63, 0.69], [0.89, 0.95]],
+        "N2O2": [[0.35, 0.4], [0.63, 0.69]],
+        "N2S2": [[0.63, 0.71]],
+        "R3": [[0.45, 0.52]],
+        "O3N2": [[0.45, 0.52], [0.63, 0.69]],
+        "R2": [[0.35, 0.4], [0.46, 0.52]],
+    }
+    z = {
+        "S23": [[0, 1.5], [1.5, 2.5], [2.5, 4], [4, 20]],
+        "N2O2": [[0, 1.5], [1.5, 2.5], [2.5, 3.5], [3.5, 4.5], [4.5, 20]],
+        "N2S2": [[0, 1.5], [1.5, 2.5], [2.5, 3.5], [3.5, 4.5], [4.5, 20]],
+        "R3": [[0, 1.5], [1.5, 2.5], [2.5, 4], [4, 6], [6, 20]],
+        "O3N2": [[0, 1.5], [1.5, 2.5], [2.5, 3.5], [3.5, 4.5], [4.5, 20]],
+        "R2": [[0, 1.5], [1.5, 2.5], [2.5, 4], [4, 6], [6, 20]],
+    }
     for sr in srs:
         for k in lines:
-            hist_region(srs[sr], lines[k], save=path0+sr+k+'hist.png')
+            hist_region(srs[sr], lines[k], save=path0 + sr + k + "hist.png")
             for da in sources:
-                plot_zstacks(srs[sr], lines[k], z[k], 300, base=sources[da], save=path0+sr+k+da+'.png')
+                plot_zstacks(
+                    srs[sr],
+                    lines[k],
+                    z[k],
+                    300,
+                    base=sources[da],
+                    save=path0 + sr + k + da + ".png",
+                )
+
 
 if __name__ == "__main__":
     # plot_zstack([[0.47, 0.69]], 300)

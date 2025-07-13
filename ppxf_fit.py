@@ -1,5 +1,6 @@
 import matplotlib
-matplotlib.use('qtagg')
+
+matplotlib.use("qtagg")
 
 import os
 import sys
@@ -14,13 +15,14 @@ from urllib import request
 
 import matplotlib.pyplot as plt
 import numpy as np
-from astropy.convolution import convolve, Gaussian1DKernel
 import ppxf.ppxf_util as util
 import ppxf.sps_util as lib
+from astropy.convolution import Gaussian1DKernel, convolve
 from ppxf.ppxf import ppxf
 
 import catalog
 import spectr
+
 
 def ppxf_fit(source, spectrum, silent=True, plot=False):
     lam, galaxy = spectrum[0] * 10**4, spectrum[1]
@@ -139,8 +141,8 @@ def ppxf_fitting_multi(start_in=0):
     proc = cpu_count()
     active = []
     latest = start_in - 1
-    while latest < len(a)-1 or len(active) > 0:
-        pr_no = min(proc, len(a)-1 - latest)
+    while latest < len(a) - 1 or len(active) > 0:
+        pr_no = min(proc, len(a) - 1 - latest)
         if len(active) < pr_no:
             for i in range(pr_no - len(active)):
                 latest += 1
@@ -162,11 +164,11 @@ def ppxf_process(source, save=True, **kwargs):
     try:
         pp = ppxf_fit(source, spectrum, **kwargs)
         z = source["z"]
-        wav = pp.lam / 10**4 *(1+z)
+        wav = pp.lam / 10**4 * (1 + z)
         bestfit = pp.bestfit
         if pp.gas_bestfit is not None:
             bestfit = bestfit - pp.gas_bestfit
-        '''
+        """
         bestf = spectr.resample([wav, bestfit], spectrum[0])
         spectn = [spectrum[0], spectrum[1] - bestf[1]]
         error = pp.error[0][0]*np.sqrt(pp.chi2) 
@@ -177,18 +179,27 @@ def ppxf_process(source, save=True, **kwargs):
         if np.abs(z-source['z']) > np.abs(dz):
             print('Redshift fit disagreeing with original.')
             print(f'New {z}, old {source["z"]}, chi2 {pp.chi2}')
-        '''
+        """
     except:
         print(f'Spectrum of {source["srcid"]} not subtracted.')
         return None
     if save:
         base = "../Data/Continuum/"
-        spectr.save_npy(source, [wav,bestfit], base=base)
+        spectr.save_npy(source, [wav, bestfit], base=base)
     return pp
 
-def continuum(source, nconv = 5, save = True, plot=False, bi = '../Data/Continuum/', bo = '../Data/Subtracted/', convolv = True):
+
+def continuum(
+    source,
+    nconv=5,
+    save=True,
+    plot=False,
+    bi="../Data/Continuum/",
+    bo="../Data/Subtracted/",
+    convolv=True,
+):
     spectrum = spectr.get_spectrum_n(source)
-    continuu = spectr.get_spectrum_n(source, base = bi)
+    continuu = spectr.get_spectrum_n(source, base=bi)
     if spectrum is None or continuu is None:
         print(f'Spectrum not available for {source["srcid"]}')
         return None
@@ -202,22 +213,30 @@ def continuum(source, nconv = 5, save = True, plot=False, bi = '../Data/Continuu
                 R = 1000
             case _:
                 R = len(spectrum[0])
-        FWHM_conv = np.sqrt(min(spectrum[0])* max(spectrum[0])) / R * nconv
+        FWHM_conv = np.sqrt(min(spectrum[0]) * max(spectrum[0])) / R * nconv
         convc = sp_conv(continuu, FWHM_conv)
         resac = spectr.resample(convc, spectrum[0])
     else:
         resac = spectr.resample(continuu, spectrum[0])
-    subtc = [spectrum[0], spectrum[1]-resac[1]]
+    subtc = [spectrum[0], spectrum[1] - resac[1]]
     if plot:
-        plt.plot(spectrum[0],spectrum[1])
-        plt.plot(resac[0],resac[1])
-        #plt.plot(subtc[0],subtc[1])
+        plt.plot(spectrum[0], spectrum[1])
+        plt.plot(resac[0], resac[1])
+        # plt.plot(subtc[0],subtc[1])
         plt.show()
     if save:
         spectr.save_npy(source, subtc, base=bo)
     return subtc
-    
-def smooth_to_cont(source, nconv = 40, save = True, plot=False, bi = '../Data/Npy/', bo = '../Data/Continuum_b/'):
+
+
+def smooth_to_cont(
+    source,
+    nconv=40,
+    save=True,
+    plot=False,
+    bi="../Data/Npy/",
+    bo="../Data/Continuum_b/",
+):
     spectrum = spectr.get_spectrum_n(source)
     if spectrum is None:
         print(f'Spectrum not available for {source["srcid"]}')
@@ -231,37 +250,40 @@ def smooth_to_cont(source, nconv = 40, save = True, plot=False, bi = '../Data/Np
             R = 1000
         case _:
             R = len(spectrum[0])
-    FWHM_conv = np.sqrt(min(spectrum[0])* max(spectrum[0])) / R
-    convc = sp_conv(spectrum, FWHM_conv*nconv)
+    FWHM_conv = np.sqrt(min(spectrum[0]) * max(spectrum[0])) / R
+    convc = sp_conv(spectrum, FWHM_conv * nconv)
     resac = spectr.resample(convc, spectrum[0])
-    clip = spectr.clipping([spectrum[0], spectrum[1]-resac[1]], sup = 3, sdo = 3, ite = 2)
-    spcl = [spectrum[0], spectrum[1]*np.isfinite(clip[1])]
-    conv = sp_conv(spcl, FWHM_conv*nconv)
+    clip = spectr.clipping([spectrum[0], spectrum[1] - resac[1]], sup=3, sdo=3, ite=2)
+    spcl = [spectrum[0], spectrum[1] * np.isfinite(clip[1])]
+    conv = sp_conv(spcl, FWHM_conv * nconv)
     resa = spectr.resample(conv, spectrum[0])
-    
+
     if plot:
-        plt.plot(spectrum[0],spectrum[1])
-        plt.plot(resac[0],resac[1])
-        plt.plot(resa[0],resa[1])
+        plt.plot(spectrum[0], spectrum[1])
+        plt.plot(resac[0], resac[1])
+        plt.plot(resa[0], resa[1])
         plt.show()
     if save:
         spectr.save_npy(source, resa, base=bo)
     return resa
-    
+
+
 def sp_conv(spectrum, fwhm):
-    rastr = len(spectrum[0])*3
-    rang = [min(spectrum[0]),max(spectrum[0])]
-    fwno = fwhm/(rang[1]-rang[0])*rastr
-    unifw = spectr.wave_sp(rang[0],rang[1], rastr)
+    rastr = len(spectrum[0]) * 3
+    rang = [min(spectrum[0]), max(spectrum[0])]
+    fwno = fwhm / (rang[1] - rang[0]) * rastr
+    unifw = spectr.wave_sp(rang[0], rang[1], rastr)
     unifc = spectr.resample(spectrum, unifw)
     convc = conv1D(unifc[1], fwno)
     return [unifc[0], convc]
-    
+
+
 def conv1D(array, fwhm):
-    sig = fwhm/(2*np.sqrt(2*np.log(2)))
+    sig = fwhm / (2 * np.sqrt(2 * np.log(2)))
     ker = Gaussian1DKernel(sig)
-    convolved = convolve(array, ker,boundary='extend')
+    convolved = convolve(array, ker, boundary="extend")
     return convolved
-    
+
+
 if __name__ == "__main__":
     ppxf_fitting_multi(start_in=0)

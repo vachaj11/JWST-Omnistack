@@ -1,12 +1,13 @@
 import matplotlib
-matplotlib.use('qtagg')
+
+matplotlib.use("qtagg")
 import matplotlib.pyplot as plt
 import numpy as np
 
 import catalog
 import spectr
 
-'''
+"""
 plt.rcParams.update(
     {
         "text.usetex": True,
@@ -14,7 +15,7 @@ plt.rcParams.update(
         "font.size": 15,
     }
 )
-'''
+"""
 
 
 def spectra_plot(spectra, axis=None, norm=True, **kwargs):
@@ -51,15 +52,15 @@ def spectras_plot(spectra, axis=None, norm=True, label="_", **kwargs):
     axis.set_xlabel("Wavelength ($\mu$m)")
 
 
-def histogram_in(sources, value, bins = None, range= None, axis=None, label='', **kwargs):
+def histogram_in(sources, value, bins=None, range=None, axis=None, label="", **kwargs):
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
     else:
         fig = plt.gcf()
         axis = axis
-    hist, bins, _ = catalog.value_bins(sources, value, bins=bins,range=range)
-    axis.stairs(hist, bins, label=f"{label} ({hist.sum()})",**kwargs)
+    hist, bins, _ = catalog.value_bins(sources, value, bins=bins, range=range)
+    axis.stairs(hist, bins, label=f"{label} ({hist.sum()})", **kwargs)
     axis.set_xlabel(value)
     axis.legend()
     fig.set_layout_engine(layout="tight")
