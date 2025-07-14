@@ -33,14 +33,16 @@ lines = {
 }
 
 
-def plot_lines(sources, lines, title=None, save=None):
+def plot_lines(sources, lines, title=None, save=None, narrow=1):
     fig, axs = plt.subplots()
     hists = []
     tickp = []
     tickl = []
     for i, l in enumerate(lines):
         sourl = catalog.filter_zranges(
-            sources, [[l - lines[l][1], l + lines[l][1]]], z_shift=True
+            sources,
+            [[l - lines[l][1] / narrow, l + lines[l][1] / narrow]],
+            z_shift=True,
         )
         hist, bins, _ = catalog.value_bins(sourl, "z", bins=24, range=[0, 12])
         hist = np.where(~(hist == 0), hist, np.nan)
@@ -90,14 +92,16 @@ def plot_lines(sources, lines, title=None, save=None):
         plt.show()
 
 
-def plot_histograms(sources, lines, title=None, save=None, ymax=2600):
+def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
     fig = plt.figure()
     gs = fig.add_gridspec(len(lines) // 3 + 1, 3, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
     axs = axes.flatten()
     for i, l in enumerate(lines):
         lin = lines[l]
-        al = catalog.filter_zranges(sources, [[l - lin[1], l + lin[1]]])
+        al = catalog.filter_zranges(
+            sources, [[l - lin[1] / narrow, l + lin[1] / narrow]]
+        )
         plots.histogram_in(
             al,
             "z",
@@ -154,7 +158,7 @@ def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
     fig.set_size_inches(19, 10)
     fig.tight_layout()
     if save is not None:
-        fig.savefig(save)
+        fig.savefig(save, dpi=150)
         plt.close(fig)
     else:
         plt.show()
@@ -173,19 +177,56 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
-    """
+    '''
     for i in range(3):
-        # plot_stacks(afp,lines, ite = i, save = f'../Plots/lines4/spectr_prism_{i}.png')
+        plot_stacks(afp, lines, ite=i, save=f"../Plots/lines4/spectr_prism_{i}.png")
         plot_stacks(
             afm, lines, ite=i, save=f"../Plots/lines4/spectr_medium_{i}.png", narrow=3
         )
         plot_stacks(
             afh, lines, ite=i, save=f"../Plots/lines4/spectr_high_{i}.png", narrow=5
         )
-    plot_histograms(afp, lines, title='Coverage of lines in prism', save = '../Plots/lines4/hist_prism.png',ymax=2600)
-    plot_histograms(afm, lines, title='Coverage of lines in medium resolution', save = '../Plots/lines4/hist_medium.png',ymax=950)
-    plot_histograms(afh, lines, title='Coverage of lines in high resolution', save = '../Plots/lines4/hist_high.png',ymax=500)
-    plot_lines(afh, lines, title="Coverage of lines in high resolution", save = '../Plots/lines4/lines_high.png')
-    plot_lines(afm, lines, title="Coverage of lines in medium resolution", save = '../Plots/lines4/lines_medium.png')
-    plot_lines(afp, lines, title="Coverage of lines in prism", save = '../Plots/lines4/lines_prism.png')
-    """
+    plot_histograms(
+        afp,
+        lines,
+        title="Coverage of lines in prism",
+        save="../Plots/lines4/hist_prism.png",
+        ymax=2600,
+    )
+    plot_histograms(
+        afm,
+        lines,
+        title="Coverage of lines in medium resolution",
+        save="../Plots/lines4/hist_medium.png",
+        ymax=950,
+        narrow=3,
+    )
+    plot_histograms(
+        afh,
+        lines,
+        title="Coverage of lines in high resolution",
+        save="../Plots/lines4/hist_high.png",
+        ymax=500,
+        narrow=5,
+    )
+    plot_lines(
+        afp,
+        lines,
+        title="Coverage of lines in prism",
+        save="../Plots/lines4/lines_prism.png",
+    )
+    plot_lines(
+        afm,
+        lines,
+        title="Coverage of lines in medium resolution",
+        save="../Plots/lines4/lines_medium.png",
+        narrow=3,
+    )
+    plot_lines(
+        afh,
+        lines,
+        title="Coverage of lines in high resolution",
+        save="../Plots/lines4/lines_high.png",
+        narrow=5,
+    )
+    '''

@@ -38,7 +38,8 @@ def get_spectrum_n(source, base="../Data/Npy/"):
     path = path[:-5] + ".npy"
     try:
         spectr = np.load(path)
-        return clipping(spectr)
+        # spectr = clipping(spectr)
+        return spectr
     except:
         return None
 
