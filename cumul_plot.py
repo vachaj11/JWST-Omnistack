@@ -155,6 +155,7 @@ def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
     axs[0, 0].set_ylabel("Flux\n ($\mu$J)")
     axs[1, 0].set_ylabel("Flux (Ppxf-subtracted)\n ($\mu$J)")
     axs[2, 0].set_ylabel("Flux (Smooth-subtracted)\n ($\mu$J)")
+    fig.suptitle(title)
     fig.set_size_inches(19, 10)
     fig.tight_layout()
     if save is not None:
@@ -177,15 +178,31 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
-    '''
     for i in range(3):
-        plot_stacks(afp, lines, ite=i, save=f"../Plots/lines4/spectr_prism_{i}.png")
         plot_stacks(
-            afm, lines, ite=i, save=f"../Plots/lines4/spectr_medium_{i}.png", narrow=3
+            afp,
+            lines,
+            ite=i,
+            save=f"../Plots/lines4/spectr_prism_{i}.png",
+            title=f"Stack of lines in prism ({i} of 2)",
         )
         plot_stacks(
-            afh, lines, ite=i, save=f"../Plots/lines4/spectr_high_{i}.png", narrow=5
+            afm,
+            lines,
+            ite=i,
+            save=f"../Plots/lines4/spectr_medium_{i}.png",
+            narrow=3,
+            title=f"Stack of lines in medium resolution ({i} of 2)",
         )
+        plot_stacks(
+            afh,
+            lines,
+            ite=i,
+            save=f"../Plots/lines4/spectr_high_{i}.png",
+            narrow=5,
+            title=f"Stack of lines in high resolution ({i} of 2)",
+        )
+    """
     plot_histograms(
         afp,
         lines,
@@ -229,4 +246,4 @@ if __name__ == "__main__":
         save="../Plots/lines4/lines_high.png",
         narrow=5,
     )
-    '''
+    """
