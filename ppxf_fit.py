@@ -134,9 +134,8 @@ def ppxf_fitting_single(n=0):
     ppxf_process(source, silent=False, plot=True)
 
 
-def ppxf_fitting_multi(start_in=0):
-    a = catalog.fetch_json("../catalog.json")["sources"]
-
+def ppxf_fitting_multi(sources, start_in=0):
+    a = sources
     manag = Manager()
     proc = cpu_count()
     active = []
@@ -286,4 +285,5 @@ def conv1D(array, fwhm):
 
 
 if __name__ == "__main__":
-    ppxf_fitting_multi(start_in=0)
+    a = catalog.fetch_json("../catalog.json")["sources"]
+    ppxf_fitting_multi(a, start_in=0)

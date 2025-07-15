@@ -18,6 +18,7 @@ plt.rcParams.update(
 lines = {
     0.9532: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9532\\AA}$", 0.02],
     0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 0.01],
+    0.6585: ["$\\mathrm{N}_\\mathrm{II} \\mathrm{\\,\\, 6585\\AA}$", 0.005],
     0.6564: ["$\\mathrm{H}_\\mathrm{\\alpha} \\mathrm{\\,\\, 6564\\AA}$", 0.025],
     0.5008: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5008\\AA}$", 0.025],
     0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 0.01],
@@ -32,8 +33,14 @@ lines = {
     0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 0.03],
 }
 
+ratios = {
+    'Sulphur': ('gold',[0,1,5]),
+    'Nitrogen': ('grey',[1,2,3,9]),
+    'Oxygen': ('green',[4,5,9]),
+}
 
-def plot_lines(sources, lines, title=None, save=None, narrow=1):
+
+def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
     fig, axs = plt.subplots()
     hists = []
     tickp = []
@@ -60,6 +67,12 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1):
         # lc.set_norm(colors.LogNorm(vmin = 1, vmax = hmax))
         lc.set_clim(1, hmax)
         line = axs.add_collection(lc)
+    if ratios is not None:
+        for i, (nam , (c, itm)) in enumerate(ratios.items()):
+            xs = [-0.5*(i+1)]*len(itm)
+            lin = axs.plot(xs, itm, c=c, mfcalt = c, marker='.', alpha=0.3, markersize=25)
+            lin[0].set_clip_on(False)
+            axs.text(xs[0],-1,nam, c=c, rotation=-40, rotation_mode='anchor')
     axs.set_xlim(0, 12)
     axs.set_ylim(-0.5, len(lines) - 0.5)
     axs.set_yticks(tickp, labels=tickl)
@@ -94,7 +107,7 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1):
 
 def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
     fig = plt.figure()
-    gs = fig.add_gridspec(len(lines) // 3 + 1, 3, hspace=0, wspace=0)
+    gs = fig.add_gridspec(-(-len(lines) // 3), 3, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
     axs = axes.flatten()
     for i, l in enumerate(lines):
@@ -115,7 +128,7 @@ def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
     for i in range(3):
         axs[-i - 1].set_xlabel(r"$\mathrm{Redshift}$")
         axs[-i - 1].set_xlim(-1, 13)
-    for i in range(len(lines) // 3 + 1):
+    for i in range(-(-len(lines) // 3)):
         axs[i * 3].set_ylabel(r"No. of sources")
         axs[i * 3].set_ylim(0, ymax)
     for ax in axs:
@@ -166,7 +179,7 @@ def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
 
 
 if __name__ == "__main__":
-    a = catalog.fetch_json("../catalog.json")["sources"]
+    a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
@@ -178,6 +191,7 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
+    '''
     for i in range(3):
         plot_stacks(
             afp,
@@ -202,20 +216,19 @@ if __name__ == "__main__":
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 2)",
         )
-    """
     plot_histograms(
         afp,
         lines,
         title="Coverage of lines in prism",
         save="../Plots/lines4/hist_prism.png",
-        ymax=2600,
+        ymax=3350,
     )
     plot_histograms(
         afm,
         lines,
         title="Coverage of lines in medium resolution",
         save="../Plots/lines4/hist_medium.png",
-        ymax=950,
+        ymax=1700,
         narrow=3,
     )
     plot_histograms(
@@ -223,7 +236,7 @@ if __name__ == "__main__":
         lines,
         title="Coverage of lines in high resolution",
         save="../Plots/lines4/hist_high.png",
-        ymax=500,
+        ymax=630,
         narrow=5,
     )
     plot_lines(
@@ -231,6 +244,7 @@ if __name__ == "__main__":
         lines,
         title="Coverage of lines in prism",
         save="../Plots/lines4/lines_prism.png",
+        ratios = ratios,
     )
     plot_lines(
         afm,
@@ -238,6 +252,7 @@ if __name__ == "__main__":
         title="Coverage of lines in medium resolution",
         save="../Plots/lines4/lines_medium.png",
         narrow=3,
+        ratios = ratios,
     )
     plot_lines(
         afh,
@@ -245,5 +260,6 @@ if __name__ == "__main__":
         title="Coverage of lines in high resolution",
         save="../Plots/lines4/lines_high.png",
         narrow=5,
+        ratios = ratios,
     )
-    """
+    '''

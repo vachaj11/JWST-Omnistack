@@ -1,44 +1,6 @@
-import csv
 import json
 
 import numpy as np
-
-typeint = ["ndup", "uid", "srcid", "nGr", "grade", "nRef"]
-typefloat = [
-    "ra",
-    "dec",
-    "zfit",
-    "z",
-    "sn50",
-    "wmin",
-    "wmax",
-    "Lya",
-    "Ha",
-    "OIII",
-    "L_Ha",
-    "L_OIII",
-]
-typedel = ["HST", "NIRCam", "slit", "FITS", "Fnu", "Flam"]
-
-
-def construct_dict(path):
-    fil = open(path, "r")
-    cs = csv.DictReader(fil, delimiter=",", quotechar='"')
-    gall = []
-    for row in cs:
-        gal = dict(row)
-        for k in typedel:
-            if k in gal.keys():
-                gal.pop(k)
-        for k in gal:
-            if gal[k] == "":
-                gal[k] = None
-            elif k in typeint:
-                gal[k] = int(gal[k])
-            elif k in typefloat:
-                gal[k] = float(gal[k])
-        gall.append(gal)
-    return gall
 
 
 def save_as_json(thing, path):
@@ -102,7 +64,7 @@ def rm_bad(sources):
             and gr > 1
             and "star" not in cm
             and "Star" not in cm
-            and (ha is None or ha < 80)
+            #and (ha is None or ha < 80)
         ):
             sourn.append(source)
     return sourn

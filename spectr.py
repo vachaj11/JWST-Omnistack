@@ -4,6 +4,7 @@ import time
 import astropy.io.fits as fits
 import numpy as np
 
+glob = dict()
 
 def get_spectrum(source, base="../Data/Fits/"):
     path = base + source["root"] + "/" + source["file"]
@@ -11,10 +12,26 @@ def get_spectrum(source, base="../Data/Fits/"):
         x = fits.open(path)
         wave = x[1].data["wave"]
         flux = x[1].data["flux"]
-        return clipping([wave, flux])
+        #wave, flux = clippint([wave, flux])
+        x.close()
+        return [wave, flux]
     except:
         return None
+        
 
+def get_spectrum_n(source, base="../Data/Npy/"):
+    path = base + source["root"] + "/" + source["file"]
+    path = path[:-5] + ".npy"
+    try:
+        if path in glob:
+            return glob[path]
+        else:
+            spectr = np.load(path)
+            glob[path] = spectr
+            # spectr = clipping(spectr)
+            return spectr
+    except:
+        return None
 
 def save_npy(source, spectrum, base="../Data/Npy/"):
     path = base + source["root"] + "/"
@@ -31,17 +48,6 @@ def rm_npy(source, base="../Data/Fits/"):
         os.remove(path)
     except:
         print(f"File {path} not found and not removed.")
-
-
-def get_spectrum_n(source, base="../Data/Npy/"):
-    path = base + source["root"] + "/" + source["file"]
-    path = path[:-5] + ".npy"
-    try:
-        spectr = np.load(path)
-        # spectr = clipping(spectr)
-        return spectr
-    except:
-        return None
 
 
 def clipping(spectrum, sup=30, sdo=15, ite=1):
