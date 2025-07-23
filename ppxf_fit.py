@@ -200,7 +200,7 @@ def continuum(
     spectrum = spectr.get_spectrum_n(source)
     continuu = spectr.get_spectrum_n(source, base=bi)
     if spectrum is None or continuu is None:
-        print(f'Spectrum not available for {source["srcid"]}')
+        print(f'\r\033[KSpectrum not available for {source["srcid"]}', end="")
         return None
     if convolv:
         match source["grat"]:

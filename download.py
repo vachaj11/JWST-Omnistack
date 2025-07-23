@@ -1,19 +1,19 @@
-import os
-import warnings
 import csv
+import os
 import time
+import warnings
+
 warnings.filterwarnings("ignore")
 import urllib.request
 from multiprocessing import Manager, Process, cpu_count
 
-'''
+"""
 import grizli
 from grizli import utils
-'''
+"""
 
 import catalog
 import spectr
-
 
 typeint = ["ndup", "uid", "srcid", "nGr", "grade", "nRef"]
 typefloat = [
@@ -33,44 +33,45 @@ typefloat = [
 typedel = ["HST", "NIRCam", "slit", "FITS", "Fnu", "Flam"]
 
 typeint_c = {
-    'srcid':'srcid',
-    'grade':'grade',
-} 
+    "srcid": "srcid",
+    "grade": "grade",
+}
 typefloat_c = {
-    'ra':"ra",
-    'dec':"dec",
-    "zfit":'z_best',
-    "z":'zgrade',
-    "sn50":'sn50',
-    'flux50':'flux50',
-    'err50':'err50',
-    "wmin":'wmin',
-    "wmax":'wmax',
-    "Lya":'line_lya',
-    'SII':'line_sii',
-    "Ha":'line_ha',
-    'OII':'line_oii',
-    "OIII":'line_oiii',
-    "SIII_63":'line_siii_6314',
-    'SIII_90': 'line_siii_9068',
-    'NII_65': 'line_nii_6549',
-    'NII_66':'line_nii_6584',
-    "phot_Av":"phot_Av",
-    "phot_mass":"phot_mass",
-    "phot_restU":"phot_restU",
-    "phot_restV":"phot_restV",
-    "phot_restJ":"phot_restJ",
-    "z_phot":"z_phot",
-    "phot_LHa":"phot_LHa",
-    "phot_LOIII":"phot_LOIII",
-    "phot_LOII":"phot_LOII",
+    "ra": "ra",
+    "dec": "dec",
+    "zfit": "z_best",
+    "z": "zgrade",
+    "sn50": "sn50",
+    "flux50": "flux50",
+    "err50": "err50",
+    "wmin": "wmin",
+    "wmax": "wmax",
+    "Lya": "line_lya",
+    "SII": "line_sii",
+    "Ha": "line_ha",
+    "OII": "line_oii",
+    "OIII": "line_oiii",
+    "SIII_63": "line_siii_6314",
+    "SIII_90": "line_siii_9068",
+    "NII_65": "line_nii_6549",
+    "NII_66": "line_nii_6584",
+    "phot_Av": "phot_Av",
+    "phot_mass": "phot_mass",
+    "phot_restU": "phot_restU",
+    "phot_restV": "phot_restV",
+    "phot_restJ": "phot_restJ",
+    "z_phot": "z_phot",
+    "phot_LHa": "phot_LHa",
+    "phot_LOIII": "phot_LOIII",
+    "phot_LOII": "phot_LOII",
 }
 typestr_c = {
-    'file':'file',
-    'root':'root',
-    'comment':'comment',
-    'grat':'grating',
+    "file": "file",
+    "root": "root",
+    "comment": "comment",
+    "grat": "grating",
 }
+
 
 def construct_dict(path):
     fil = open(path, "r")
@@ -90,7 +91,8 @@ def construct_dict(path):
                 gal[k] = float(gal[k])
         gall.append(gal)
     return gall
-    
+
+
 def construct_dict_n(path):
     fil = open(path, "r")
     cs = csv.DictReader(fil, delimiter=",", quotechar='"')
@@ -99,23 +101,24 @@ def construct_dict_n(path):
         gal = dict(row)
         galn = dict()
         for k, v in typeint_c.items():
-            if gal[v] != '':
+            if gal[v] != "":
                 galn[k] = int(gal[v])
             else:
                 galn[k] = None
         for k, v in typefloat_c.items():
-            if gal[v] != '':
+            if gal[v] != "":
                 galn[k] = float(gal[v])
             else:
                 galn[k] = None
         for k, v in typestr_c.items():
-            if gal[v] != '':
+            if gal[v] != "":
                 galn[k] = gal[v]
             else:
                 galn[k] = None
         gall.append(galn)
     return gall
-    
+
+
 '''
 def download_spectra():
     BASE_URL = "https://s3.amazonaws.com/msaexp-nirspec/extractions/"
@@ -171,7 +174,8 @@ def download_spectra():
     """
 '''
 
-def downloadall(sources, start_in = 0):
+
+def downloadall(sources, start_in=0):
     a = sources
     proc = cpu_count()
     active = []
@@ -191,10 +195,14 @@ def downloadall(sources, start_in = 0):
                 t.terminate()
                 active.remove(t)
         time.sleep(0.5)
-        
+
+
 def download(source):
-    sp = spectr.get_spectrum(source, base='https://s3.amazonaws.com/msaexp-nirspec/extractions/')
+    sp = spectr.get_spectrum(
+        source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
+    )
     spectr.save_npy(source, sp, base="../Data/Npy/")
+
 
 def move_around():
     a = catalog.fetch_json("../catalog.json")["sources"]

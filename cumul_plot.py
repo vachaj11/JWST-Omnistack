@@ -14,7 +14,6 @@ plt.rcParams.update(
         "font.size": 15,
     }
 )
-
 lines = {
     0.9532: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9532\\AA}$", 0.02],
     0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 0.01],
@@ -33,10 +32,23 @@ lines = {
     0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 0.03],
 }
 
+lines_C = {
+    0.5007: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5007\\AA}$", 0.025],
+    0.4959: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4959\\AA}$", 0.025],
+    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 0.01],
+    0.4363: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4363\\AA}$", 0.025],
+    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 0.01],
+    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 0.02],
+    0.3869: ["$\\mathrm{Ne}_\\mathrm{III} \\mathrm{\\,\\, 3869\\AA}$", 0.02],
+    0.3727: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3727\\AA}$", 0.02],
+    0.2465: ["$\\mathrm{Fe}_\\mathrm{III} \\mathrm{\\,\\, 2465\\AA}$", 0.02],
+    0.1908: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1908\\AA}$", 0.02],
+}
+
 ratios = {
-    'Sulphur': ('gold',[0,1,5]),
-    'Nitrogen': ('grey',[1,2,3,9]),
-    'Oxygen': ('green',[4,5,9]),
+    "Sulphur": ("gold", [0, 1, 5]),
+    "Nitrogen": ("grey", [1, 2, 3, 9]),
+    "Oxygen": ("green", [4, 5, 9]),
 }
 
 
@@ -68,11 +80,11 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
         lc.set_clim(1, hmax)
         line = axs.add_collection(lc)
     if ratios is not None:
-        for i, (nam , (c, itm)) in enumerate(ratios.items()):
-            xs = [-0.5*(i+1)]*len(itm)
-            lin = axs.plot(xs, itm, c=c, mfcalt = c, marker='.', alpha=0.3, markersize=25)
+        for i, (nam, (c, itm)) in enumerate(ratios.items()):
+            xs = [-0.5 * (i + 1)] * len(itm)
+            lin = axs.plot(xs, itm, c=c, mfcalt=c, marker=".", alpha=0.3, markersize=25)
             lin[0].set_clip_on(False)
-            axs.text(xs[0],-1,nam, c=c, rotation=-40, rotation_mode='anchor')
+            axs.text(xs[0], -1, nam, c=c, rotation=-40, rotation_mode="anchor")
     axs.set_xlim(0, 12)
     axs.set_ylim(-0.5, len(lines) - 0.5)
     axs.set_yticks(tickp, labels=tickl)
@@ -147,12 +159,15 @@ def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
         plt.show()
 
 
-def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
+def plot_stacks(sources, lines, zrang=None, title=None, save=None, ite=0, narrow=1):
     fig = plt.figure()
     gs = fig.add_gridspec(3, 5, hspace=0)
     axs = gs.subplots(sharex="col")
     keys = list(lines.keys())[ite * 5 : (ite + 1) * 5]
-    z = [[0, 1.5], [1.5, 3], [3, 4.5], [4.5, 20]]
+    if zrang is None:
+        z = [[0, 1.5], [1.5, 3], [3, 4.5], [4.5, 20]]
+    else:
+        z = zrang
     bases = ["../Data/Npy/", "../Data/Subtracted/", "../Data/Subtracted_b/"]
     for i, l in enumerate(keys):
         lin = lines[l]
@@ -178,6 +193,23 @@ def plot_stacks(sources, lines, title=None, save=None, ite=0, narrow=1):
         plt.show()
 
 
+def plot_mz(sources, title=None, save=None, **kwargs):
+    fig, axs = plt.subplots()
+    plots.plot_values(sources, "phot_mass", "z", axis=axs, alpha=0.1, **kwargs)
+    axs.set_xlim(10**5, 10**12)
+    axs.set_ylim(0, 14.5)
+    axs.set_xscale("log")
+    axs.set_xlabel("$\\mathrm{M}/\\mathrm{M}_{\\odot}$")
+    fig.suptitle(title)
+    fig.set_size_inches(6, 5)
+    fig.tight_layout()
+    if save is not None:
+        fig.savefig(save, dpi=150)
+        plt.close(fig)
+    else:
+        plt.show()
+
+
 if __name__ == "__main__":
     a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
@@ -191,7 +223,34 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
-    '''
+    """
+    for i in range(2):
+        plot_stacks(
+            afp,
+            lines_C,
+            ite=i,
+            zrang = [[7,20]],
+            save=f"../Plots/linesC/spectr_prism_{i}.png",
+            title=f"Stack of lines in prism ({i} of 1)",
+        )
+        plot_stacks(
+            afm,
+            lines_C,
+            ite=i,
+            zrang = [[7,20]],
+            save=f"../Plots/linesC/spectr_medium_{i}.png",
+            narrow=3,
+            title=f"Stack of lines in medium resolution ({i} of 1)",
+        )
+        plot_stacks(
+            afh,
+            lines_C,
+            ite=i,
+            zrang = [[7,20]],
+            save=f"../Plots/linesC/spectr_high_{i}.png",
+            narrow=5,
+            title=f"Stack of lines in high resolution ({i} of 1)",
+        )
     for i in range(3):
         plot_stacks(
             afp,
@@ -216,6 +275,9 @@ if __name__ == "__main__":
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 2)",
         )
+    plot_mz(afp, title='Mass vs Redshift for prism', save='../Plots/lines4/mz_prism.png')
+    plot_mz(afm, title='Mass vs Redshift for medium resolution', save='../Plots/lines4/mz_medium.png')
+    plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.png')
     plot_histograms(
         afp,
         lines,
@@ -262,4 +324,4 @@ if __name__ == "__main__":
         narrow=5,
         ratios = ratios,
     )
-    '''
+    """

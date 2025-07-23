@@ -15,7 +15,7 @@ colors = ["b", "g", "r", "c", "m", "y"]
 
 
 def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
-    a = catalog.fetch_json("../catalog.json")["sources"]
+    a = catalog.fetch_json("../catalog_z.json")["sources"]
     # plots.histogram_in(catalog.rm_bad(a), 'z')
     ah = catalog.filter_zranges(a, rangs)
     ahf = catalog.rm_bad(ah)
@@ -107,7 +107,7 @@ def plot_zstacks(
 
 
 def plot_stacks(rang, reso, save=None):
-    a = catalog.fetch_json("../catalog.json")["sources"]
+    a = catalog.fetch_json("../catalog_z.json")["sources"]
     # plots.histogram_in(catalog.rm_bad(a), 'z')
     ah = catalog.filter_zranges(a, [rang])
     sources = catalog.rm_bad(ah)
@@ -135,7 +135,7 @@ def plot_stacks(rang, reso, save=None):
 
 
 def histograms():
-    a = catalog.fetch_json("../catalog.json")["sources"]
+    a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
     plots.histogram_in(af, "z", bins=20, range=(0, 14))
     plots.histogram_in(af, "sn50", bins=20, range=(0, 30))
@@ -185,7 +185,7 @@ def hist_region(sources, rangs, save=None):
 
 
 def plot_all_lines():
-    a = catalog.fetch_json("../catalog.json")["sources"]
+    a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
@@ -225,6 +225,19 @@ def plot_all_lines():
                     base=sources[da],
                     save=path0 + sr + k + da + ".png",
                 )
+
+
+def cont_diff(source, plot=False):
+    spectr1 = spectr.get_spectrum_n(source, base="../Data/Continuum/")
+    spectr2 = spectr.get_spectrum_n(source, base="../Data/Continuum_b/")
+    spectro = spectr.get_spectrum_n(source, base="../Data/Npy/")
+    if plot:
+        plots.spectras_plot([spectr1, spectr2, spectro])
+        plt.show()
+    if spectr1 is not None and spectr2 is not None:
+        return spectr.relat_diff(spectr1, spectr2)
+    else:
+        return None
 
 
 if __name__ == "__main__":

@@ -6,18 +6,19 @@ import numpy as np
 
 glob = dict()
 
+
 def get_spectrum(source, base="../Data/Fits/"):
     path = base + source["root"] + "/" + source["file"]
     try:
         x = fits.open(path)
         wave = x[1].data["wave"]
         flux = x[1].data["flux"]
-        #wave, flux = clippint([wave, flux])
+        # wave, flux = clippint([wave, flux])
         x.close()
         return [wave, flux]
     except:
         return None
-        
+
 
 def get_spectrum_n(source, base="../Data/Npy/"):
     path = base + source["root"] + "/" + source["file"]
@@ -32,6 +33,7 @@ def get_spectrum_n(source, base="../Data/Npy/"):
             return spectr
     except:
         return None
+
 
 def save_npy(source, spectrum, base="../Data/Npy/"):
     path = base + source["root"] + "/"
@@ -191,6 +193,28 @@ def spects_norm(spectra, frequency=True):
             diffreq = np.abs(np.diff(frequencies))
             flux += np.nansum(diffreq * np.array(spectrum[1])[:-1])
         return np.array([[spectrum[0], spectrum[1] / flux] for spectrum in spectra])
+
+
+def relat_diff(spectr1, spectr2, frequency=True):
+    spect1 = spectr1
+    spect2 = resample(spectr2, spectr1[0])
+    difspe = [spect2[0], np.abs(spectr1[1] - spect2[1])]
+    spect1 = [spect2[0], np.where(np.isfinite(difspe[1]), spect1[1], np.nan)]
+    spect2 = [spect2[0], np.where(np.isfinite(difspe[1]), spect2[1], np.nan)]
+    if not frequency:
+        diffwav = np.abs(np.diff(difspe[0]))
+        fluxdif = np.abs(np.nansum(diffwav * np.array(difspe[1])[:-1]))
+        fluxsp1 = np.abs(np.nansum(diffwav * np.array(spect1[1])[:-1]))
+        fluxsp2 = np.abs(np.nansum(diffwav * np.array(spect2[1])[:-1]))
+        return fluxdif / min(fluxsp1, fluxsp2)
+    else:
+        c = 1
+        frequen = c / np.array(difspe[0])
+        diffreq = np.abs(np.diff(frequen))
+        fluxdif = np.abs(np.nansum(diffreq * np.array(difspe[1])[:-1]))
+        fluxsp1 = np.abs(np.nansum(diffreq * np.array(spect1[1])[:-1]))
+        fluxsp2 = np.abs(np.nansum(diffreq * np.array(spect2[1])[:-1]))
+        return fluxdif / min(fluxsp1, fluxsp2)
 
 
 def stack(sp_stack, sources, typ="median", normalise=False):

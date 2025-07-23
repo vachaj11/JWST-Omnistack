@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import catalog
+import line_fit as lf
 import spectr
 
 """
@@ -18,7 +19,7 @@ plt.rcParams.update(
 """
 
 
-def spectra_plot(spectra, axis=None, norm=True, **kwargs):
+def spectra_plot(spectra, axis=None, norm=False, **kwargs):
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -32,7 +33,7 @@ def spectra_plot(spectra, axis=None, norm=True, **kwargs):
     axis.set_xlabel("Wavelength ($\mu$m)")
 
 
-def spectras_plot(spectra, axis=None, norm=True, label="_", **kwargs):
+def spectras_plot(spectra, axis=None, norm=False, label="_", **kwargs):
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -64,6 +65,44 @@ def histogram_in(sources, value, bins=None, range=None, axis=None, label="", **k
     axis.set_xlabel(value)
     axis.legend()
     fig.set_layout_engine(layout="tight")
+
+
+def plot_values(sources, valx, valy, axis=None, **kwargs):
+    if axis is None:
+        fig = plt.gcf()
+        axis = plt.gca()
+    else:
+        fig = plt.gcf()
+        axis = axis
+    valsx = []
+    valsy = []
+    for s in sources:
+        if valx and valy in s.keys():
+            x = s[valx]
+            y = s[valy]
+            if x is not None and y is not None:
+                valsx.append(x)
+                valsy.append(y)
+    axis.plot(
+        valsx, valsy, ls="", marker="+", c="black", label=f"({len(valsx)})", **kwargs
+    )
+    axis.set_xlabel(valx)
+    axis.set_ylabel(valy)
+    axis.legend()
+    fig.set_layout_engine(layout="tight")
+
+
+def plot_linefit(spectrum, line, axis, **kwargs):
+    if axis is None:
+        fig = plt.gcf()
+        axis = plt.gca()
+    else:
+        fig = plt.gcf()
+        axis = axis
+    m = lf.fit_line(spectrum, line, **kwargs)
+    x = np.linspace(line - m.sigma * 2, line + m.sigma * 2, 200)
+    axis.plot(x, m(x), ls=":", c="gray")
+    # m.mean, m.sigma, m.amplitude, m.yoff
 
 
 def spectra_resolution(sources):

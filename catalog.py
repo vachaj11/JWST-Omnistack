@@ -50,13 +50,17 @@ def unique(sources):
     return sourn
 
 
-def rm_bad(sources):
+def rm_bad(sources, ppxf=False):
     sourn = []
     for source in sources:
         sn = source["sn50"]
         gr = source["grade"]
         cm = str(source["comment"])
         ha = source["Ha"]
+        if "cont_diff" in source.keys():
+            cont = source["cont_diff"]
+        else:
+            cont = None
         if (
             sn is not None
             and sn > 0
@@ -64,7 +68,8 @@ def rm_bad(sources):
             and gr > 1
             and "star" not in cm
             and "Star" not in cm
-            #and (ha is None or ha < 80)
+            # and (ha is None or ha < 80)
+            and (cont is None or cont < 10 or not ppxf)
         ):
             sourn.append(source)
     return sourn
