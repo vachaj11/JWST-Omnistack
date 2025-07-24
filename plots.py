@@ -99,10 +99,51 @@ def plot_linefit(spectrum, line, axis, **kwargs):
     else:
         fig = plt.gcf()
         axis = axis
-    m = lf.fit_line(spectrum, line, **kwargs)
-    x = np.linspace(line - m.sigma * 2, line + m.sigma * 2, 200)
-    axis.plot(x, m(x), ls=":", c="gray")
-    # m.mean, m.sigma, m.amplitude, m.yoff
+    m, x = lf.fit_line(spectrum, line, **kwargs)
+    axis.plot(x, m(x), ls=":", c="black")
+    # m.mean, m.stddev, m.amplitude, m.yoff
+
+
+def plot_linefits(spectrum, lines, axis=None, text=False, **kwargs):
+    if axis is None:
+        fig = plt.gcf()
+        axis = plt.gca()
+    else:
+        fig = plt.gcf()
+        axis = axis
+    m, x = lf.fit_lines(spectrum, lines, **kwargs)
+    axis.plot(x, m(x), ls=":", c="black")
+    if text:
+        yoff = m._leaflist[0].yoff.value
+        for g in m._leaflist[1:]:
+            mean = g.mean.value
+            dens = yoff + g.amplitude.value
+            flux = g.flux
+            axis.text(
+                mean,
+                dens,
+                f"$\\lambda = {mean:.4f}\\mu m$\n$ \mathrm{{Flux}} = {ftL(flux, 2)}\\mathrm{{W}}/\\mathrm{{m}}^2$",
+                ha="center",
+                va="bottom",
+                fontsize=10,
+            )
+    return m
+
+
+def ftL(num, d=2):
+    neg = False
+    if num == 0:
+        return "0.0"
+    elif num < 0:
+        neg = True
+        num = -num
+    mag = int(np.floor(np.log10(num)))
+    numd = num * 10 ** (-mag)
+    strd = neg * "-" + str(numd)[: 2 + d]
+    if mag == 0:
+        return strd
+    else:
+        return strd + f"\\cdot 10^{{{mag}}}"
 
 
 def spectra_resolution(sources):

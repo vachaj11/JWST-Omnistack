@@ -174,7 +174,8 @@ def plot_stacks(sources, lines, zrang=None, title=None, save=None, ite=0, narrow
         rangs = [[l - lin[1] / narrow, l + lin[1] / narrow]]
         al = catalog.filter_zranges(sources, rangs)
         for b, bas in enumerate(bases):
-            joint.plot_zstacks(al, rangs, z, 300, base=bas, axis=axs[b, i])
+            fits = [l] if b == 0 else None
+            joint.plot_zstacks(al, rangs, z, 300, base=bas, axis=axs[b, i], fits=fits)
             if b != 2:
                 axs[b, i].get_legend().remove()
             else:
@@ -223,13 +224,12 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
-    """
     for i in range(2):
         plot_stacks(
             afp,
             lines_C,
             ite=i,
-            zrang = [[7,20]],
+            zrang=[[7, 20]],
             save=f"../Plots/linesC/spectr_prism_{i}.png",
             title=f"Stack of lines in prism ({i} of 1)",
         )
@@ -237,7 +237,7 @@ if __name__ == "__main__":
             afm,
             lines_C,
             ite=i,
-            zrang = [[7,20]],
+            zrang=[[7, 20]],
             save=f"../Plots/linesC/spectr_medium_{i}.png",
             narrow=3,
             title=f"Stack of lines in medium resolution ({i} of 1)",
@@ -246,11 +246,12 @@ if __name__ == "__main__":
             afh,
             lines_C,
             ite=i,
-            zrang = [[7,20]],
+            zrang=[[7, 20]],
             save=f"../Plots/linesC/spectr_high_{i}.png",
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 1)",
         )
+    """
     for i in range(3):
         plot_stacks(
             afp,

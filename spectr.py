@@ -101,6 +101,7 @@ def resampled_spectra(sources, rang, reso, **kwargs):
                 f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
                 end="",
             )
+    print("")
     return spectra, sourn
 
 

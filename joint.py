@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import catalog
+import line_fit as lf
 import plots
 import spectr
 
@@ -70,7 +71,7 @@ def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=N
 
 
 def plot_zstacks(
-    sources, rangs, zrangs, resos, base="../Data/Npy/", save=None, axis=None
+    sources, rangs, zrangs, resos, base="../Data/Npy/", save=None, axis=None, fits=None
 ):
     if axis is None:
         fig, axs = plt.subplots()
@@ -92,10 +93,16 @@ def plot_zstacks(
                     reso = resos
                 spectra, sourn = spectr.resampled_spectra(sours, rang, reso, base=base)
                 stack = spectr.combine_spectra(spectra)
-                stacked.append(spectr.stack(stack, sourn, typ="median"))
+                stacc = spectr.stack(stack, sourn, typ="median")
+                stacked.append(stacc)
             plots.spectras_plot(
                 stacked, axis=axs, c=c, label=f"{zrangs[k]} ({len(sours)})", norm=False
             )
+            for i, rang in enumerate(rangs):
+                if fits is not None and rang[0] <= min(fits) and max(fits) <= rang[1]:
+                    plots.plot_linefits(
+                        stacked[i], fits, axs, grat=sours[0]["grat"], text=False
+                    )
     axs.legend()
     axs.axhline(y=0, c="gray", ls=":")
     fig.set_layout_engine(layout="tight")
@@ -104,6 +111,71 @@ def plot_zstacks(
         plt.close(fig)
     else:
         return axs
+
+
+def fit_lines(
+    sources,
+    lines,
+    reso=300,
+    base="../Data/Npy/",
+    save=None,
+    plot=True,
+    axis=None,
+    text=True,
+    typ="median",
+):
+    if axis is None:
+        fig, axs = plt.subplots()
+    else:
+        fig = plt.gcf()
+        axs = axis
+    grats = [s["grat"] for s in sources]
+    grat = max(set(grats), key=grats.count)
+    rang, _ = lf.line_range(lines, grat=grat)
+    sources = catalog.filter_zranges(sources, [rang])
+    spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base)
+    stack = spectr.combine_spectra(spectra)
+    stacc = spectr.stack(stack, sourn, typ=typ)
+    plots.spectras_plot([stacc], axis=axs, label=f"({len(sourn)})", norm=False)
+    m = plots.plot_linefits(stacc, lines, axs, grat=grat, text=text)
+    fluxes = [l.flux for l in m._leaflist[1:]]
+    axs.legend()
+    axs.axhline(y=0, c="gray", ls=":")
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+    elif plot:
+        plt.show()
+    plt.close(fig)
+    return fluxes, sourn
+
+
+def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
+    if axis is None:
+        fig, axs = plt.subplots()
+    else:
+        fig = plt.gcf()
+        axs = axis
+    mx = len(sources)
+    n = np.linspace(mx / 20, mx, 200)
+    y = []
+    x = []
+    for i in n:
+        sample = np.random.choice(sources, size=int(i), replace=False)
+        fit, sn = fit_lines(sample, lines, plot=False, typ=typ)
+        y.append(fit[lind])
+        x.append(len(sn))
+    x, y = zip(*sorted(zip(x, y)))
+    axs.plot(x, y)
+    axs.set_xlabel("Number of spectra stacked")
+    axs.set_ylabel("Flux")
+    axs.set_title("Convergence of line flux with stack size")
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+    elif plot:
+        plt.show()
+    plt.close(fig)
 
 
 def plot_stacks(rang, reso, save=None):
