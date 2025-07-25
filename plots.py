@@ -53,15 +53,15 @@ def spectras_plot(spectra, axis=None, norm=False, label="_", **kwargs):
     axis.set_xlabel("Wavelength ($\mu$m)")
 
 
-def histogram_in(sources, value, bins=None, range=None, axis=None, label="", **kwargs):
+def histogram_in(sources, value, bins=None, range=None, axis=None, label="", norm=False, **kwargs):
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
     else:
         fig = plt.gcf()
         axis = axis
-    hist, bins, _ = catalog.value_bins(sources, value, bins=bins, range=range)
-    axis.stairs(hist, bins, label=f"{label} ({hist.sum()})", **kwargs)
+    hist, bins, _ = catalog.value_bins(sources, value, bins=bins, range=range, density=norm)
+    axis.stairs(hist, bins, label=f"{label}" +f"({hist.sum()})"*(not norm), **kwargs)
     axis.set_xlabel(value)
     axis.legend()
     fig.set_layout_engine(layout="tight")

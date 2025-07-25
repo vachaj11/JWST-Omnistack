@@ -255,6 +255,27 @@ def hist_region(sources, rangs, save=None):
     else:
         plt.show()
 
+def hist_in_z(sources, value, zrangs, range=None, save=None, norm= False):
+    fig, axs = plt.subplots()
+    zr = [0, 12]
+    for i, zrang in enumerate(zrangs):
+        al = [s for s in sources if s['z'] is not None and zrang[0]<s['z']<zrang[1]]
+        plots.histogram_in(
+            al,
+            value,
+            color=colors[i % len(colors)],
+            axis=axs,
+            label=str(zrang),
+            range=range,
+            bins=20,
+            norm = norm
+        )
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+        plt.close(fig)
+    else:
+        plt.show()
 
 def plot_all_lines():
     a = catalog.fetch_json("../catalog_z.json")["sources"]

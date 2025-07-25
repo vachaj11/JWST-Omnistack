@@ -34,6 +34,8 @@ def fetch_json(path):
 
 
 def unique(sources):
+    '''Assumes that same "srcid" are assigned only to same sources, which might not hold across catalogues.
+    '''
     sourn = []
     for source in sources:
         new = True

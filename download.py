@@ -3,6 +3,9 @@ import os
 import time
 import warnings
 
+import numpy as np
+import astropy.io.fits as fits
+
 warnings.filterwarnings("ignore")
 import urllib.request
 from multiprocessing import Manager, Process, cpu_count
@@ -213,10 +216,54 @@ def move_around():
         spectr.rm_npy(s)
 
 
-def add_photometry(sources, pathp):
-    dic = catalog.construct_dict(pathp)
-    print("here")
-    values = [
+def match_cosmos(sources):
+    path = '../COSMOS25.fits'
+    x = fits.open(path)
+    ins = x[1].data['id']
+    ras = x[1].data['ra']
+    des = x[1].data['dec']
+    zes = x[2].data['zfinal']
+    zis = list(zip(ins, ras, des, zes))
+    matched = []
+    souf = [True if 149<s['ra']<151 and 1<s['dec']<3 else False for s in sources]
+    for ind, (s, f) in enumerate(zip(sources,souf)):
+        s['COSMOS25_match']=[]
+        if f and s['z'] is not None:
+            for i, r, d, z in zis:
+                if abs(s['ra']-r)<0.0005 and abs(s['dec']-d)<0.0005 and abs(s['z']-z)<0.2:
+                    s['COSMOS25_match'].append(int(i))
+            if s['COSMOS25_match']:
+                matched.append(s)
+            print(f'{s["srcid"]} ({ind} out of {len(sources)})')
+    x.close()
+    return matched
+    
+cosmos_val = {
+    'cos_z': [2,'zfinal', lambda x: float(x)],
+    'cos_age': [2, 'age_minchi2',lambda x: float(x)],
+    'cos_mass': [2, 'mass_minchi2',lambda x: float(np.exp(x*np.log(10)))],
+    'cos_sfr': [2, 'sfr_minchi2', lambda x: float(np.exp(x*np.log(10)))],
+    'cos_mass_2': [4, 'mass', lambda x: float(x)],
+    'cos_sfr_2': [4, 'sfr_inst', lambda x: float(x)],
+    'cos_met_2': [4, 'metallicity', lambda x: float(x)],
+}
+    
+def extract_cosmos(sources):
+    path = '../COSMOS25.fits'
+    x = fits.open(path)
+    for s in sources:
+        if 'COSMOS25_match' in s.keys() and len(s['COSMOS25_match'])==1:
+            ind = s['COSMOS25_match'][0]
+            for k, v in cosmos_val.items():
+                s[k] = v[2](x[v[0]].data[v[1]][ind])
+        else:
+            for k, v in cosmos_val.items():
+                s[k] = None
+
+
+def add_post_hoc(sources, pathp='../dja_msaexp_2.csv', values = None):
+    dic = construct_dict(pathp)
+    v = [
         "phot_Av",
         "phot_mass",
         "phot_restU",
@@ -227,11 +274,12 @@ def add_photometry(sources, pathp):
         "phot_LOIII",
         "phot_LOII",
     ]
+    values = v if values is None else values
     for i, source in enumerate(sources):
         sid = source["file"]
         g = None
         for s in dic:
-            if sid == s["file"].replace("-v4_", "-v3_"):
+            if sid in [s['file'], s["file"].replace("-v4_", "-v3_")]:
                 g = s
                 break
         if g is not None:
@@ -242,3 +290,4 @@ def add_photometry(sources, pathp):
                 source[v] = None
         print(f"\r{i} {type(g)}", end="")
     return sources
+
