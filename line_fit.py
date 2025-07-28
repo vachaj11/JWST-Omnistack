@@ -112,31 +112,6 @@ def get_closest(spectrum, line):
     return flux[ind]
 
 
-def fit_line(spectrum, line, delta=None, grat=""):
-    match grat:
-        case "prism":
-            R = 100
-        case x if x[-1:] == "h":
-            R = 2700 / 3
-        case x if x[-1:] == "m":
-            R = 1000 / 3
-        case _:
-            R = len(spectrum[0])
-    std = line / R / 2.35
-    if delta is None:
-        delta = std * 5
-    amplitude = get_closest(spectrum, line)
-    spect = cut_range(spectrum, [line - delta, line + delta])
-    if amplitude is not None:
-        gauss = Gaussian1Dof(mean=line, stddev=std, amplitude=amplitude, yoff=0.0)
-        fit = TRFLSQFitter()
-        m = fit(gauss, spect[0], spect[1])
-        x = np.linspace(line - delta, line + delta, 200)
-        return m, x
-    else:
-        return None
-
-
 def line_range(lines, grat=""):
     match grat:
         case "prism":
@@ -165,9 +140,30 @@ def fit_lines(spectrum, lines, delta=None, grat=""):
         msum = Offset(yoff=0.0)
         for m in models:
             msum += m
-        fit = TRFLSQFitter()
-        m = fit(msum, spect[0], spect[1])
+        fitter = TRFLSQFitter()
+        fit = fitter(msum, spect[0], spect[1])
         x = np.linspace(rang[0], rang[1], 200)
-        return m, x
+        return fit, x
     else:
         return None
+
+
+def fit_infos(fit):
+    lines = []
+    for g in fit._leaflist[1:]:
+        line = dict()
+        line["mean"] = g.mean.value
+        line["amp"] = g.amplitude.value
+        line["stddev"] = g.stddev.value
+        line["flux"] = g.flux
+        lines.append(line)
+    return lines
+
+
+def flux_at(fit, line, std=1):
+    lines = fit_infos(fit)
+    flux = 0.0
+    for l in lines:
+        if l["mean"] - std * l["stddev"] < line < l["mean"] + std * l["stddev"]:
+            flux += l["flux"]
+    return flux

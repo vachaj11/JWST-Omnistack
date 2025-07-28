@@ -101,7 +101,7 @@ def resampled_spectra(sources, rang, reso, **kwargs):
                 f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
                 end="",
             )
-    print("")
+    print("\n")
     return spectra, sourn
 
 
@@ -261,10 +261,11 @@ def stack(sp_stack, sources, typ="median", normalise=False):
 
 def combine_spectra(spectra):
     refer = spectra[0]
-    cube = np.transpose([refer[1]])
-    for s in spectra[1:]:
+    Tspectra = []
+    for s in spectra:
         if (s[0] == refer[0]).all():
-            cube = np.hstack((cube, np.transpose([s[1]])))
+            Tspectra.append(np.transpose([s[1]]))
         else:
             print(f"Spectra not matching in wavelength space!")
+    cube = np.hstack(Tspectra)
     return refer[0], cube

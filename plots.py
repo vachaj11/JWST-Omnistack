@@ -53,15 +53,19 @@ def spectras_plot(spectra, axis=None, norm=False, label="_", **kwargs):
     axis.set_xlabel("Wavelength ($\mu$m)")
 
 
-def histogram_in(sources, value, bins=None, range=None, axis=None, label="", norm=False, **kwargs):
+def histogram_in(
+    sources, value, bins=None, range=None, axis=None, label="", norm=False, **kwargs
+):
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
     else:
         fig = plt.gcf()
         axis = axis
-    hist, bins, _ = catalog.value_bins(sources, value, bins=bins, range=range, density=norm)
-    axis.stairs(hist, bins, label=f"{label}" +f"({hist.sum()})"*(not norm), **kwargs)
+    hist, bins, _ = catalog.value_bins(
+        sources, value, bins=bins, range=range, density=norm
+    )
+    axis.stairs(hist, bins, label=f"{label}" + f"({hist.sum()})" * (not norm), **kwargs)
     axis.set_xlabel(value)
     axis.legend()
     fig.set_layout_engine(layout="tight")
@@ -92,42 +96,48 @@ def plot_values(sources, valx, valy, axis=None, **kwargs):
     fig.set_layout_engine(layout="tight")
 
 
-def plot_linefit(spectrum, line, axis, **kwargs):
+def plot_fit(spectra, sources, fit, axis=None, text=True, save=None):
     if axis is None:
-        fig = plt.gcf()
-        axis = plt.gca()
+        fig, axs = plt.subplots()
     else:
         fig = plt.gcf()
-        axis = axis
-    m, x = lf.fit_line(spectrum, line, **kwargs)
-    axis.plot(x, m(x), ls=":", c="black")
-    # m.mean, m.stddev, m.amplitude, m.yoff
-
-
-def plot_linefits(spectrum, lines, axis=None, text=False, **kwargs):
-    if axis is None:
-        fig = plt.gcf()
-        axis = plt.gca()
-    else:
-        fig = plt.gcf()
-        axis = axis
-    m, x = lf.fit_lines(spectrum, lines, **kwargs)
-    axis.plot(x, m(x), ls=":", c="black")
+        axs = axis
+    spectras_plot([spectra], axis=axs, label=f"({len(sources)})", norm=False)
+    x = np.linspace(min(spectra[0]), max(spectra[0]), 200)
+    axs.plot(x, fit(x), ls=":", c="gray")
     if text:
-        yoff = m._leaflist[0].yoff.value
-        for g in m._leaflist[1:]:
-            mean = g.mean.value
-            dens = yoff + g.amplitude.value
-            flux = g.flux
-            axis.text(
-                mean,
-                dens,
-                f"$\\lambda = {mean:.4f}\\mu m$\n$ \mathrm{{Flux}} = {ftL(flux, 2)}\\mathrm{{W}}/\\mathrm{{m}}^2$",
-                ha="center",
-                va="bottom",
-                fontsize=10,
-            )
-    return m
+        plot_fit_text(fit, axis=axs)
+    axs.legend()
+    axs.axhline(y=0, c="gray", ls=":")
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
+def plot_fit_text(fit, axis=None):
+    if axis is None:
+        fig = plt.gcf()
+        axis = plt.gca()
+    else:
+        fig = plt.gcf()
+        axis = axis
+    yoff = fit._leaflist[0].yoff.value
+    for g in fit._leaflist[1:]:
+        mean = g.mean.value
+        dens = yoff + g.amplitude.value
+        flux = g.flux
+        axis.text(
+            mean,
+            dens,
+            f"$\\lambda = {mean:.4f}\\mu m$\n$ \mathrm{{Flux}} = {ftL(flux, 2)}\\mathrm{{W}}/\\mathrm{{m}}^2$",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+        )
+    return axis
 
 
 def ftL(num, d=2):

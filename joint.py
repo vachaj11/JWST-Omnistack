@@ -16,6 +16,7 @@ colors = ["b", "g", "r", "c", "m", "y"]
 
 
 def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
+    """legacy plot of stacks in two redshift bins separated by z=2.5 ."""
     a = catalog.fetch_json("../catalog_z.json")["sources"]
     # plots.histogram_in(catalog.rm_bad(a), 'z')
     ah = catalog.filter_zranges(a, rangs)
@@ -49,6 +50,7 @@ def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
 
 
 def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=None):
+    """Plots stack for sources covering a specified range."""
     fig, axs = plt.subplots()
     sources = catalog.filter_zranges(sources, rangs)
     for i, rang in enumerate(rangs):
@@ -73,6 +75,7 @@ def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=N
 def plot_zstacks(
     sources, rangs, zrangs, resos, base="../Data/Npy/", save=None, axis=None, fits=None
 ):
+    """Plots stacks of sources covering specified range in separately in specified redshift bins."""
     if axis is None:
         fig, axs = plt.subplots()
     else:
@@ -100,9 +103,8 @@ def plot_zstacks(
             )
             for i, rang in enumerate(rangs):
                 if fits is not None and rang[0] <= min(fits) and max(fits) <= rang[1]:
-                    plots.plot_linefits(
-                        stacked[i], fits, axs, grat=sours[0]["grat"], text=False
-                    )
+                    fit, x = lf.fit_lines(stacked[i], fits, grat=sours[0]["grat"])
+                    axs.plot(x, fit(x), ls=":", c="gray")
     axs.legend()
     axs.axhline(y=0, c="gray", ls=":")
     fig.set_layout_engine(layout="tight")
@@ -113,76 +115,9 @@ def plot_zstacks(
         return axs
 
 
-def fit_lines(
-    sources,
-    lines,
-    reso=300,
-    base="../Data/Npy/",
-    save=None,
-    plot=True,
-    axis=None,
-    text=True,
-    typ="median",
-):
-    if axis is None:
-        fig, axs = plt.subplots()
-    else:
-        fig = plt.gcf()
-        axs = axis
-    grats = [s["grat"] for s in sources]
-    grat = max(set(grats), key=grats.count)
-    rang, _ = lf.line_range(lines, grat=grat)
-    sources = catalog.filter_zranges(sources, [rang])
-    spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base)
-    stack = spectr.combine_spectra(spectra)
-    stacc = spectr.stack(stack, sourn, typ=typ)
-    plots.spectras_plot([stacc], axis=axs, label=f"({len(sourn)})", norm=False)
-    m = plots.plot_linefits(stacc, lines, axs, grat=grat, text=text)
-    fluxes = [l.flux for l in m._leaflist[1:]]
-    axs.legend()
-    axs.axhline(y=0, c="gray", ls=":")
-    fig.set_layout_engine(layout="tight")
-    if save is not None:
-        fig.savefig(save)
-    elif plot:
-        plt.show()
-    plt.close(fig)
-    return fluxes, sourn
-
-
-def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
-    if axis is None:
-        fig, axs = plt.subplots()
-    else:
-        fig = plt.gcf()
-        axs = axis
-    mx = len(sources)
-    n = np.linspace(mx / 20, mx, 200)
-    y = []
-    x = []
-    for i in n:
-        sample = np.random.choice(sources, size=int(i), replace=False)
-        fit, sn = fit_lines(sample, lines, plot=False, typ=typ)
-        y.append(fit[lind])
-        x.append(len(sn))
-    x, y = zip(*sorted(zip(x, y)))
-    axs.plot(x, y)
-    axs.set_xlabel("Number of spectra stacked")
-    axs.set_ylabel("Flux")
-    axs.set_title("Convergence of line flux with stack size")
-    fig.set_layout_engine(layout="tight")
-    if save is not None:
-        fig.savefig(save)
-    elif plot:
-        plt.show()
-    plt.close(fig)
-
-
-def plot_stacks(rang, reso, save=None):
-    a = catalog.fetch_json("../catalog_z.json")["sources"]
-    # plots.histogram_in(catalog.rm_bad(a), 'z')
-    ah = catalog.filter_zranges(a, [rang])
-    sources = catalog.rm_bad(ah)
+def plot_stacks(sources, rang, reso, save=None):
+    """Plot results of different stacking methods."""
+    sources = catalog.filter_zranges(a, [rang])
 
     fig, axs = plt.subplots()
     spectra, sourn = spectr.resampled_spectra(sources, rang, reso)
@@ -206,18 +141,18 @@ def plot_stacks(rang, reso, save=None):
         plt.show()
 
 
-def histograms():
-    a = catalog.fetch_json("../catalog_z.json")["sources"]
-    af = catalog.rm_bad(a)
-    plots.histogram_in(af, "z", bins=20, range=(0, 14))
-    plots.histogram_in(af, "sn50", bins=20, range=(0, 30))
-    plots.histogram_in(af, "Ha", bins=20, range=(-5, 90))
-    plots.histogram_in(af, "phot_restU", bins=20, range=(-0.5, 3))
-    plots.histogram_in(af, "z_phot", bins=20, range=(0, 14))
-    plots.histogram_in(af, "phot_mass", bins=20, range=(0, 2 * 10**10))
+def histograms(sources):
+    """Plots histograms of parameters of provided sources."""
+    plots.histogram_in(sources, "z", bins=20, range=(0, 14))
+    plots.histogram_in(sources, "sn50", bins=20, range=(0, 30))
+    plots.histogram_in(sources, "Ha", bins=20, range=(-5, 90))
+    plots.histogram_in(sources, "phot_restU", bins=20, range=(-0.5, 3))
+    plots.histogram_in(sources, "z_phot", bins=20, range=(0, 14))
+    plots.histogram_in(sources, "phot_mass", bins=20, range=(0, 2 * 10**10))
 
 
 def hist_region(sources, rangs, save=None):
+    """Plots coverage of a given region(s) in redshift among given sources"""
     fig, axs = plt.subplots()
     zr = [0, 12]
     aa = catalog.filter_zranges(sources, rangs)
@@ -255,11 +190,12 @@ def hist_region(sources, rangs, save=None):
     else:
         plt.show()
 
-def hist_in_z(sources, value, zrangs, range=None, save=None, norm= False):
+
+def hist_in_z(sources, value, zrangs, range=None, save=None, norm=False):
+    """Plots histogram of a given value in specified redshift bins."""
     fig, axs = plt.subplots()
-    zr = [0, 12]
     for i, zrang in enumerate(zrangs):
-        al = [s for s in sources if s['z'] is not None and zrang[0]<s['z']<zrang[1]]
+        al = [s for s in sources if s["z"] is not None and zrang[0] < s["z"] < zrang[1]]
         plots.histogram_in(
             al,
             value,
@@ -268,7 +204,7 @@ def hist_in_z(sources, value, zrangs, range=None, save=None, norm= False):
             label=str(zrang),
             range=range,
             bins=20,
-            norm = norm
+            norm=norm,
         )
     fig.set_layout_engine(layout="tight")
     if save is not None:
@@ -277,13 +213,15 @@ def hist_in_z(sources, value, zrangs, range=None, save=None, norm= False):
     else:
         plt.show()
 
+
 def plot_all_lines():
+    """Plots large set of various diagnostic plots for lines of interest."""
     a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
     afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
-    path0 = "../Plots/"
+    path0 = "../Plots/lines3/"
     srs = {"medium": afm, "high": afh, "prism": afp}
     sources = {
         "npy": "../Data/Npy/",
@@ -321,6 +259,7 @@ def plot_all_lines():
 
 
 def cont_diff(source, plot=False):
+    """For a provided single source plots comparison with continuum approximation templates."""
     spectr1 = spectr.get_spectrum_n(source, base="../Data/Continuum/")
     spectr2 = spectr.get_spectrum_n(source, base="../Data/Continuum_b/")
     spectro = spectr.get_spectrum_n(source, base="../Data/Npy/")
