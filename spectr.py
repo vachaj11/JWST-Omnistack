@@ -8,7 +8,9 @@ from astropy.convolution import Gaussian1DKernel, convolve
 glob = dict()
 
 
-def get_spectrum_fits(source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"):
+def get_spectrum_fits(
+    source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
+):
     path = base + source["root"] + "/" + source["file"]
     try:
         x = fits.open(path)
@@ -63,9 +65,9 @@ def clipping(spectrum, sup=30, sdo=15, ite=1):
         flux = np.where(mask, flux, np.nan)
     return [spectrum[0], flux]
 
-def iden_bad(spectrum, nstd=20, nref = 3, nei=3):
-    '''Identify and remove one-pixel erroneous noise peaks from spectra
-    '''
+
+def iden_bad(spectrum, nstd=20, nref=3, nei=3):
+    """Identify and remove one-pixel erroneous noise peaks from spectra"""
     if spectrum is None:
         return None, None, None
     flux0 = np.copy(spectrum[1])
@@ -75,41 +77,45 @@ def iden_bad(spectrum, nstd=20, nref = 3, nei=3):
     indb0 = np.where(mask0)[0]
     indb1 = []
     for i in indb0:
-        fluxr = flux0[max(i-50,0):i+50+1]
+        fluxr = flux0[max(i - 50, 0) : i + 50 + 1]
         fluxr[50] = np.nan
         meanr = np.nanmean(fluxr)
         stdr = np.nanstd(fluxr)
         maskr = ((meanr + stdr * nref) < flux0) | (flux0 < (meanr - stdr * nref))
-        indbr = np.where(maskr)[0] 
-        if i in indbr and np.nanmin(np.where(np.abs(indbr-i)==0, np.nan, np.abs(indbr-i)))>nei:
+        indbr = np.where(maskr)[0]
+        if (
+            i in indbr
+            and np.nanmin(np.where(np.abs(indbr - i) == 0, np.nan, np.abs(indbr - i)))
+            > nei
+        ):
             indb1.append(i)
     mask1 = np.zeros(mask0.shape)
     mask1[indb1] = True
     flux1 = np.where(mask1, np.nan, flux0)
-    return indb1, [spectrum[0][i] for i in indb1], [spectrum[0],flux1]
-    
-def iden_bad_e(spectrum, nstd=5, ncou = 10):
-    '''Identify and remove noise-dominated edges of spectra
-    '''
+    return indb1, [spectrum[0][i] for i in indb1], [spectrum[0], flux1]
+
+
+def iden_bad_e(spectrum, nstd=5, ncou=10):
+    """Identify and remove noise-dominated edges of spectra"""
     if spectrum is None:
         return None, None, None
     flux0 = np.copy(spectrum[1])
     nnan = np.where(np.isfinite(flux0))[0]
-    mean = np.nanmean(flux0[nnan.min()+ncou:nnan.max()+1-ncou])
-    std = np.nanstd(flux0[nnan.min()+ncou:nnan.max()+1-ncou])
-    
+    mean = np.nanmean(flux0[nnan.min() + ncou : nnan.max() + 1 - ncou])
+    std = np.nanstd(flux0[nnan.min() + ncou : nnan.max() + 1 - ncou])
+
     indb = []
-    fluxs = flux0[nnan.min():nnan.min()+ncou]
+    fluxs = flux0[nnan.min() : nnan.min() + ncou]
     masks = ((mean + std * nstd) < fluxs) | (fluxs < (mean - std * nstd))
     if masks.any():
-        flux0[nnan.min():nnan.min()+ncou] = np.nan
-        indb += list(np.where(masks)[0]+nnan.min())
-    fluxe = flux0[nnan.max()+1-ncou:nnan.max()+1]
+        flux0[nnan.min() : nnan.min() + ncou] = np.nan
+        indb += list(np.where(masks)[0] + nnan.min())
+    fluxe = flux0[nnan.max() + 1 - ncou : nnan.max() + 1]
     maske = ((mean + std * nstd) < fluxe) | (fluxe < (mean - std * nstd))
     if maske.any():
-        flux0[nnan.max()+1-ncou:nnan.max()+1] = np.nan
-        indb += list(np.where(maske)[0]+nnan.max()+1-ncou)
-    return indb, [spectrum[0][i] for i in indb], [spectrum[0],flux0]
+        flux0[nnan.max() + 1 - ncou : nnan.max() + 1] = np.nan
+        indb += list(np.where(maske)[0] + nnan.max() + 1 - ncou)
+    return indb, [spectrum[0][i] for i in indb], [spectrum[0], flux0]
 
 
 def remove_nan(spectrum):
@@ -123,7 +129,7 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso, **kwargs):
+def resampled_spectra(sources, rang, reso, prin=False, **kwargs):
     spectra = []
     sourn = []
     space = wave_sp(rang[0], rang[1], reso)
@@ -137,21 +143,23 @@ def resampled_spectra(sources, rang, reso, **kwargs):
                 t2 = time.time()
                 spectra.append(sr)
                 sourn.append(s)
-                print(
-                    f'\r\033[KResampled: {s["srcid"]:<14}\t({i} of {len(sources)})\tTime: {(t2-t1)/(t1-t0):.2f}',
-                    end="",
-                )
+                if prin:
+                    print(
+                        f'\r\033[KResampled: {s["srcid"]:<14}\t({i} of {len(sources)})\tTime: {(t2-t1)/(t1-t0):.2f}',
+                        end="",
+                    )
             else:
+                if prin:
+                    print(
+                        f'\r\033[KNo spectral file found for: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
+                        end="",
+                    )
+        except:
+            if prin:
                 print(
-                    f'\r\033[KNo spectral file found for: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
+                    f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
                     end="",
                 )
-        except:
-            print(
-                f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
-                end="",
-            )
-    print("\n")
     return spectra, sourn
 
 
@@ -215,6 +223,7 @@ def resample(spectrum, space, z=0.0, normalise=False):
     else:
         return nspectrum
 
+
 def spect_norm(spectrum, frequency=True):
     if not frequency:
         diffwav = np.abs(np.diff(spectrum[0]))
@@ -244,16 +253,17 @@ def spects_norm(spectra, frequency=True):
             flux += np.nansum(diffreq * np.array(spectrum[1])[:-1])
         return np.array([[spectrum[0], spectrum[1] / flux] for spectrum in spectra])
 
-def degrade_spectrum(spectrum, tpx= 0.0005, fact = 2.2):
-    opx = (spectrum[0][1]-spectrum[0][0])
-    tstd = tpx*fact/(2*np.sqrt(2*np.log(2)))
-    ostd = opx*fact/(2*np.sqrt(2*np.log(2)))
-    kstd = np.sqrt(tstd**2-ostd**2)
-    ker = Gaussian1DKernel(kstd/opx)
+
+def degrade_spectrum(spectrum, tpx=0.0005, fact=2.2):
+    opx = spectrum[0][1] - spectrum[0][0]
+    tstd = tpx * fact / (2 * np.sqrt(2 * np.log(2)))
+    ostd = opx * fact / (2 * np.sqrt(2 * np.log(2)))
+    kstd = np.sqrt(tstd**2 - ostd**2)
+    ker = Gaussian1DKernel(kstd / opx)
     convolved = convolve(spectrum[1], ker, boundary="extend")
     convolved = np.where(np.isfinite(spectrum[1]), convolved, np.nan)
     return [spectrum[0], convolved]
-    
+
 
 def relat_diff(spectr1, spectr2, frequency=True):
     spect1 = spectr1
@@ -328,4 +338,3 @@ def combine_spectra(spectra):
             print(f"Spectra not matching in wavelength space!")
     cube = np.hstack(Tspectra)
     return refer[0], cube
-

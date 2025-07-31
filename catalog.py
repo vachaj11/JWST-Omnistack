@@ -41,10 +41,22 @@ def unique(sources):
         sn = source["sn50"]
         for i in range(len(sourn)):
             s = sourn[i]
-            if source["srcid"] == s["srcid"]:
+            if (
+                source["srcid"] == s["srcid"]
+                and source["root"] == s["root"]
+                and abs(source["ra"] - s["ra"]) < 0.005
+                and abs(source["dec"] - s["dec"]) < 0.005
+            ):
                 if sn is not None and s["sn50"] < sn:
                     sourn[i] = source
                 new = False
+                if source["phot_mass"] != s["phot_mass"]:
+                    print(
+                        f'Disagreeing masses for {s["srcid"]}\n {source["phot_mass"]} and {s["phot_mass"]}.'
+                    )
+                    print(
+                        f'Differences {source["ra"]-s["ra"]}, {source["dec"]-s["dec"]}, {source["z"]}|{s["z"]}.'
+                    )
                 break
         if new:
             sourn.append(source)

@@ -197,7 +197,7 @@ def fit_lines(
     base="../Data/Npy/",
     typ="median",
     plot=False,
-    **kwargs
+    **kwargs,
 ):
     grats = [s["grat"] for s in sources]
     grat = max(set(grats), key=grats.count)
@@ -247,7 +247,38 @@ def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
     plt.close(fig)
 
 
-def abundance_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, yax=None, **kwargs):
+def boots_stat(funct, sources, ite=30, **kwargs):
+    vs = np.flip(funct(sources, **kwargs)[1])
+    vals = np.full((ite, len(vs)), np.nan)
+    for i in range(ite):
+        rsourc = np.random.choice(sources, size=len(sources))
+        vi = np.flip(funct(rsourc, **kwargs)[1])
+        vals[i, : vi.shape[0]] = vi[: vals.shape[1]]
+    means = np.nanmean(vals, axis=0)
+    stds = np.nanstd(vals, axis=0)
+    return vs, means, stds
+
+
+def indiv_stat(funct, sources, no=100, **kwargs):
+    zs = []
+    vs = []
+    srcs = np.random.choice(sources, size=len(sources), replace=False)
+    i = 0
+    it = 0
+    while it < no and i < len(srcs):
+        vi = funct([srcs[i]], **kwargs)[1]
+        if vi:
+            zs += [srcs[i]["z"]] * len(vi)
+            vs += [v for v in vi]
+            it += 1
+        i += 1
+    print(f"Needed {i} out of {len(srcs)} for {it} results.")
+    return (zs, vs)
+
+
+def abundance_in_z(
+    sources, zrangs, abund=Oxygen, save=None, title=None, yax=None, **kwargs
+):
     n = int(-(-np.sqrt(len(abund)) // 1))
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
@@ -260,13 +291,17 @@ def abundance_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, yax=Non
     for i, (nam, ab) in enumerate(abund.items()):
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
-            v = ab(sourz, **kwargs)[1]
-            if v:
+            ind = indiv_stat(ab, sourz, **kwargs)
+            if ind[0]:
+                axs[i].plot(ind[0], ind[1], ls="", marker=".", c="gray", alpha=0.3)
+            v, m, st = boots_stat(ab, sourz, **kwargs)
+            if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
                 axs[i].plot(zmean, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
-            valss += v
+                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
+            valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
     minz = min([min(zr) for zr in zrangs])
     maxz = max([max(zr) for zr in zrangs])

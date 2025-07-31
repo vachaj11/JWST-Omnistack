@@ -159,7 +159,9 @@ def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
         plt.show()
 
 
-def plot_stacks(sources, lines, zrang=None, title=None, save=None, ite=0, narrow=1):
+def plot_stacks(
+    sources, lines, zrang=None, title=None, save=None, ite=0, narrow=1, fit=False
+):
     fig = plt.figure()
     gs = fig.add_gridspec(3, 5, hspace=0)
     axs = gs.subplots(sharex="col")
@@ -174,7 +176,7 @@ def plot_stacks(sources, lines, zrang=None, title=None, save=None, ite=0, narrow
         rangs = [[l - lin[1] / narrow, l + lin[1] / narrow]]
         al = catalog.filter_zranges(sources, rangs)
         for b, bas in enumerate(bases):
-            fits = [l] if b == 0 else None
+            fits = [l] if b == 0 and fit else None
             joint.plot_zstacks(al, rangs, z, 300, base=bas, axis=axs[b, i], fits=fits)
             if b != 2:
                 axs[b, i].get_legend().remove()
@@ -224,12 +226,14 @@ if __name__ == "__main__":
         "ppxf": "../Data/Subtracted/",
         "smoo": "../Data/Subtracted_b/",
     }
+    """
     for i in range(2):
         plot_stacks(
             afp,
             lines_C,
             ite=i,
             zrang=[[7, 20]],
+            fit = True,
             save=f"../Plots/linesC/spectr_prism_{i}.png",
             title=f"Stack of lines in prism ({i} of 1)",
         )
@@ -238,20 +242,23 @@ if __name__ == "__main__":
             lines_C,
             ite=i,
             zrang=[[7, 20]],
+            fit = True,
             save=f"../Plots/linesC/spectr_medium_{i}.png",
             narrow=3,
             title=f"Stack of lines in medium resolution ({i} of 1)",
         )
+        '''
         plot_stacks(
             afh,
             lines_C,
             ite=i,
             zrang=[[7, 20]],
+            fit = True,
             save=f"../Plots/linesC/spectr_high_{i}.png",
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 1)",
         )
-    """
+        '''
     for i in range(3):
         plot_stacks(
             afp,
@@ -268,6 +275,7 @@ if __name__ == "__main__":
             narrow=3,
             title=f"Stack of lines in medium resolution ({i} of 2)",
         )
+        '''
         plot_stacks(
             afh,
             lines,
@@ -276,9 +284,12 @@ if __name__ == "__main__":
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 2)",
         )
+        '''
     plot_mz(afp, title='Mass vs Redshift for prism', save='../Plots/lines4/mz_prism.png')
     plot_mz(afm, title='Mass vs Redshift for medium resolution', save='../Plots/lines4/mz_medium.png')
+    '''
     plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.png')
+    '''
     plot_histograms(
         afp,
         lines,
@@ -291,9 +302,10 @@ if __name__ == "__main__":
         lines,
         title="Coverage of lines in medium resolution",
         save="../Plots/lines4/hist_medium.png",
-        ymax=1700,
+        ymax=2300,
         narrow=3,
     )
+    '''
     plot_histograms(
         afh,
         lines,
@@ -302,6 +314,7 @@ if __name__ == "__main__":
         ymax=630,
         narrow=5,
     )
+    '''
     plot_lines(
         afp,
         lines,
@@ -317,6 +330,7 @@ if __name__ == "__main__":
         narrow=3,
         ratios = ratios,
     )
+    '''
     plot_lines(
         afh,
         lines,
@@ -325,4 +339,5 @@ if __name__ == "__main__":
         narrow=5,
         ratios = ratios,
     )
+    '''
     """

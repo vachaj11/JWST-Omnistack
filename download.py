@@ -298,8 +298,9 @@ def add_post_hoc(sources, pathp="../dja_msaexp_2.csv", values=None):
                 source[v] = None
         print(f"\r{i} {type(g)}", end="")
     return sources
-    
-def trim_edges(sources, bi = '../Data/Npy_legacy/', bo='../Data/Npy/', **kwargs):
+
+
+def trim_edges(sources, bi="../Data/Npy_legacy/", bo="../Data/Npy/", **kwargs):
     vss = []
     for l, s in enumerate(sources):
         sp0 = spectr.get_spectrum(s, base=bi)
@@ -307,36 +308,37 @@ def trim_edges(sources, bi = '../Data/Npy_legacy/', bo='../Data/Npy/', **kwargs)
         if i:
             vss.append([w, sp0, spr])
             spectr.save_npy(s, spr, base=bo)
-        print('\r'+str(l), end='')  
+        print("\r" + str(l), end="")
     return vss
-    
-def update_ranges(sources, base='../Data/Npy/'):
+
+
+def update_ranges(sources, base="../Data/Npy/"):
     for s in sources:
         sp = spectr.get_spectrum(s, base=base)
         if sp is not None:
-            s['range'] = spectr.useful_range(sp)
+            s["range"] = spectr.useful_range(sp)
         else:
-            s['range'] = []
+            s["range"] = []
     return sources
-    
-def degrade_high(sources, bi='../Data/Npy/',bo='../Data/Npy_med/'):
+
+
+def degrade_high(sources, bi="../Data/Npy/", bo="../Data/Npy_med/"):
     mpx = {
-        'g140h': 0.00060000,
-        'g235h': 0.00100952,
-        'g395h': 0.00170476,
+        "g140h": 0.00060000,
+        "g235h": 0.00100952,
+        "g395h": 0.00170476,
     }
     adj = 0
     for l, s in enumerate(sources):
-        print('\r'+str(l), end='') 
-        if s['grat'][-1]=='h':
+        print("\r" + str(l), end="")
+        if s["grat"][-1] == "h":
             sp0 = spectr.get_spectrum(s, base=bi)
             if sp0 is not None:
-                spr = spectr.degrade_spectrum(sp0, mpx[s['grat']])
+                spr = spectr.degrade_spectrum(sp0, mpx[s["grat"]])
                 spectr.save_npy(s, spr, base=bo)
-                adj+=1
-            s['grat_orig'] = s['grat']
-            s['grat'] = s['grat'][:-1]+'m'
-        elif 'grat_orig' not in s.keys():
-            s['grat_orig'] = s['grat']
-    print('\n'+str(adj))
-    
+                adj += 1
+            s["grat_orig"] = s["grat"]
+            s["grat"] = s["grat"][:-1] + "m"
+        elif "grat_orig" not in s.keys():
+            s["grat_orig"] = s["grat"]
+    print("\n" + str(adj))

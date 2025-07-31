@@ -245,7 +245,7 @@ def smooth_to_cont(
             R = 100
         case x if x[-1:] == "h":
             R = 2700
-        case x if x[-1:] == "m":
+        case x if x[-1:] == "m" and x[:1] == "g":
             R = 1000
         case _:
             R = len(spectrum[0])
