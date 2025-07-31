@@ -168,7 +168,7 @@ def spectra_resolution(sources):
             examp[g] = s
         else:
             gratings[g] += 1
-    spectras = [spectr.get_spectrum_n(examp[s]) for s in examp]
+    spectras = [spectr.get_spectrum(examp[s]) for s in examp]
     for g, spectra in zip(gratings, spectras):
         wavs = spectra[0]
         dwav = [wavs[i + 1] - wavs[i] for i in range(len(wavs) - 1)]

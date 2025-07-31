@@ -260,9 +260,9 @@ def plot_all_lines():
 
 def cont_diff(source, plot=False):
     """For a provided single source plots comparison with continuum approximation templates."""
-    spectr1 = spectr.get_spectrum_n(source, base="../Data/Continuum/")
-    spectr2 = spectr.get_spectrum_n(source, base="../Data/Continuum_b/")
-    spectro = spectr.get_spectrum_n(source, base="../Data/Npy/")
+    spectr1 = spectr.get_spectrum(source, base="../Data/Continuum/")
+    spectr2 = spectr.get_spectrum(source, base="../Data/Continuum_b/")
+    spectro = spectr.get_spectrum(source, base="../Data/Npy/")
     if plot:
         plots.spectras_plot([spectr1, spectr2, spectro])
         plt.show()

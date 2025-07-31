@@ -66,7 +66,7 @@ def rm_bad(sources, ppxf=False):
             sn is not None
             and sn > 0
             and gr is not None
-            and gr > 1
+            and gr > 2
             and "star" not in cm
             and "Star" not in cm
             # and (ha is None or ha < 80)

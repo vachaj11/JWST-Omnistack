@@ -162,7 +162,7 @@ def fit_infos(fit):
 
 def flux_at(fit, line, std=1):
     lines = fit_infos(fit)
-    flux = 0.0
+    flux = np.float64(0.0)
     for l in lines:
         if l["mean"] - std * l["stddev"] < line < l["mean"] + std * l["stddev"]:
             flux += l["flux"]

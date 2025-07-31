@@ -60,7 +60,7 @@ def O_N2(sources, **kwargs):
     if np.isfinite(N2):
         p = [-0.489 - N2, 1.513, -2.554, -5.293, -2.867]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return N2, roots
     else:
@@ -74,7 +74,7 @@ def O_R3(sources, **kwargs):
     if np.isfinite(R3):
         p = [-0.277 - R3, -3.549, -3.593, -0.981]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return R3, roots
     else:
@@ -86,7 +86,7 @@ def O_O3N2(sources, **kwargs):
     if np.isfinite(O3N2):
         p = [0.281 - O3N2, -4.765, -2.268]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return O3N2, roots
     else:
@@ -98,7 +98,7 @@ def O_O3S2(sources, **kwargs):
     if np.isfinite(O3S2):
         p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return O3S2, roots
     else:
@@ -112,7 +112,7 @@ def O_S2(sources, **kwargs):
     if np.isfinite(S2):
         p = [-0.442 - S2, -0.360, -6.271, -8.339, -3.559]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return S2, roots
     else:
@@ -126,7 +126,7 @@ def O_R2(sources, **kwargs):
     if np.isfinite(R2):
         p = [0.435 - R2, -1.362, -5.655, -4.851, -0.478, 0.736]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return R2, roots
     else:
@@ -138,7 +138,7 @@ def O_O3O2(sources, **kwargs):
     if np.isfinite(O3O2):
         p = [-0.691 - O3O2, -2.944, -1.308]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return O3O2, roots
     else:
@@ -153,7 +153,7 @@ def O_R23(sources, **kwargs):
     if np.isfinite(R23):
         p = [0.527 - R23, -1.569, -1.652, -0.421]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return R23, roots
     else:
@@ -167,7 +167,7 @@ def O_RS23(sources, **kwargs):
     if np.isfinite(RS23):
         p = [-0.054 - RS23, -2.546, -1.970, 0.082, 0.222]
         roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.5 < v < 9.0
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
         return RS23, roots
     else:
@@ -231,9 +231,9 @@ def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
     x = []
     for i in n:
         sample = np.random.choice(sources, size=int(i), replace=False)
-        fit, sn = fit_lines(sample, lines, plot=False, typ=typ)
-        y.append(fit[lind])
-        x.append(len(sn))
+        flux = fit_lines(sample, lines, lines[lind], plot=False, typ=typ)
+        y.append(flux)
+        x.append(i)
     x, y = zip(*sorted(zip(x, y)))
     axs.plot(x, y)
     axs.set_xlabel("Number of spectra stacked")
@@ -242,12 +242,12 @@ def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
     fig.set_layout_engine(layout="tight")
     if save is not None:
         fig.savefig(save)
-    elif plot:
+    else:
         plt.show()
     plt.close(fig)
 
 
-def abundance_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, yax=None):
+def abundance_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, yax=None, **kwargs):
     n = int(-(-np.sqrt(len(abund)) // 1))
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
@@ -260,7 +260,7 @@ def abundance_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, yax=Non
     for i, (nam, ab) in enumerate(abund.items()):
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
-            v = ab(sourz)[1]
+            v = ab(sourz, **kwargs)[1]
             if v:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)

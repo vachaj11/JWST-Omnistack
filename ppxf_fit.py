@@ -159,7 +159,7 @@ def ppxf_fitting_multi(sources, start_in=0):
 
 
 def ppxf_process(source, save=True, **kwargs):
-    spectrum = spectr.get_spectrum_n(source)
+    spectrum = spectr.get_spectrum(source)
     try:
         pp = ppxf_fit(source, spectrum, **kwargs)
         z = source["z"]
@@ -197,8 +197,8 @@ def continuum(
     bo="../Data/Subtracted/",
     convolv=True,
 ):
-    spectrum = spectr.get_spectrum_n(source)
-    continuu = spectr.get_spectrum_n(source, base=bi)
+    spectrum = spectr.get_spectrum(source)
+    continuu = spectr.get_spectrum(source, base=bi)
     if spectrum is None or continuu is None:
         print(f'\r\033[KSpectrum not available for {source["srcid"]}', end="")
         return None
@@ -236,7 +236,7 @@ def smooth_to_cont(
     bi="../Data/Npy/",
     bo="../Data/Continuum_b/",
 ):
-    spectrum = spectr.get_spectrum_n(source)
+    spectrum = spectr.get_spectrum(source)
     if spectrum is None:
         print(f'Spectrum not available for {source["srcid"]}')
         return None
