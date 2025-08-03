@@ -20,39 +20,6 @@ plt.rcParams.update(
     }
 )
 
-Oxygen = {
-    "N2": O_N2,
-    "R3": O_R3,
-    "O3N2": O_O3N2,
-    "O3S2": O_O3S2,
-    "S2": O_S2,
-    "R2": O_R2,
-    "O3O2": O_O3O2,
-    "R23": O_R23,
-    "RS32": O_RS32,
-}
-Nitrogen = {
-    "N2O2": N_N2O2,
-    "N2": N_N2,
-    "N2S2": N_N2S2,
-}
-Sulphur = {"S23": S_S23}
-Names = {
-    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
-    "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
-    "O3N2": "$\\mathrm{R}3-\\mathrm{N}2$",
-    "O3S2": "$\\mathrm{R}3-\\mathrm{S}2$",
-    "S2": "$\\mathrm{log}([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731/\\mathrm{H}_\\alpha)$",
-    "R2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{II}]\\lambda 3727/\\mathrm{H}_\\beta)$",
-    "O3O2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
-    "R23": "$\\mathrm{log}(([\\mathrm{O}_\\mathrm{II}]\\lambda 3727+[\\mathrm{O}_\\mathrm{III}]\\lambda 5007)/\\mathrm{H}_\\beta)$",
-    "RS32": "$\\mathrm{log}(10^\\mathrm{R3}+10^\\mathrm{S2})$",
-    "N2O2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
-    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{H}_\\alpha)$",
-    "N2S2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731)$",
-    "S23": "$\\mathrm{log}(([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6716, 6731 + [\\mathrm{S}_\\mathrm{III}]\\lambda 9532)/\\mathrm{H}_\\beta)$",
-}
-
 
 def S_S23(sources, **kwargs):
     fsii = fit_lines(sources, [0.6718, 0.6733], [0.6718, 0.6733], **kwargs)
@@ -215,6 +182,40 @@ def O_RS32(sources, **kwargs):
         return [RS32], []
 
 
+Oxygen = {
+    "N2": O_N2,
+    "R3": O_R3,
+    "O3N2": O_O3N2,
+    "O3S2": O_O3S2,
+    "S2": O_S2,
+    "R2": O_R2,
+    "O3O2": O_O3O2,
+    "R23": O_R23,
+    "RS32": O_RS32,
+}
+Nitrogen = {
+    "N2O2": N_N2O2,
+    "N2": N_N2,
+    "N2S2": N_N2S2,
+}
+Sulphur = {"S23": S_S23}
+Names = {
+    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
+    "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
+    "O3N2": "$\\mathrm{R}3-\\mathrm{N}2$",
+    "O3S2": "$\\mathrm{R}3-\\mathrm{S}2$",
+    "S2": "$\\mathrm{log}([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731/\\mathrm{H}_\\alpha)$",
+    "R2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{II}]\\lambda 3727/\\mathrm{H}_\\beta)$",
+    "O3O2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
+    "R23": "$\\mathrm{log}(([\\mathrm{O}_\\mathrm{II}]\\lambda 3727+[\\mathrm{O}_\\mathrm{III}]\\lambda 5007)/\\mathrm{H}_\\beta)$",
+    "RS32": "$\\mathrm{log}(10^\\mathrm{R3}+10^\\mathrm{S2})$",
+    "N2O2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
+    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{H}_\\alpha)$",
+    "N2S2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731)$",
+    "S23": "$\\mathrm{log}(([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6716, 6731 + [\\mathrm{S}_\\mathrm{III}]\\lambda 9532)/\\mathrm{H}_\\beta)$",
+}
+
+
 def fit_lines(
     sources,
     lines,
@@ -361,6 +362,8 @@ def abundance_in_z(
                 yrang[1].append(np.nanmax(m + st[1]))
             valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
+    for i in range(len(axs) - len(abund)):
+        axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
     minz = min([min(zr) for zr in zrangs])
     maxz = max([max(zr) for zr in zrangs])
     ranz = maxz - minz
@@ -443,6 +446,8 @@ def ratios_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, **kwargs):
             ylims[0] - 0.1 * (ylims[1] - ylims[0]),
             ylims[1] + 0.25 * (ylims[1] - ylims[0]),
         )
+    for i in range(len(axs) - len(abund)):
+        axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
     minz = min([min(zr) for zr in zrangs])
     maxz = max([max(zr) for zr in zrangs])
     ranz = maxz - minz
@@ -465,7 +470,6 @@ if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_z.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
-
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
