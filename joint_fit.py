@@ -12,6 +12,47 @@ import line_fit as lf
 import plots
 import spectr
 
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "Computer Modern",
+        "font.size": 15,
+    }
+)
+
+Oxygen = {
+    "N2": O_N2,
+    "R3": O_R3,
+    "O3N2": O_O3N2,
+    "O3S2": O_O3S2,
+    "S2": O_S2,
+    "R2": O_R2,
+    "O3O2": O_O3O2,
+    "R23": O_R23,
+    "RS32": O_RS32,
+}
+Nitrogen = {
+    "N2O2": N_N2O2,
+    "N2": N_N2,
+    "N2S2": N_N2S2,
+}
+Sulphur = {"S23": S_S23}
+Names = {
+    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
+    "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
+    "O3N2": "$\\mathrm{R}3-\\mathrm{N}2$",
+    "O3S2": "$\\mathrm{R}3-\\mathrm{S}2$",
+    "S2": "$\\mathrm{log}([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731/\\mathrm{H}_\\alpha)$",
+    "R2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{II}]\\lambda 3727/\\mathrm{H}_\\beta)$",
+    "O3O2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
+    "R23": "$\\mathrm{log}(([\\mathrm{O}_\\mathrm{II}]\\lambda 3727+[\\mathrm{O}_\\mathrm{III}]\\lambda 5007)/\\mathrm{H}_\\beta)$",
+    "RS32": "$\\mathrm{log}(10^\\mathrm{R3}+10^\\mathrm{S2})$",
+    "N2O2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
+    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{H}_\\alpha)$",
+    "N2S2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731)$",
+    "S23": "$\\mathrm{log}(([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6716, 6731 + [\\mathrm{S}_\\mathrm{III}]\\lambda 9532)/\\mathrm{H}_\\beta)$",
+}
+
 
 def S_S23(sources, **kwargs):
     fsii = fit_lines(sources, [0.6718, 0.6733], [0.6718, 0.6733], **kwargs)
@@ -20,9 +61,9 @@ def S_S23(sources, **kwargs):
     fhbe = fit_lines(sources, [0.4862], 0.4862, **kwargs)
     S23 = np.log10((fsii + fsiii) / fhbe)
     if np.isfinite(S23):
-        return S23, [6.63 + 2.202 * S23 + 1.060 * S23**2]
+        return [S23], [6.63 + 2.202 * S23 + 1.060 * S23**2]
     else:
-        return S23, []
+        return [S23], []
 
 
 def N_N2O2(sources, **kwargs):
@@ -30,9 +71,9 @@ def N_N2O2(sources, **kwargs):
     foii = fit_lines(sources, [0.3727, 0.3729], [0.3727, 0.3729], **kwargs)
     N2O2 = np.log10(fnii / foii)
     if np.isfinite(N2O2):
-        return N2O2, [0.52 * N2O2 - 0.65]
+        return [N2O2], [0.52 * N2O2 - 0.65]
     else:
-        return N2O2, []
+        return [N2O2], []
 
 
 def N_N2(sources, **kwargs):
@@ -40,17 +81,17 @@ def N_N2(sources, **kwargs):
     fhal = fit_lines(sources, [0.6550, 0.6564, 0.6585], 0.6564, **kwargs)
     N2 = np.log10(fnii / fhal)
     if np.isfinite(N2):
-        return N2, [0.62 * N2 - 0.57]
+        return [N2], [0.62 * N2 - 0.57]
     else:
-        return N2, []
+        return [N2], []
 
 
 def N_N2S2(sources, **kwargs):
-    N2S2 = O_N2(sources, **kwargs)[0] - O_S2(sources, **kwargs)[0]
+    N2S2 = O_N2(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(N2S2):
-        return N2S2, [0.85 * N2S2 - 1.00]
+        return [N2S2], [0.85 * N2S2 - 1.00]
     else:
-        return N2S2, []
+        return [N2S2], []
 
 
 def O_N2(sources, **kwargs):
@@ -62,9 +103,9 @@ def O_N2(sources, **kwargs):
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return N2, roots
+        return [N2], roots
     else:
-        return N2, []
+        return [N2], []
 
 
 def O_R3(sources, **kwargs):
@@ -76,33 +117,33 @@ def O_R3(sources, **kwargs):
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return R3, roots
+        return [R3], roots
     else:
-        return R3, []
+        return [R3], []
 
 
 def O_O3N2(sources, **kwargs):
-    O3N2 = O_R3(sources, **kwargs)[0] - O_N2(sources, **kwargs)[0]
+    O3N2 = O_R3(sources, **kwargs)[0][0] - O_N2(sources, **kwargs)[0][0]
     if np.isfinite(O3N2):
         p = [0.281 - O3N2, -4.765, -2.268]
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return O3N2, roots
+        return [O3N2], roots
     else:
-        return O3N2, []
+        return [O3N2], []
 
 
 def O_O3S2(sources, **kwargs):
-    O3S2 = O_R3(sources, **kwargs)[0] - O_S2(sources, **kwargs)[0]
+    O3S2 = O_R3(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(O3S2):
         p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return O3S2, roots
+        return [O3S2], roots
     else:
-        return O3S2, []
+        return [O3S2], []
 
 
 def O_S2(sources, **kwargs):
@@ -114,9 +155,9 @@ def O_S2(sources, **kwargs):
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return S2, roots
+        return [S2], roots
     else:
-        return S2, []
+        return [S2], []
 
 
 def O_R2(sources, **kwargs):
@@ -128,21 +169,21 @@ def O_R2(sources, **kwargs):
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return R2, roots
+        return [R2], roots
     else:
-        return R2, []
+        return [R2], []
 
 
 def O_O3O2(sources, **kwargs):
-    O3O2 = O_R3(sources, **kwargs)[0] - O_R2(sources, **kwargs)[0]
+    O3O2 = O_R3(sources, **kwargs)[0][0] - O_R2(sources, **kwargs)[0][0]
     if np.isfinite(O3O2):
         p = [-0.691 - O3O2, -2.944, -1.308]
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return O3O2, roots
+        return [O3O2], roots
     else:
-        return O3O2, []
+        return [O3O2], []
 
 
 def O_R23(sources, **kwargs):
@@ -155,38 +196,23 @@ def O_R23(sources, **kwargs):
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return R23, roots
+        return [R23], roots
     else:
-        return R23, []
+        return [R23], []
 
 
-def O_RS23(sources, **kwargs):
-    RS23 = np.log10(
-        10 ** (O_R3(sources, **kwargs)[0]) + 10 ** (O_S2(sources, **kwargs)[0])
+def O_RS32(sources, **kwargs):
+    RS32 = np.log10(
+        10 ** (O_R3(sources, **kwargs)[0][0]) + 10 ** (O_S2(sources, **kwargs)[0][0])
     )
-    if np.isfinite(RS23):
-        p = [-0.054 - RS23, -2.546, -1.970, 0.082, 0.222]
+    if np.isfinite(RS32):
+        p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
         roots = [
             np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return RS23, roots
+        return [RS32], roots
     else:
-        return RS23, []
-
-
-Oxygen = {
-    "N2": O_N2,
-    "R3": O_R3,
-    "O3N2": O_O3N2,
-    "O3S2": O_O3S2,
-    "S2": O_S2,
-    "R2": O_R2,
-    "O3O2": O_O3O2,
-    "R23": O_R23,
-    "RS23": O_RS23,
-}
-Nitrogen = {"N2O2": N_N2O2, "N2": N_N2, "N2S2": N_N2S2}
-Sulphur = {"S23": S_S23}
+        return [RS32], []
 
 
 def fit_lines(
@@ -247,33 +273,54 @@ def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
     plt.close(fig)
 
 
-def boots_stat(funct, sources, ite=30, **kwargs):
-    vs = np.flip(funct(sources, **kwargs)[1])
+def boots_stat(funct, sources, ite=200, calib=True, **kwargs):
+    ind = 1 if calib else 0
+    vs = np.flip(funct(sources, **kwargs)[ind])
     vals = np.full((ite, len(vs)), np.nan)
     for i in range(ite):
         rsourc = np.random.choice(sources, size=len(sources))
-        vi = np.flip(funct(rsourc, **kwargs)[1])
+        vi = np.flip(funct(rsourc, **kwargs)[ind])
         vals[i, : vi.shape[0]] = vi[: vals.shape[1]]
-    means = np.nanmean(vals, axis=0)
-    stds = np.nanstd(vals, axis=0)
-    return vs, means, stds
+    vals = np.nan_to_num(vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
+    medians = np.nanmedian(vals, axis=0)
+    err33 = np.nanpercentile(vals, 33, axis=0)
+    err67 = np.nanpercentile(vals, 67, axis=0)
+    return vs, medians, [medians - err33, err67 - medians]
 
 
-def indiv_stat(funct, sources, no=100, **kwargs):
+def indiv_stat(funct, sources, no=None, calib=True, **kwargs):
     zs = []
     vs = []
+    va = []
+    ind = 1 if calib else 0
+    no = len(sources) if no is None else no
     srcs = np.random.choice(sources, size=len(sources), replace=False)
     i = 0
     it = 0
     while it < no and i < len(srcs):
-        vi = funct([srcs[i]], **kwargs)[1]
+        vi = funct([srcs[i]], **kwargs)[ind]
         if vi:
             zs += [srcs[i]["z"]] * len(vi)
             vs += [v for v in vi]
+            va.append(vi)
             it += 1
         i += 1
+    if len(va):
+        vals = np.full((len(va), max([len(v) for v in va])), np.nan)
+        for l in range(len(va)):
+            vi = np.flip(va[l])
+            vals[l, : vi.shape[0]] = vi[: vals.shape[1]]
+        vals = np.nan_to_num(vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
+        medians = np.nanmedian(vals, axis=0)
+        err33 = np.nanpercentile(vals, 33, axis=0)
+        err67 = np.nanpercentile(vals, 67, axis=0)
+    else:
+        medians, err33, err67 = [np.array([np.nan])] * 3
     print(f"Needed {i} out of {len(srcs)} for {it} results.")
-    return (zs, vs)
+    return (zs, vs), (
+        medians,
+        np.nan_to_num([medians - err33, err67 - medians], nan=0.0),
+    )
 
 
 def abundance_in_z(
@@ -283,6 +330,7 @@ def abundance_in_z(
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
+    yrang = [[], []]
     if n == 1:
         axs = [axes]
     else:
@@ -291,9 +339,17 @@ def abundance_in_z(
     for i, (nam, ab) in enumerate(abund.items()):
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
-            ind = indiv_stat(ab, sourz, **kwargs)
+            ind, _ = indiv_stat(ab, sourz, **kwargs)
             if ind[0]:
-                axs[i].plot(ind[0], ind[1], ls="", marker=".", c="gray", alpha=0.3)
+                axs[i].plot(
+                    ind[0],
+                    ind[1],
+                    ls="",
+                    marker=".",
+                    c="gray",
+                    alpha=0.15,
+                    markersize=2,
+                )
             v, m, st = boots_stat(ab, sourz, **kwargs)
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
@@ -301,6 +357,8 @@ def abundance_in_z(
                 axs[i].plot(zmean, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
                 axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
+                yrang[0].append(np.nanmin(m - st[0]))
+                yrang[1].append(np.nanmax(m + st[1]))
             valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
     minz = min([min(zr) for zr in zrangs])
@@ -308,9 +366,11 @@ def abundance_in_z(
     ranz = maxz - minz
     minz = minz - ranz * 0.1
     maxz = maxz + ranz * 0.1
-    rana = max(valss) - min(valss)
-    mina = min(valss) - rana * 0.1
-    maxa = max(valss) + rana * 0.25
+    yrang = np.nan_to_num(yrang, nan=0.0, posinf=0.0, neginf=0.0)
+    ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+    rana = ylims[1] - ylims[0]
+    mina = ylims[0] - rana * 0.1
+    maxa = ylims[1] + rana * 0.25
     for i in range(n):
         axs[-i - 1].set_xlim(minz, maxz)
         axs[i * n].set_ylim(mina, maxa)
@@ -324,3 +384,130 @@ def abundance_in_z(
     else:
         plt.show()
     plt.close(fig)
+
+
+def ratios_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, **kwargs):
+    n = int(-(-np.sqrt(len(abund)) // 1))
+    fig = plt.figure()
+    gs = fig.add_gridspec(n, n, hspace=0)
+    axes = gs.subplots(sharex="col")
+    if n == 1:
+        axs = [axes]
+    else:
+        axs = axes.flatten()
+    valss = []
+    for i, (nam, ab) in enumerate(abund.items()):
+        yrang = [[], []]
+        for zrang in zrangs:
+            sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
+            ind, sta = indiv_stat(ab, sourz, calib=False, **kwargs)
+            if ind[0]:
+                zmean = [(zrang[1] + zrang[0]) / 2] * len(sta[0])
+                zerr = [(zrang[1] - zrang[0]) / 2] * len(sta[0])
+                axs[i].plot(
+                    ind[0],
+                    ind[1],
+                    ls="",
+                    marker=".",
+                    c="gray",
+                    alpha=0.15,
+                    markersize=2,
+                )
+                axs[i].errorbar(
+                    zmean,
+                    sta[0],
+                    yerr=sta[1],
+                    xerr=zerr,
+                    ls="",
+                    c="gainsboro",
+                    capsize=5,
+                )
+                yrang[0].append(np.nanmin(sta[0] - sta[1][0]))
+                yrang[1].append(np.nanmax(sta[0] + sta[1][1]))
+            v, m, st = boots_stat(ab, sourz, calib=False, **kwargs)
+            if v.size:
+                zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
+                zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
+                axs[i].plot(zmean, v, ls="", marker="D", c="black")
+                axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
+                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
+                axs[i].set_ylabel(Names[nam], fontsize=11)
+                axs[i].yaxis.set_tick_params(labelsize=11)
+                yrang[0].append(np.nanmin(m - st[0]))
+                yrang[1].append(np.nanmax(m + st[1]))
+            valss = np.concatenate([valss, v])
+        yrang = np.nan_to_num(yrang, nan=0.0, posinf=0.0, neginf=0.0)
+        ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+        axs[i].set_title(nam, y=0.85)
+        axs[i].set_ylim(
+            ylims[0] - 0.1 * (ylims[1] - ylims[0]),
+            ylims[1] + 0.25 * (ylims[1] - ylims[0]),
+        )
+    minz = min([min(zr) for zr in zrangs])
+    maxz = max([max(zr) for zr in zrangs])
+    ranz = maxz - minz
+    minz = minz - ranz * 0.1
+    maxz = maxz + ranz * 0.1
+    for i in range(n):
+        axs[-i - 1].set_xlim(minz, maxz)
+        axs[-i - 1].set_xlabel("$z$")
+    fig.set_size_inches((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5)
+    fig.suptitle(title)
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    f = catalog.fetch_json("../catalog_z.json")["sources"]
+    ff = catalog.rm_bad(f)
+    ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
+
+    abundance_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Sulphur,
+        title="Sulphur abundance in medium resolution\n via different calibrations",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        save="../Plots/abund/sulphur_cal.png",
+    )
+    abundance_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Nitrogen,
+        title="Nitrogen abundance in medium resolution\n via different calibrations",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        save="../Plots/abund/nitrogen_cal.png",
+    )
+    abundance_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Oxygen,
+        title="Oxygen abundance in medium resolution via different calibrations",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        save="../Plots/abund/oxygen_cal.png",
+    )
+    ratios_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Sulphur,
+        title="Line fluxes for sulphur abundance calibration\n in medium resolution",
+        save="../Plots/abund/sulphur_flu.png",
+    )
+    ratios_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Nitrogen,
+        title="Line fluxes for nitrogen abundance calibration\n in medium resolution",
+        save="../Plots/abund/nitrogen_flu.png",
+    )
+    ratios_in_z(
+        ffm,
+        [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
+        abund=Oxygen,
+        title="Line fluxes for oxygen abundance calibration in medium resolution",
+        save="../Plots/abund/oxygen_flu.png",
+    )

@@ -73,7 +73,15 @@ def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=N
 
 
 def plot_zstacks(
-    sources, rangs, zrangs, resos, base="../Data/Npy/", save=None, axis=None, fits=None
+    sources,
+    rangs,
+    zrangs,
+    resos,
+    base="../Data/Npy/",
+    save=None,
+    axis=None,
+    fits=None,
+    typ="median",
 ):
     """Plots stacks of sources covering specified range in separately in specified redshift bins."""
     if axis is None:
@@ -96,7 +104,7 @@ def plot_zstacks(
                     reso = resos
                 spectra, sourn = spectr.resampled_spectra(sours, rang, reso, base=base)
                 stack = spectr.combine_spectra(spectra)
-                stacc = spectr.stack(stack, sourn, typ="median")
+                stacc = spectr.stack(stack, sourn, typ=typ)
                 stacked.append(stacc)
             plots.spectras_plot(
                 stacked, axis=axs, c=c, label=f"{zrangs[k]} ({len(sours)})", norm=False

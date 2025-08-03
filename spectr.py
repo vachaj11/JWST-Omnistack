@@ -311,6 +311,7 @@ def stack(sp_stack, sources, typ="median", normalise=False):
                 else:
                     specn.append(False)
             sp_cubn = sp_cube[:, np.array(specn)]
+            weights = np.array(weights) / np.sum(weights)
             return (wav, np.average(sp_cubn, axis=1, weights=weights))
         case "ha":
             weights = []
