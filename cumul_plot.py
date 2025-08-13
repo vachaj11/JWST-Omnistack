@@ -227,6 +227,7 @@ def plot_mz(sources, title=None, save=None, **kwargs):
 if __name__ == "__main__":
     a = catalog.fetch_json("../catalog_z.json")["sources"]
     af = catalog.rm_bad(a)
+    af = catalog.rm_quasars(af)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
     afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
@@ -238,6 +239,7 @@ if __name__ == "__main__":
         "smoo": "../Data/Subtracted_b/",
     }
     stack_type = "median"
+
     for i in range(2):
         plot_stacks(
             afp,
@@ -273,6 +275,7 @@ if __name__ == "__main__":
             typ=stack_type,
         )
         """
+
     for i in range(3):
         plot_stacks(
             afp,
@@ -302,6 +305,7 @@ if __name__ == "__main__":
             typ=stack_type,
         )
         """
+
     plot_mz(
         afp, title="Mass vs Redshift for prism", save="../Plots/lines4/mz_prism.png"
     )
@@ -363,3 +367,4 @@ if __name__ == "__main__":
         ratios = ratios,
     )
     """
+

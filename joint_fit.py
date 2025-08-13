@@ -6,6 +6,7 @@ import csv
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pyneb as pn
 
 import catalog
 import line_fit as lf
@@ -181,6 +182,36 @@ def O_RS32(sources, **kwargs):
     else:
         return [RS32], []
 
+def OxAb(sources, **kwargs):
+    lines = {
+        'O3_4959A' : (0.4959, [0.4959], 8),
+        'O3_5007A' : (0.5007, [0.5007], 8),
+        'O3_4363A' : (0.4363, [0.4364, 0.4372], 7),
+        'O2_3726A' : (0.3726, [0.3726, 0.3729], 7),
+        'O2_3729A' : (0.3729, [0.3726, 0.3729], 7),
+        'O2_7319A' : (0.7320, [0.7320,0.7331], 8),
+        'O2_7330A' : (0.7331, [0.7320,0.7331], 8),
+        'H1r_4862A' : (0.4862, [0.4862], 8),
+        'H1r_6563A' : (0.6564, [0.6550,0.6564, 0.6585], 8),
+        'H1r_4340A' : (0.4341, [0.4341, 0.4364], 8),
+        'H1r_4102A' : (0.4102, [0.4102], 5),
+        'S2_6716A' : (0.6718, [0.6718, 0.6732], 7),
+        'S2_6731A' : (0.6732, [0.6718, 0.6732], 7),
+        'S2_4069A' : (0.4070, [0.4070, 0.4078], 3),
+        'S2_4076A' : (0.4078, [0.4070, 0.4078], 3),
+        'S3_9532A' : (0.9533, [0.9533], 8),
+        'S3_9069A' : (0.9071, [0.9071], 8),
+        'S3_6312A' : (0.6314, [0.6314], 2),
+        'N2_6548A' : (0.6548, [0.6548, 0.6565], 8),
+        'N2_6584A' : (0.6585, [0.6565, 0.6585], 8),
+        'N2_5755A' : (0.5757, [0.5757], 4),
+    }
+    fluxes = dict()
+    for l in lines:
+        flux = fit_lines(sources, lines[l][1], lines[l][0], dwidth = lines[l][2], cal_red=0, **kwargs)
+        if flux > 0:
+            fluxes[l] = flux
+    return fluxes
 
 Oxygen = {
     "N2": O_N2,
@@ -224,8 +255,12 @@ def fit_lines(
     base="../Data/Npy/",
     typ="median",
     plot=False,
+    cal_red = None,
+    dwidth = 8,
     **kwargs,
 ):
+    if cal_red is None:
+        cal_red = red_const(sources)
     grats = [s["grat"] for s in sources]
     grat = max(set(grats), key=grats.count)
     rang, _ = lf.line_range(lines, grat=grat)
@@ -234,17 +269,48 @@ def fit_lines(
     if len(sourn):
         stack = spectr.combine_spectra(spectra)
         stacc = spectr.stack(stack, sourn, typ=typ)
-        fit, x = lf.fit_lines(stacc, lines, grat=grat)
+        fit, x, stacc = lf.fit_lines(stacc, lines, grat=grat, dwidth = dwidth)
         if type(mline) == list:
-            flux = sum([lf.flux_at(fit, l) for l in mline])
+            flux = sum([redd(lf.flux_at(fit, l), l, sources, cal_red) for l in mline])
         else:
-            flux = lf.flux_at(fit, mline)
+            flux = redd(lf.flux_at(fit, mline), mline, sources, cal_red)
         if plot:
             plots.plot_fit(stacc, sourn, fit, **kwargs)
         return flux
     else:
         return np.nan
 
+
+def red_const(sources, T = 10000):
+    lT = np.log10(T)
+    wavs = {
+        6563.0: 10.35-3.254*lT+ 0.3457*lT**2, 
+        4340.0: 0.0254+ 0.1922*lT- 0.0204*lT**2,
+        4102.0: -0.07132 +0.1436*lT- 0.0153*lT**2,
+    } 
+    flub = fit_lines(sources, [0.4862], 0.4862, cal_red=0)
+    flux = {
+        6563.0: fit_lines(sources, [0.6550, 0.6564, 0.6585], 0.6564, cal_red=0)/flub,
+        4340.0: fit_lines(sources, [0.4341, 0.4364], 0.4341, cal_red=0)/flub,
+        4102.0: fit_lines(sources, [0.4102], 0.4102, cal_red=0)/flub,
+    }
+    consts = []
+    for k in wavs:
+        if flux[k]>0:
+            rc = pn.RedCorr(law = 'CCM89')
+            rc.setCorr(obs_over_theo=flux[k]/wavs[k], wave1=k, wave2=4862.)
+            consts.append(rc.cHbeta)
+    print('cHbeta values: ' +str(consts))
+    return consts[0]
+    
+    
+
+def redd(flux, line, sources, cal_red):
+    if cal_red is None:
+        cal_red = red_const(sources)
+    else:
+        rc = pn.RedCorr(law = 'CCM89', cHbeta = cal_red)
+        return flux*rc.getCorrHb(line*10**4)
 
 def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
     if axis is None:
@@ -340,7 +406,8 @@ def abundance_in_z(
     for i, (nam, ab) in enumerate(abund.items()):
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
-            ind, _ = indiv_stat(ab, sourz, **kwargs)
+            cal_red = red_const(sourz)
+            ind, _ = indiv_stat(ab, sourz, cal_red=cal_red, **kwargs)
             if ind[0]:
                 axs[i].plot(
                     ind[0],
@@ -351,7 +418,7 @@ def abundance_in_z(
                     alpha=0.15,
                     markersize=2,
                 )
-            v, m, st = boots_stat(ab, sourz, **kwargs)
+            v, m, st = boots_stat(ab, sourz,cal_red=cal_red, **kwargs)
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
@@ -403,7 +470,8 @@ def ratios_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, **kwargs):
         yrang = [[], []]
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
-            ind, sta = indiv_stat(ab, sourz, calib=False, **kwargs)
+            cal_red=red_const(sourz)
+            ind, sta = indiv_stat(ab, sourz, calib=False,cal_red=cal_red, **kwargs)
             if ind[0]:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(sta[0])
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(sta[0])
@@ -427,7 +495,7 @@ def ratios_in_z(sources, zrangs, abund=Oxygen, save=None, title=None, **kwargs):
                 )
                 yrang[0].append(np.nanmin(sta[0] - sta[1][0]))
                 yrang[1].append(np.nanmax(sta[0] + sta[1][1]))
-            v, m, st = boots_stat(ab, sourz, calib=False, **kwargs)
+            v, m, st = boots_stat(ab, sourz, calib=False,cal_red=cal_red, **kwargs)
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
@@ -470,6 +538,7 @@ if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_z.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
+    '''
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
@@ -486,6 +555,7 @@ if __name__ == "__main__":
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal.png",
     )
+    '''
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
