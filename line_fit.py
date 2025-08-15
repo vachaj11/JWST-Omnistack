@@ -112,7 +112,7 @@ def get_closest(spectrum, line):
     return flux[ind]
 
 
-def line_range(lines, grat="", dwidth = 8):
+def line_range(lines, grat="", dwidth=8):
     match grat:
         case "prism":
             R = 100
@@ -127,8 +127,8 @@ def line_range(lines, grat="", dwidth = 8):
     return rang, R
 
 
-def fit_lines(spectrum, lines, delta=None, grat="", dwidth = 8):
-    rang, R = line_range(lines, grat=grat, dwidth = dwidth)
+def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8):
+    rang, R = line_range(lines, grat=grat, dwidth=dwidth)
     spect = cut_range(spectrum, rang)
     models = []
     for line in lines:

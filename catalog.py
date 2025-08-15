@@ -87,28 +87,31 @@ def rm_bad(sources, ppxf=False):
             sourn.append(source)
     return sourn
 
+
 quasars = [
-		['gdn-fujimoto-v', '4762_33609.spec.fits'],
-		['gdn-fujimoto-v', '4762_37393.spec.fits'],
-		['j0226-wang-v', '3325_6699.spec.fits'],
-		['j0910-wang-v', '2028_12910.spec.fits'],
-		['jades-gdn2-v', '1181_954.spec.fits'],
-		['rubies-egs61-v', '4233_55604.spec.fits'],
-		['rubies-egs63-v','4233_42803.spec.fits'],
-		['rubies-egs63-v', ' 4233_49140.spec.fits'],
+    ["gdn-fujimoto-v", "4762_33609.spec.fits"],
+    ["gdn-fujimoto-v", "4762_37393.spec.fits"],
+    ["j0226-wang-v", "3325_6699.spec.fits"],
+    ["j0910-wang-v", "2028_12910.spec.fits"],
+    ["jades-gdn2-v", "1181_954.spec.fits"],
+    ["rubies-egs61-v", "4233_55604.spec.fits"],
+    ["rubies-egs63-v", "4233_42803.spec.fits"],
+    ["rubies-egs63-v", " 4233_49140.spec.fits"],
 ]
+
 
 def rm_quasars(sources, quasars=quasars):
     sourn = []
     for source in sources:
-        fn = source['file']
+        fn = source["file"]
         link = False
         for nam in quasars:
             if fn.startswith(nam[0]) and fn.endswith(nam[1]):
-                link=True
+                link = True
         if not link:
             sourn.append(source)
     return sourn
+
 
 def check_zrange(source, rang, z_shift=True):
     if z_shift:
@@ -162,3 +165,18 @@ def value_bins(sources, value, **kwargs):
     for i in range(len(bins) - 1):
         sbins.append(value_range(sources, value, (bins[i], bins[i + 1])))
     return hist, bins, sbins
+
+
+def inbins(sources, value, nbin=10):
+    sours = []
+    for s in sources:
+        if value in s.keys() and s[value] is not None:
+            sours.append((s, s[value]))
+    sours.sort(key=lambda x: x[1])
+    sbinned = []
+    size = int(-((-len(sours) / nbin) // 1))
+    for i in range(nbin):
+        imin = i * size
+        imax = (i + 1) * size
+        sbinned.append(list(zip(*sours[imin:imax]))[0])
+    return sbinned
