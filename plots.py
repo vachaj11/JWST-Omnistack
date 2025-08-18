@@ -96,25 +96,27 @@ def plot_values(sources, valx, valy, axis=None, **kwargs):
     fig.set_layout_engine(layout="tight")
 
 
-def plot_fit(spectra, sources, fit, axis=None, text=True, save=None):
+def plot_fit(spectra, fit, sources=None, axis=None, text=True, save=None, plot=True):
     if axis is None:
         fig, axs = plt.subplots()
     else:
         fig = plt.gcf()
         axs = axis
-    spectras_plot([spectra], axis=axs, label=f"({len(sources)})", norm=False)
+    label = f"({len(sources)})" if sources is not None else ""
+    spectras_plot([spectra], axis=axs, label=label, norm=False)
     x = np.linspace(min(spectra[0]), max(spectra[0]), 200)
     axs.plot(x, fit(x), ls=":", c="gray")
     if text:
         plot_fit_text(fit, axis=axs)
-    axs.legend()
+    if label:
+        axs.legend()
     axs.axhline(y=0, c="gray", ls=":")
     fig.set_layout_engine(layout="tight")
     if save is not None:
         fig.savefig(save)
-    else:
+    elif plot:
         plt.show()
-    plt.close(fig)
+        plt.close(fig)
 
 
 def plot_fit_text(fit, axis=None):

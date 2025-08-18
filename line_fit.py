@@ -3,6 +3,8 @@ import numpy as np
 from astropy.modeling import Fittable1DModel, Parameter
 from astropy.modeling.fitting import TRFLSQFitter
 
+import line_man as lm
+
 
 class Offset(Fittable1DModel):
     yoff = Parameter()
@@ -21,6 +23,7 @@ class Gaussian1D(Fittable1DModel):
     amplitude = Parameter()
     mean = Parameter()
     stddev = Parameter()
+    stddev.min = 0.0
 
     @staticmethod
     def evaluate(x, amplitude, mean, stddev):
@@ -57,6 +60,7 @@ class Gaussian1Dof(Fittable1DModel):
     mean = Parameter()
     stddev = Parameter()
     yoff = Parameter()
+    stddev.min = 0.0
 
     @staticmethod
     def evaluate(x, amplitude, mean, stddev, yoff):
@@ -127,7 +131,7 @@ def line_range(lines, grat="", dwidth=8):
     return rang, R
 
 
-def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8):
+def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mline=None):
     rang, R = line_range(lines, grat=grat, dwidth=dwidth)
     spect = cut_range(spectrum, rang)
     models = []
@@ -136,6 +140,7 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8):
         amplitude = get_closest(spectrum, line)
         if amplitude is not None:
             models.append(Gaussian1D(mean=line, stddev=std, amplitude=amplitude))
+    mline = mline if mline is not None else lines[0]
     if models:
         msum = Offset(yoff=0.0)
         for m in models:
@@ -143,7 +148,10 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8):
         fitter = TRFLSQFitter()
         fit = fitter(msum, spect[0], spect[1])
         x = np.linspace(rang[0], rang[1], 200)
-        return fit, x, spect
+        if not manual:
+            return fit, x, spect
+        else:
+            return lm.manfit(fit, x, spect, mline, info=False)
     else:
         return None
 

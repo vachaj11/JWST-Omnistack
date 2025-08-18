@@ -475,6 +475,7 @@ def fit_lines(
     plot=False,
     cal_red=None,
     dwidth=8,
+    manual=False,
     **kwargs,
 ):
     if cal_red is None:
@@ -487,13 +488,15 @@ def fit_lines(
     if len(sourn):
         stack = spectr.combine_spectra(spectra)
         stacc = spectr.stack(stack, sourn, typ=typ)
-        fit, x, stacc = lf.fit_lines(stacc, lines, grat=grat, dwidth=dwidth)
+        fit, x, stacc = lf.fit_lines(
+            stacc, lines, grat=grat, dwidth=dwidth, manual=manual, mline=mline
+        )
         if type(mline) == list:
             flux = sum([redd(lf.flux_at(fit, l), l, sources, cal_red) for l in mline])
         else:
             flux = redd(lf.flux_at(fit, mline), mline, sources, cal_red)
-        if plot:
-            plots.plot_fit(stacc, sourn, fit, **kwargs)
+        if plot and not manual:
+            plots.plot_fit(stacc, fit, sources=sourn, **kwargs)
         return flux
     else:
         return np.nan
@@ -576,15 +579,15 @@ def bprocess(funct, srs, ind, vis, **kwargs):
         vis.append(vi)
 
 
-def boots_stat(funct, sources, ite=200, calib=True, **kwargs):
+def boots_stat(funct, sources, ite=100, calib=True, manual=True, **kwargs):
     ind = 1 if calib else 0
-    vs = np.flip(funct(sources, **kwargs)[ind])
+    vs = np.flip(funct(sources, manual=manual, **kwargs)[ind])
     vals = np.full((ite, len(vs)), np.nan)
     manag = Manager()
     vis = manag.list()
     i = 0
     nos = 5
-    proc = cpu_count()
+    proc = int(cpu_count() * 1.5)
     active = []
     while i < ite or len(active) > 0:
         pr_no = -((i - ite) // nos)
@@ -625,7 +628,7 @@ def indiv_stat(funct, sources, no=None, calib=True, **kwargs):
     i = 0
     nos = 50
     it = manag.Value(int, 0)
-    proc = cpu_count()
+    proc = cpu_count() * 2
     active = []
     while it.value < no and i < len(srcs) or len(active) > 0:
         pr_no = -((-min(len(srcs) - i, no - it.value)) // nos)
@@ -664,6 +667,9 @@ def indiv_stat(funct, sources, no=None, calib=True, **kwargs):
     )
 
 
+flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") else [l]
+
+
 def abundance_in_z(
     sources, zrangs, abund=Oxygen, save=None, title=None, yax=None, indiv=True, **kwargs
 ):
@@ -671,7 +677,7 @@ def abundance_in_z(
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
-    yrang = [[], []]
+    yrang = []
     if n == 1:
         axs = [axes]
     else:
@@ -700,8 +706,7 @@ def abundance_in_z(
                 axs[i].plot(zmean, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
                 axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
-                yrang[0].append(np.nanmin(m - st[0]))
-                yrang[1].append(np.nanmax(m + st[1]))
+                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1]), v]
             valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
     for i in range(len(axs) - len(abund)):
@@ -711,8 +716,8 @@ def abundance_in_z(
     ranz = maxz - minz
     minz = minz - ranz * 0.1
     maxz = maxz + ranz * 0.1
-    yrang = np.nan_to_num(yrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-    ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+    yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+    ylims = (np.nanmin(yrang), np.nanmax(yrang))
     rana = ylims[1] - ylims[0]
     mina = ylims[0] - rana * 0.1
     maxa = ylims[1] + rana * 0.25
@@ -744,7 +749,7 @@ def ratios_in_z(
         axs = axes.flatten()
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
-        yrang = [[], []]
+        yrang = []
         for zrang in zrangs:
             sourz = [s for s in sources if zrang[0] < s["z"] < zrang[1]]
             cal_red = red_const(sourz)
@@ -771,8 +776,10 @@ def ratios_in_z(
                         c="gainsboro",
                         capsize=5,
                     )
-                    yrang[0].append(np.nanmin(sta[0] - sta[1][0]))
-                    yrang[1].append(np.nanmax(sta[0] + sta[1][1]))
+                    yrang += [
+                        np.nanmin(sta[0] - sta[1][0]),
+                        np.nanmax(sta[0] + sta[1][1]),
+                    ]
             v, m, st = boots_stat(ab, sourz, calib=False, cal_red=None, **kwargs)
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
@@ -782,11 +789,10 @@ def ratios_in_z(
                 axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
                 axs[i].set_ylabel(Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
-                yrang[0].append(np.nanmin(m - st[0]))
-                yrang[1].append(np.nanmax(m + st[1]))
+                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1]), v]
             valss = np.concatenate([valss, v])
-        yrang = np.nan_to_num(yrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-        ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+        yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+        ylims = (np.nanmin(yrang), np.nanmax(yrang))
         axs[i].set_title(nam, y=0.85)
         axs[i].set_ylim(
             ylims[0] - 0.1 * (ylims[1] - ylims[0]),
@@ -828,7 +834,7 @@ def abundance_calib(
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0)
     axes = gs.subplots(sharex="col")
-    xrang = [[], []]
+    xrang = []
     if n == 1:
         axs = [axes]
     else:
@@ -840,7 +846,7 @@ def abundance_calib(
         xbins.append((sb, boots_stat(xmetr, sb, **kwargs)))
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
-        yrang = [[], []]
+        yrang = []
         for sb in xbins:
             sourz = sb[0]
             cal_red = red_const(sourz)
@@ -865,13 +871,11 @@ def abundance_calib(
                 axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=5)
                 axs[i].set_ylabel(Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
-                yrang[0].append(np.nanmin(m - st[0]))
-                yrang[1].append(np.nanmax(m + st[1]))
-                xrang[0].append(zm[0] - zerr[0][0])
-                xrang[1].append(zm[0] + zerr[1][0])
+                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
+                xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
             valss = np.concatenate([valss, v])
-        yrang = np.nan_to_num(yrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-        ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+        yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+        ylims = (np.nanmin(yrang), np.nanmax(yrang))
         axs[i].set_title(nam, y=0.85)
         axs[i].set_ylim(
             ylims[0] - 0.1 * (ylims[1] - ylims[0]),
@@ -880,8 +884,8 @@ def abundance_calib(
     for i in range(len(axs) - len(abund)):
         axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
 
-    xrang = np.nan_to_num(xrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-    xlims = (np.nanmin(xrang[0]), np.nanmax(xrang[1]))
+    xrang = np.nan_to_num(flatten(xrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+    xlims = (np.nanmin(xrang), np.nanmax(xrang))
     ranx = xlims[1] - xlims[0]
     minx = xlims[0] - ranx * 0.1
     maxx = xlims[1] + ranx * 0.1
@@ -917,8 +921,8 @@ def abundance_compar(
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
-    yrang = [[], []]
-    xrang = [[], []]
+    yrang = []
+    xrang = []
     if n == 1:
         axs = [axes]
     else:
@@ -946,28 +950,32 @@ def abundance_compar(
                         markersize=2,
                     )
             v, m, st = boots_stat(ab, sourz, cal_red=None, **kwargs)
+            """
+            print('\n=====')
+            print(sb[1][0], sb[1][1])
+            print((v, m))
+            print('=====')
+            """
             if v.size:
                 zv = [sb[1][0][0]] * len(v)
                 zm = [sb[1][1][0]] * len(v)
                 zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
                 axs[i].plot(zv, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=5)
-                yrang[0].append(np.nanmin(m - st[0]))
-                yrang[1].append(np.nanmax(m + st[1]))
-                xrang[0].append(zm[0] - zerr[0][0])
-                xrang[1].append(zm[0] + zerr[1][0])
+                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
+                xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
             valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
     for i in range(len(axs) - len(abund)):
         axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
 
-    yrang = np.nan_to_num(yrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-    ylims = (np.nanmin(yrang[0]), np.nanmax(yrang[1]))
+    yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+    ylims = (np.nanmin(yrang), np.nanmax(yrang))
     rana = ylims[1] - ylims[0]
     mina = ylims[0] - rana * 0.1
     maxa = ylims[1] + rana * 0.25
-    xrang = np.nan_to_num(xrang, nan=np.nan, posinf=np.nan, neginf=np.nan)
-    xlims = (np.nanmin(xrang[0]), np.nanmax(xrang[1]))
+    xrang = np.nan_to_num(flatten(xrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+    xlims = (np.nanmin(xrang), np.nanmax(xrang))
     ranx = xlims[1] - xlims[0]
     minx = xlims[0] - ranx * 0.1
     maxx = xlims[1] + ranx * 0.1
@@ -976,6 +984,12 @@ def abundance_compar(
         axs[i * n].set_ylim(mina, maxa)
         axs[-i - 1].set_xlabel(xax)
         axs[i * n].set_ylabel(yax)
+    maxc = max(maxx, maxa)
+    minc = min(minx, mina)
+    for ax in axs:
+        ax.axline((0, 0), (1, 1), c="gray", ls="--", alpha=0.7)
+        ax.set_xlim(minc, maxc)
+        ax.set_ylim(minc, maxc)
     fig.set_size_inches((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5)
     fig.suptitle(title)
     fig.set_layout_engine(layout="tight")
@@ -999,8 +1013,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal.png",
     )
-    """
-    """
+    
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
@@ -1017,8 +1030,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal.png",
     )
-    """
-    """
+
     ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
@@ -1026,8 +1038,6 @@ if __name__ == "__main__":
         title="Line fluxes for sulphur abundance calibration\n in medium resolution",
         save="../Plots/abund/sulphur_flu.png",
     )
-    """
-    """
     ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
@@ -1053,12 +1063,28 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
-    """
+
     abundance_compar(
-        ffm, xmetr = N_Dir, abund=Nitrogen, binval = 'z', bins=10, save='../Plots/abund/nitrogen_com.png', title="Nitrogen abundance in medium resolution\n via direct method and strong lines", yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$")
+        ffm,
+        xmetr=N_Dir,
+        abund=Nitrogen,
+        binval="z",
+        bins=10,
+        save="../Plots/abund/nitrogen_com.png",
+        title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+    )
     abundance_compar(
-        ffm, xmetr = O_Dir, abund=Oxygen, binval = 'z', bins=10, save='../Plots/abund/oxygen_com.png', title="Oxygen abundance in medium resolution\n via direct method and strong lines", yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$")
-    """
+        ffm,
+        xmetr=O_Dir,
+        abund=Oxygen,
+        binval="z",
+        bins=10,
+        save="../Plots/abund/oxygen_com.png",
+        title="Oxygen abundance in medium resolution\n via direct method and strong lines",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+    )
+
     abundance_calib(
         ffm,
         xmetr=S_Dir,
@@ -1067,13 +1093,29 @@ if __name__ == "__main__":
         bins=10,
         save="../Plots/abund/sulphur_clf.png",
         title="Sulphur abundance in medium resolution\n via compared to broad line calibrations",
-        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        xax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
-    """
+
     abundance_calib(
-        ffm, xmetr = N_Dir, abund=Nitrogen, binval = 'z', bins=10, save='../Plots/abund/nitrogen_clf.png', title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations", yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$")
+        ffm,
+        xmetr=N_Dir,
+        abund=Nitrogen,
+        binval="z",
+        bins=10,
+        save="../Plots/abund/nitrogen_clf.png",
+        title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations",
+        xax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+    )
     abundance_calib(
-        ffm, xmetr = O_Dir, abund=Oxygen, binval = 'z', bins=10, save='../Plots/abund/oxygen_clf.png', title="Oxygen abundance in medium resolution\n via compared to broad line calibrations", yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$")
+        ffm,
+        xmetr=O_Dir,
+        abund=Oxygen,
+        binval="z",
+        bins=10,
+        save="../Plots/abund/oxygen_clf.png",
+        title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
+        xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+    )
     """
     abundance_in_z(
         ffm,
@@ -1084,7 +1126,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_dir.png",
         indiv=False,
     )
-    """
+    
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
