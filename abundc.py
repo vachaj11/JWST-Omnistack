@@ -641,7 +641,7 @@ def indiv_stat(funct, sources, val="z", no=None, calib=True, **kwargs):
         pr_no = -((-min(len(srcs) - i, no - it.value)) // nos)
         if proc > len(active) and (it.value < no and i < len(srcs)):
             for l in range(min(pr_no, proc - len(active))):
-                print(f"\r\033[KCaclulating {i} out of {no} points.", end="")
+                print(f"\r\033[KCalculating {i} out of {no} points.", end="")
                 sr = srcs[i : i + nos]
                 args = (funct, sr, ind, va, zs, vs, it, val)
                 t = Process(target=iprocess, args=args, kwargs=kwargs)
