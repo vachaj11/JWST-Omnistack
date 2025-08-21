@@ -1130,6 +1130,8 @@ def abundance_in_val_z(
     valrangs,
     val="phot_mass",
     val_name=None,
+    zval = 'z',
+    zval_name=None,
     abund=Oxygen,
     save=None,
     title=None,
@@ -1138,6 +1140,8 @@ def abundance_in_val_z(
     manual=False,
     **kwargs,
 ):
+    val_name = val_name if val_name is not None else val
+    zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
 
     rat = 15 * n
@@ -1155,19 +1159,18 @@ def abundance_in_val_z(
     cmap = mpl.cm.ScalarMappable(cmap="inferno")
     cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
     cbr = fig.colorbar(
-        cmap, location="right", label="Redshift $z$", cax=cbar_ax, aspect=25 * n, pad=0
+        cmap, location="right", label=zval_name, cax=cbar_ax, aspect=25 * n, pad=0
     )
 
     # axs, cbar_ax = constr_ax(fig, n)
     yrang = []
-    val_name = val_name if val_name is not None else val
     for i, (nam, ab) in enumerate(abund.items()):
         for zrang in zrangs:
             valss = []
             zsour = [
                 s
                 for s in sources
-                if s.get("z") is not None and zrang[0] < s["z"] < zrang[1]
+                if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
             ]
             cl = cmap.to_rgba(np.mean(zrang))
             for vrang in valrangs:
@@ -1542,14 +1545,15 @@ if __name__ == "__main__":
 
     abundance_in_val_z(
         ffm,
-        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
-        [[i, i + 1] for i in range(6, 12)],
+        [[0, 1.5]],# [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 8)],
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=Sulphur,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_cal_z_mass.png",
+        save="../Plots/abund/sulphur_cal_k_mass.png",
+        zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
         ffm,
@@ -1561,6 +1565,7 @@ if __name__ == "__main__":
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_z_mass.png",
+        zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
         ffm,
@@ -1572,5 +1577,6 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal_z_mass.png",
+        zval_name = "Redshift $z$",
     )
     """
