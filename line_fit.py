@@ -134,15 +134,21 @@ def line_range(lines, grat="", dwidth=8):
 def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mline=None):
     rang, R = line_range(lines, grat=grat, dwidth=dwidth)
     spect = cut_range(spectrum, rang)
+    yav = np.nanmedian(spect[1])
     models = []
     for line in lines:
         std = line / R / 2.35
-        amplitude = get_closest(spectrum, line)
+        amplitude = abs(get_closest(spectrum, line) - yav)
         if amplitude is not None:
             models.append(Gaussian1D(mean=line, stddev=std, amplitude=amplitude))
+            models[-1].stddev.max = std * 2
+            models[-1].stddev.min = std / 2
+            models[-1].mean.min = rang[0]
+            models[-1].mean.max = rang[1]
+            models[-1].amplitude.min = 0
     mline = mline if mline is not None else lines[0]
     if models:
-        msum = Offset(yoff=0.0)
+        msum = Offset(yoff=yav)
         for m in models:
             msum += m
         fitter = TRFLSQFitter()
@@ -168,10 +174,47 @@ def fit_infos(fit):
     return lines
 
 
-def flux_at(fit, line, std=1):
+def flux_at(fit, line, grat="g140m", std=1):
+    _, R = line_range([line], grat=grat)
+    lstd = line / R / 2.35
     lines = fit_infos(fit)
-    flux = np.float64(0.0)
+    overlap = dict()
     for l in lines:
-        if l["mean"] - std * l["stddev"] < line < l["mean"] + std * l["stddev"]:
-            flux += l["flux"]
-    return flux
+        if (
+            l["mean"] - std * l["stddev"] < line + lstd * std
+            and l["mean"] + std * l["stddev"] > line - lstd * std
+        ):
+            overlap[l["mean"]] = l["flux"]
+    if overlap:
+        return min(overlap.items(), key=lambda x: abs(x[0] - line))[1]
+    else:
+        return 0.0
+
+
+def flux_extract(fit, mline, grat="g140m", red=lambda f, l: f):
+    fluxes = dict()
+    outd = True
+    if type(mline) is not dict:
+        mline = {"_": mline}
+        outd = False
+    for l, v in mline.items():
+        if hasattr(v, "__iter__"):
+            fluxes[l] = sum([red(flux_at(fit, i), i) for i in v])
+        else:
+            fluxes[l] = red(flux_at(fit, v), v)
+    if outd:
+        return fluxes
+    else:
+        return next(f for f in fluxes.values())
+
+
+def flux_nan(mline):
+    outd = True
+    if type(mline) is not dict:
+        mline = {"_": mline}
+        outd = False
+    fluxes = {l: np.nan for l in mline}
+    if outd:
+        return fluxes
+    else:
+        return next(f for f in fluxes.values())

@@ -239,7 +239,7 @@ if __name__ == "__main__":
         "smoo": "../Data/Subtracted_b/",
     }
     stack_type = "median"
-
+    '''
     for i in range(2):
         plot_stacks(
             afp,
@@ -317,6 +317,7 @@ if __name__ == "__main__":
     """
     plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.png')
     """
+    
     plot_histograms(
         afp,
         lines,
@@ -342,6 +343,7 @@ if __name__ == "__main__":
         narrow=5,
     )
     """
+    
     plot_lines(
         afp,
         lines,
@@ -367,3 +369,4 @@ if __name__ == "__main__":
         ratios = ratios,
     )
     """
+    '''

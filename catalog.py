@@ -63,17 +63,16 @@ def unique(sources):
     return sourn
 
 
-def rm_bad(sources, ppxf=False):
+def rm_bad(sources, ppxf=False, agn=False):
     sourn = []
     for source in sources:
         sn = source["sn50"]
         gr = source["grade"]
         cm = str(source["comment"])
         ha = source["Ha"]
-        if "cont_diff" in source.keys():
-            cont = source["cont_diff"]
-        else:
-            cont = None
+        cont = source.get("cont_diff")
+        agn = source.get("AGN_cand")
+        n2 = source.get("N2")
         if (
             sn is not None
             and sn > 0
@@ -83,9 +82,11 @@ def rm_bad(sources, ppxf=False):
             and "Star" not in cm
             # and (ha is None or ha < 80)
             and (cont is None or cont < 10 or not ppxf)
+            # and (agn is None or agn < 3)
+            and (n2 is None or n2 < 0 or agn)
         ):
             sourn.append(source)
-    return sourn
+    return rm_quasars(sourn) if not agn else sourn
 
 
 quasars = [
