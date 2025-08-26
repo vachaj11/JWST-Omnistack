@@ -181,3 +181,10 @@ def inbins(sources, value, nbin=10):
         imax = (i + 1) * size
         sbinned.append(list(zip(*sours[imin:imax]))[0])
     return sbinned
+
+
+def getffm():
+    f = fetch_json("../catalog_z.json")["sources"]
+    ff = rm_bad(f)
+    ffm = [s for s in ff if s["grat"][0] == "g"]
+    return ffm
