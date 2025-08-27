@@ -196,7 +196,7 @@ def PART(M, fluxes, c_ite=25, lam=0.05):
         gchang = []
         for u in range(noi):
             i = np.random.randint(0, M.shape[0])
-            guess += lam * (vals[i] - np.dot(M[i], guess)) * M[i] / M[i].sum() ** 2
+            guess += lam * (vals[i] - M[i].dot(guess)) * M[i] / M[i].sum() ** 2
             guess[guess < 0] = 0
             if u % 128 == 0:
                 print(f"\r\033[KFinished {u} out of {noi}.", end="")
@@ -235,7 +235,7 @@ def MART(M, fluxes, c_ite=25, lam=0.01):
         gchang = []
         for u in range(noi):
             i = np.random.randint(0, M.shape[0])
-            base = vals[i] / np.dot(M[i], guess)
+            base = vals[i] / M[i].dot(guess)
             al = lam * M[i]
             guess *= np.exp(al * np.log(base))
             if u % 128 == 0:
