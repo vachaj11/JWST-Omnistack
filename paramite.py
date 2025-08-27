@@ -306,6 +306,7 @@ def OSEM(M, fluxes, c_ite=0.1, N=16):
     M = M if type(M) is csc_array else csc_array(M)
     gval = dict()
     inds = [[] for i in range(N)]
+    noi = int(M.shape[0] * c_ite)
     for i in range(M.shape[0]):
         inds[i % len(inds)].append(i)
     for nam, vals in fluxes.items():
@@ -319,13 +320,13 @@ def OSEM(M, fluxes, c_ite=0.1, N=16):
         guess = np.ones(M.shape[1]) * init
         guess1 = guess.copy()
         gchang = []
-        for u in range(int(M.shape[0] * c_ite)):
+        for u in range(noi):
             for i in range(N):
                 base = vss[i] / (Ms[i] @ guess)
                 co = Ms[i].T @ base
                 coe = co / Ms[i].sum(axis=0)
                 guess *= coe
-            print(f"\r\033[KFinished {u} out of {int(M.shape[0]*c_ite)}.", end="")
+            print(f"\r\033[KFinished {u} out of {noi}.", end="")
             if u % int(noi / 100) == 0:
                 guess0 = guess1
                 guess1 = guess.copy()
