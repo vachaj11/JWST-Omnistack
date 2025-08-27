@@ -247,7 +247,7 @@ if __name__ == "__main__":
             ite=i,
             zrang=[[7, 20]],
             fit=True,
-            save=f"../Plots/linesC/spectr_prism_{i}.png",
+            save=f"../Plots/linesC/spectr_prism_{i}.pdf",
             title=f"Stack of lines in prism ({i} of 1)",
             typ=stack_type,
         )
@@ -257,7 +257,7 @@ if __name__ == "__main__":
             ite=i,
             zrang=[[7, 20]],
             fit=True,
-            save=f"../Plots/linesC/spectr_medium_{i}.png",
+            save=f"../Plots/linesC/spectr_medium_{i}.pdf",
             narrow=3,
             title=f"Stack of lines in medium resolution ({i} of 1)",
             typ=stack_type,
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             ite=i,
             zrang=[[7, 20]],
             fit = True,
-            save=f"../Plots/linesC/spectr_high_{i}.png",
+            save=f"../Plots/linesC/spectr_high_{i}.pdf",
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 1)",
             typ=stack_type,
@@ -281,7 +281,7 @@ if __name__ == "__main__":
             afp,
             lines,
             ite=i,
-            save=f"../Plots/lines4/spectr_prism_{i}.png",
+            save=f"../Plots/lines4/spectr_prism_{i}.pdf",
             title=f"Stack of lines in prism ({i} of 2)",
             typ=stack_type,
         )
@@ -289,7 +289,7 @@ if __name__ == "__main__":
             afm,
             lines,
             ite=i,
-            save=f"../Plots/lines4/spectr_medium_{i}.png",
+            save=f"../Plots/lines4/spectr_medium_{i}.pdf",
             narrow=3,
             title=f"Stack of lines in medium resolution ({i} of 2)",
             typ=stack_type,
@@ -299,7 +299,7 @@ if __name__ == "__main__":
             afh,
             lines,
             ite=i,
-            save=f"../Plots/lines4/spectr_high_{i}.png",
+            save=f"../Plots/lines4/spectr_high_{i}.pdf",
             narrow=5,
             title=f"Stack of lines in high resolution ({i} of 2)",
             typ=stack_type,
@@ -307,29 +307,29 @@ if __name__ == "__main__":
         """
 
     plot_mz(
-        afp, title="Mass vs Redshift for prism", save="../Plots/lines4/mz_prism.png"
+        afp, title="Mass vs Redshift for prism", save="../Plots/lines4/mz_prism.pdf"
     )
     plot_mz(
         afm,
         title="Mass vs Redshift for medium resolution",
-        save="../Plots/lines4/mz_medium.png",
+        save="../Plots/lines4/mz_medium.pdf",
     )
     """
-    plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.png')
+    plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.pdf')
     """
     
     plot_histograms(
         afp,
         lines,
         title="Coverage of lines in prism",
-        save="../Plots/lines4/hist_prism.png",
+        save="../Plots/lines4/hist_prism.pdf",
         ymax=3350,
     )
     plot_histograms(
         afm,
         lines,
         title="Coverage of lines in medium resolution",
-        save="../Plots/lines4/hist_medium.png",
+        save="../Plots/lines4/hist_medium.pdf",
         ymax=2300,
         narrow=3,
     )
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         afh,
         lines,
         title="Coverage of lines in high resolution",
-        save="../Plots/lines4/hist_high.png",
+        save="../Plots/lines4/hist_high.pdf",
         ymax=630,
         narrow=5,
     )
@@ -348,14 +348,14 @@ if __name__ == "__main__":
         afp,
         lines,
         title="Coverage of lines in prism",
-        save="../Plots/lines4/lines_prism.png",
+        save="../Plots/lines4/lines_prism.pdf",
         ratios=ratios,
     )
     plot_lines(
         afm,
         lines,
         title="Coverage of lines in medium resolution",
-        save="../Plots/lines4/lines_medium.png",
+        save="../Plots/lines4/lines_medium.pdf",
         narrow=3,
         ratios=ratios,
     )
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         afh,
         lines,
         title="Coverage of lines in high resolution",
-        save="../Plots/lines4/lines_high.png",
+        save="../Plots/lines4/lines_high.pdf",
         narrow=5,
         ratios = ratios,
     )

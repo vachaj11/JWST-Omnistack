@@ -24,7 +24,7 @@ class App(QWidget):
         super(App, self).__init__(parent)
 
         self.resize(700, 700)
-        self.title = "The Window Title"
+        self.title = f"Fitting {mline}"
         self.setWindowTitle(self.title)
         self.canv = PlotCanvas(fit, spectrum, mline, parent=self)
 

@@ -111,7 +111,7 @@ def plot_zstacks(
             )
             for i, rang in enumerate(rangs):
                 if fits is not None and rang[0] <= min(fits) and max(fits) <= rang[1]:
-                    fit, x = lf.fit_lines(stacked[i], fits, grat=sours[0]["grat"])
+                    fit, x, _ = lf.fit_lines(stacked[i], fits, grat=sours[0]["grat"])
                     axs.plot(x, fit(x), ls=":", c="gray")
     axs.legend()
     axs.axhline(y=0, c="gray", ls=":")

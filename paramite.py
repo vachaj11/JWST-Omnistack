@@ -106,7 +106,9 @@ def ded_params(sources, method, no=50, sbin=5, nwg=0.3, ite=None):
 def pro_fluxes(sources, lt, r_lis, vals, **kwargs):
     for i, s_inds in r_lis:
         srs = [sources[l] for l in s_inds]
-        val = ac.fit_lines(srs, lt[1], lt[0], dwidth=lt[2], typ="mean", **kwargs)
+        val = ac.fit_lines(
+            srs, lt[1], lt[0], dwidth=lt[2], typ="mean", cal_red=0.0, **kwargs
+        )
         vals[i] = val
 
 

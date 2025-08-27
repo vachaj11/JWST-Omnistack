@@ -198,7 +198,7 @@ def ratios_in_z(
                 axs[i].plot(zmean, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
                 axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
-                axs[i].set_ylabel(Names[nam], fontsize=11)
+                axs[i].set_ylabel(ac.Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1]), v]
             valss = np.concatenate([valss, v])
@@ -286,7 +286,7 @@ def abundance_calib(
                 zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
                 axs[i].plot(zv, v, ls="", marker="D", c="black")
                 axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=5)
-                axs[i].set_ylabel(Names[nam], fontsize=11)
+                axs[i].set_ylabel(ac.Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                 xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
@@ -582,7 +582,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_cal.png",
+        save="../Plots/abund/sulphur_cal.pdf",
     )
     abundance_in_z(
         ffm,
@@ -590,7 +590,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        save="../Plots/abund/nitrogen_cal.png",
+        save="../Plots/abund/nitrogen_cal.pdf",
     )
     abundance_in_z(
         ffm,
@@ -598,29 +598,29 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_cal.png",
+        save="../Plots/abund/oxygen_cal.pdf",
     )
-
+    
     ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Sulphur,
         title="Line fluxes for sulphur abundance calibration\n in medium resolution",
-        save="../Plots/abund/sulphur_flu.png",
+        save="../Plots/abund/sulphur_flu.pdf",
     )
     ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Nitrogen,
         title="Line fluxes for nitrogen abundance calibration\n in medium resolution",
-        save="../Plots/abund/nitrogen_flu.png",
+        save="../Plots/abund/nitrogen_flu.pdf",
     )
     ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Oxygen,
         title="Line fluxes for oxygen abundance calibration in medium resolution",
-        save="../Plots/abund/oxygen_flu.png",
+        save="../Plots/abund/oxygen_flu.pdf",
     )
 
     abundance_compar(
@@ -629,7 +629,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         binval="z",
         bins=10,
-        save="../Plots/abund/sulphur_com.png",
+        save="../Plots/abund/sulphur_com.pdf",
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
@@ -639,7 +639,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         binval="z",
         bins=10,
-        save="../Plots/abund/nitrogen_com.png",
+        save="../Plots/abund/nitrogen_com.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
     )
@@ -649,7 +649,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         binval="z",
         bins=10,
-        save="../Plots/abund/oxygen_com.png",
+        save="../Plots/abund/oxygen_com.pdf",
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
@@ -660,7 +660,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         binval="z",
         bins=10,
-        save="../Plots/abund/sulphur_clf.png",
+        save="../Plots/abund/sulphur_clf.pdf",
         title="Sulphur abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
@@ -670,7 +670,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         binval="z",
         bins=10,
-        save="../Plots/abund/nitrogen_clf.png",
+        save="../Plots/abund/nitrogen_clf.pdf",
         title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
     )
@@ -680,19 +680,19 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         binval="z",
         bins=10,
-        save="../Plots/abund/oxygen_clf.png",
+        save="../Plots/abund/oxygen_clf.pdf",
         title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
-
+    
     abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund={"S Direct": ac.S_Dir},
         title="Sulphur abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_dir.png",
-        manual=True,
+        save="../Plots/abund/sulphur_dir.pdf",
+        #manual=True,
         indiv=False,
     )
     abundance_in_z(
@@ -701,8 +701,8 @@ if __name__ == "__main__":
         abund={"N Direct": ac.N_Dir},
         title="Nitrogen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{N}/\\mathrm{H})$",
-        save="../Plots/abund/nitrogen_dir.png",
-        manual=True,
+        save="../Plots/abund/nitrogen_dir.pdf",
+        #manual=True,
         indiv=False,
     )
     abundance_in_z(
@@ -711,8 +711,8 @@ if __name__ == "__main__":
         abund={"O Direct": ac.O_Dir},
         title="Oxygen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_dir.png",
-        manual=True,
+        save="../Plots/abund/oxygen_dir.pdf",
+        #manual=True,
         indiv=False,
     )
 
@@ -724,7 +724,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_cal_mass.png",
+        save="../Plots/abund/sulphur_cal_mass.pdf",
     )
     abundance_in_z(
         ffm,
@@ -734,7 +734,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        save="../Plots/abund/nitrogen_cal_mass.png",
+        save="../Plots/abund/nitrogen_cal_mass.pdf",
     )
     abundance_in_z(
         ffm,
@@ -744,7 +744,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_cal_mass.png",
+        save="../Plots/abund/oxygen_cal_mass.pdf",
     )
 
     ratios_in_z(
@@ -754,7 +754,7 @@ if __name__ == "__main__":
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Sulphur,
         title="Line fluxes for sulphur abundance calibration\n in medium resolution",
-        save="../Plots/abund/sulphur_flu_mass.png",
+        save="../Plots/abund/sulphur_flu_mass.pdf",
     )
     ratios_in_z(
         ffm,
@@ -763,7 +763,7 @@ if __name__ == "__main__":
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Nitrogen,
         title="Line fluxes for nitrogen abundance calibration\n in medium resolution",
-        save="../Plots/abund/nitrogen_flu_mass.png",
+        save="../Plots/abund/nitrogen_flu_mass.pdf",
     )
     ratios_in_z(
         ffm,
@@ -772,7 +772,7 @@ if __name__ == "__main__":
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Oxygen,
         title="Line fluxes for oxygen abundance calibration in medium resolution",
-        save="../Plots/abund/oxygen_flu_mass.png",
+        save="../Plots/abund/oxygen_flu_mass.pdf",
     )
 
     abundance_compar(
@@ -781,7 +781,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/sulphur_com_mass.png",
+        save="../Plots/abund/sulphur_com_mass.pdf",
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
@@ -791,7 +791,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/nitrogen_com_mass.png",
+        save="../Plots/abund/nitrogen_com_mass.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
     )
@@ -801,7 +801,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/oxygen_com_mass.png",
+        save="../Plots/abund/oxygen_com_mass.pdf",
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
@@ -812,7 +812,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/sulphur_clf_mass.png",
+        save="../Plots/abund/sulphur_clf_mass.pdf",
         title="Sulphur abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
     )
@@ -822,7 +822,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/nitrogen_clf_mass.png",
+        save="../Plots/abund/nitrogen_clf_mass.pdf",
         title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
     )
@@ -832,7 +832,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         binval="phot_mass",
         bins=10,
-        save="../Plots/abund/oxygen_clf_mass.png",
+        save="../Plots/abund/oxygen_clf_mass.pdf",
         title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
@@ -845,7 +845,7 @@ if __name__ == "__main__":
         abund={"S Direct": ac.S_Dir},
         title="Sulphur abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_dir_mass.png",
+        save="../Plots/abund/sulphur_dir_mass.pdf",
         manual=True,
         indiv=False,
     )
@@ -857,7 +857,7 @@ if __name__ == "__main__":
         abund={"N Direct": ac.N_Dir},
         title="Nitrogen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{N}/\\mathrm{H})$",
-        save="../Plots/abund/nitrogen_dir_mass.png",
+        save="../Plots/abund/nitrogen_dir_mass.pdf",
         manual=True,
         indiv=False,
     )
@@ -869,7 +869,7 @@ if __name__ == "__main__":
         abund={"O Direct": ac.O_Dir},
         title="Oxygen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_dir_mass.png",
+        save="../Plots/abund/oxygen_dir_mass.pdf",
         manual=True,
         indiv=False,
     )
@@ -883,7 +883,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_cal_z_mass.png",
+        save="../Plots/abund/sulphur_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
@@ -895,7 +895,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        save="../Plots/abund/nitrogen_cal_z_mass.png",
+        save="../Plots/abund/nitrogen_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
@@ -907,7 +907,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_cal_z_mass.png",
+        save="../Plots/abund/oxygen_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     
@@ -920,7 +920,7 @@ if __name__ == "__main__":
         abund={"S Direct": ac.S_Dir},
         title="Sulphur abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_dir_z_mass.png",
+        save="../Plots/abund/sulphur_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
@@ -932,7 +932,7 @@ if __name__ == "__main__":
         abund={"N Direct": ac.N_Dir},
         title="Nitrogen abundance in medium resolution\n via direct method",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        save="../Plots/abund/nitrogen_dir_z_mass.png",
+        save="../Plots/abund/nitrogen_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     abundance_in_val_z(
@@ -944,7 +944,7 @@ if __name__ == "__main__":
         abund={"O Direct": ac.O_Dir},
         title="Oxygen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_dir_z_mass.png",
+        save="../Plots/abund/oxygen_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
     )
     """
