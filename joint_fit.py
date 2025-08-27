@@ -910,4 +910,41 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_cal_z_mass.png",
         zval_name = "Redshift $z$",
     )
+    
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"S Direct": ac.S_Dir},
+        title="Sulphur abundance in medium resolution\n via direct method",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        save="../Plots/abund/sulphur_dir_z_mass.png",
+        zval_name = "Redshift $z$",
+    )
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"N Direct": ac.N_Dir},
+        title="Nitrogen abundance in medium resolution\n via direct method",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        save="../Plots/abund/nitrogen_dir_z_mass.png",
+        zval_name = "Redshift $z$",
+    )
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"O Direct": ac.O_Dir},
+        title="Oxygen abundance in medium resolution\n via direct method",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        save="../Plots/abund/oxygen_dir_z_mass.png",
+        zval_name = "Redshift $z$",
+    )
     """
