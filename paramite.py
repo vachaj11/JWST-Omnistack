@@ -236,7 +236,7 @@ def MART(M, fluxes, c_ite=25, lam=0.01):
         for u in range(noi):
             i = np.random.randint(0, M.shape[0])
             base = vals[i] / M[i].dot(guess)
-            al = lam * M[i]
+            al = lam * M[i].toarray()
             guess *= np.exp(al * np.log(base))
             if u % 128 == 0:
                 print(f"\r\033[KFinished {u} out of {noi}.", end="")
