@@ -330,7 +330,6 @@ def abundance_compar(
     title=None,
     yax=None,
     xax=None,
-    indiv=False,
     manual=False,
     xbins=None,
     **kwargs,
@@ -357,18 +356,6 @@ def abundance_compar(
         for sb in xbins:
             sourz = sb[0]
             cal_red = ac.red_const(sourz)
-            if indiv:
-                ind, _ = ac.indiv_stat(ab, sourz, cal_red=cal_red, **kwargs)
-                if ind[0]:
-                    axs[i].plot(
-                        ind[0],
-                        ind[1],
-                        ls="",
-                        marker=".",
-                        c="gray",
-                        alpha=0.15,
-                        markersize=2,
-                    )
             v, m, st = ac.boots_stat(ab, sourz, cal_red=None, manual=manual, **kwargs)
             if v.size:
                 zv = [sb[1][0][0]] * len(v)
@@ -569,6 +556,113 @@ def abundance_in_val_z(
     plt.close(fig)
 
 
+def abundance_compar_z(
+    sources,
+    zrangs,
+    valrangs,
+    val="phot_mass",
+    zval="z",
+    zval_name=None,
+    xmetr=ac.O_Dir,
+    abund=ac.Oxygen,
+    save=None,
+    title=None,
+    yax=None,
+    xax=None,
+    lim=None,
+    manual=False,
+    **kwargs,
+):
+    xax = yax if xax is None else xax
+    yax = xax if yax is None else yax
+    zval_name = zval_name if zval_name is not None else zval
+    n = int(-(-np.sqrt(len(abund)) // 1))
+
+    rat = 15 * n
+    fig = plt.figure(figsize=((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5))
+    spec = mpl.gridspec.GridSpec(ncols=2, nrows=1, figure=fig, width_ratios=[rat, 1])
+    gs_plots = mpl.gridspec.GridSpecFromSubplotSpec(
+        n, n, subplot_spec=spec[0], hspace=0, wspace=0
+    )
+    axes = gs_plots.subplots(sharex="col", sharey="row")
+    cbar_ax = fig.add_subplot(spec[1])
+    if n == 1:
+        axs = np.array([axes])
+    else:
+        axs = axes.flatten()
+    cmap = mpl.cm.ScalarMappable(cmap="inferno")
+    cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
+    cbr = fig.colorbar(
+        cmap, location="right", label=zval_name, cax=cbar_ax, aspect=25 * n, pad=0
+    )
+
+    yrang = []
+    xrang = []
+    zs = []
+    for zrang in zrangs:
+        zsour = [
+            s
+            for s in sources
+            if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
+        ]
+        vs = []
+        for vrang in valrangs:
+            sourz = [
+                s
+                for s in zsour
+                if s.get(val) is not None and vrang[0] < s[val] < vrang[1]
+            ]
+            if sourz:
+                vs.append((sourz, ac.boots_stat(xmetr, sourz, manual=manual, **kwargs)))
+            else:
+                vs.append((sourz, None))
+        zs.append((zrang, vs))
+    for i, (nam, ab) in enumerate(abund.items()):
+        for zrang, vs in zs:
+            cl = cmap.to_rgba(np.mean(zrang))
+            valss = []
+            for so, db in vs:
+                if not so:
+                    continue
+                v, m, st = ac.boots_stat(ab, so, cal_red=None, manual=manual, **kwargs)
+                if v.size:
+                    zv = [db[0][0]] * len(v)
+                    zm = [db[1][0]] * len(v)
+                    zerr = [[db[2][0][0]] * len(v), [db[2][1][0]] * len(v)]
+                    axs[i].plot(zv, v, ls="", marker="D", c=cl)
+                    axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=5)
+                    yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
+                    xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
+                    valss.append([zm[0]] + list(m))
+            if valss:
+                vsm = max([len(i) for i in valss])
+                valss = np.array([v + [np.nan] * (vsm - len(v)) for v in valss])
+                axs[i].plot(valss[:, 0], valss[:, 1:], c=cl, alpha=0.5)
+        axs[i].set_title(nam, y=0.85)
+    for i in range(len(axs) - len(abund)):
+        axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
+    crang = np.nan_to_num(
+        flatten(xrang + yrang), nan=np.nan, posinf=np.nan, neginf=np.nan
+    )
+    clims = (np.nanmin(crang), np.nanmax(crang))
+    ranc = clims[1] - clims[0]
+    minc = clims[0] - ranc * 0.1 if lim is None else lim[0]
+    maxc = clims[1] + ranc * 0.1 if lim is None else lim[1]
+    for ax in axs:
+        ax.axline((0, 0), (1, 1), c="gray", ls="--", alpha=0.7)
+        ax.set_xlim(minc, maxc)
+        ax.set_ylim(minc, maxc)
+
+    fig.suptitle(title)
+    fig.set_layout_engine(layout="tight")
+
+    if save is not None:
+        fig.savefig(save)
+    else:
+        plt.show()
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_z.json")["sources"]
     for s in f:
@@ -736,6 +830,7 @@ if __name__ == "__main__":
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_mass.pdf",
     )
+    
     abundance_in_z(
         ffm,
         [[i, i + 1] for i in range(6, 12)],
@@ -774,7 +869,7 @@ if __name__ == "__main__":
         title="Line fluxes for oxygen abundance calibration in medium resolution",
         save="../Plots/abund/oxygen_flu_mass.pdf",
     )
-
+    
     abundance_compar(
         ffm,
         xmetr=ac.S_Dir,
@@ -805,7 +900,7 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
-
+    
     abundance_calib(
         ffm,
         xmetr=ac.S_Dir,
@@ -836,7 +931,7 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
     )
-
+    
     abundance_in_z(
         ffm,
         [[i, i + 1] for i in range(6, 12)],
@@ -846,7 +941,7 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_mass.pdf",
-        manual=True,
+        #manual=True,
         indiv=False,
     )
     abundance_in_z(
@@ -858,7 +953,7 @@ if __name__ == "__main__":
         title="Nitrogen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{N}/\\mathrm{H})$",
         save="../Plots/abund/nitrogen_dir_mass.pdf",
-        manual=True,
+        #manual=True,
         indiv=False,
     )
     abundance_in_z(
@@ -870,7 +965,7 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_mass.pdf",
-        manual=True,
+        #manual=True,
         indiv=False,
     )
     
@@ -946,5 +1041,47 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
+    )
+    
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.S_Dir,
+        abund=ac.Sulphur,
+        save="../Plots/abund/sulphur_com_z_mass.pdf",
+        title="Sulphur abundance in medium resolution\n via direct method and strong lines",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        zval_name = "Redshift $z$",
+    )
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.N_Dir,
+        abund=ac.Nitrogen,
+        save="../Plots/abund/nitrogen_com_z_mass.pdf",
+        title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
+        yax="\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        zval_name = "Redshift $z$",
+        lim = [-2.15,0],
+    )
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.O_Dir,
+        abund=ac.Oxygen,
+        save="../Plots/abund/oxygen_com_z_mass.pdf",
+        title="Oxygen abundance in medium resolution\n via direct method and strong lines",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        zval_name = "Redshift $z$",
+        lim = [7.35,8.8],
     )
     """

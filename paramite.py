@@ -139,7 +139,7 @@ def cal_fluxes(sources, l_tuple, M_lis, **kwargs):
     return j_vals
 
 
-def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, nam="", **kwargs):
+def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, save=None, **kwargs):
     if type(l_tuple[0]) is not dict:
         l_tuple[0] = {"tmp": l_tuple[0]}
     sources = catalog.rm_bad(sources)
@@ -174,9 +174,10 @@ def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, nam="", **kwargs):
         for i in range(len(v)):
             flux[i] *= M[i].sum()
         flubs[k] = np.array(flux)
-    save_npz(f"../M{nam}.npz", M)
-    np.save(f"../F{nam}.npy", flubs)
-    np.save(f"../S{nam}.npy", sources)
+    if save is not None:
+        save_npz(f"../M{save}.npz", M)
+        np.save(f"../F{save}.npy", flubs)
+        np.save(f"../S{save}.npy", sources)
     return M, flubs, sources
 
 
@@ -186,7 +187,7 @@ def ind_fluxes(sources, l_tuple):
     return fluxes
 
 
-def PART(M, fluxes, c_ite=25, lam=0.05):
+def PART(M, fluxes, c_ite=25, lam=0.05, t_f=None):
     M = M if type(M) is csr_array else csr_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -195,37 +196,41 @@ def PART(M, fluxes, c_ite=25, lam=0.05):
         init = np.nanmean(vals) * M.sum() / M.shape[0]
         guess = np.ones(M.shape[1]) * init
         guess1 = guess.copy()
-        gchang = []
+        gchang = [np.nan]
+        t_i = time.time()
         for u in range(noi):
             i = np.random.randint(0, M.shape[0])
             guess += lam * (vals[i] - M[i].dot(guess)) * M[i] / M[i].sum() ** 2
             guess[guess < 0] = 0
             if u % 128 == 0:
-                print(f"\r\033[KFinished {u} out of {noi}.", end="")
-            if u % int(noi / 100) == 0:
+                print(
+                    f"\r\033[KFinished {u} out of {noi}. Convergence {gchang[-1]:.2e}.",
+                    end="",
+                )
+            if u % -(-noi // 1000) == 0:
                 guess0 = guess1
                 guess1 = guess.copy()
                 chang = np.nanpercentile(
                     np.nan_to_num(
-                        np.abs(guess1 - guess0) / guess1,
+                        np.where((p := (guess1 - guess0) / guess0) > 0, p, np.nan),
                         nan=np.nan,
                         posinf=np.nan,
                         neginf=np.nan,
                     ),
-                    90,
+                    75,
                 )
-                if (
-                    len(gchang) > 10
-                    and chang < np.nanpercentile(gchang[1:10], 20) / 200
-                ):
+                if len(gchang) > 20 and chang < 0.001:
                     break
                 gchang.append(chang)
+                print(f" {chang:.f}")
+            if t_f is not None and t_f < (time.time() - t_i):
+                break
         print(gchang)
         gval[nam] = guess
     return gval
 
 
-def MART(M, fluxes, c_ite=25, lam=0.01):
+def MART(M, fluxes, c_ite=25, lam=0.01, t_f=None):
     M = M if type(M) is csr_array else csr_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -234,38 +239,41 @@ def MART(M, fluxes, c_ite=25, lam=0.01):
         init = np.nanmean(vals) * M.sum() / M.shape[0]
         guess = np.ones(M.shape[1]) * init
         guess1 = guess.copy()
-        gchang = []
+        gchang = [np.nan]
+        t_i = time.time()
         for u in range(noi):
             i = np.random.randint(0, M.shape[0])
             base = vals[i] / M[i].dot(guess)
             al = lam * M[i].toarray()
             guess *= np.exp(al * np.log(base))
             if u % 128 == 0:
-                print(f"\r\033[KFinished {u} out of {noi}.", end="")
-            if u % int(noi / 100) == 0:
+                print(
+                    f"\r\033[KFinished {u} out of {noi}. Convergence {gchang[-1]:.2e}.",
+                    end="",
+                )
+            if u % -(-noi // 1000) == 0:
                 guess0 = guess1
                 guess1 = guess.copy()
                 chang = np.nanpercentile(
                     np.nan_to_num(
-                        np.abs(guess1 - guess0) / guess1,
+                        np.where((p := (guess1 - guess0) / guess0) > 0, p, np.nan),
                         nan=np.nan,
                         posinf=np.nan,
                         neginf=np.nan,
                     ),
-                    90,
+                    75,
                 )
-                if (
-                    len(gchang) > 10
-                    and chang < np.nanpercentile(gchang[1:10], 20) / 200
-                ):
+                if len(gchang) > 20 and chang < 0.001:
                     break
                 gchang.append(chang)
+            if t_f is not None and t_f < (time.time() - t_i):
+                break
         print(gchang)
         gval[nam] = guess
     return gval
 
 
-def MLEM(M, fluxes, c_ite=0.1):
+def MLEM(M, fluxes, c_ite=0.1, t_f=None):
     M = M if type(M) is csc_array else csc_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -274,37 +282,40 @@ def MLEM(M, fluxes, c_ite=0.1):
         init = np.nanmean(vals) * M.sum() / M.shape[0]
         guess = np.ones(M.shape[1]) * init
         guess1 = guess.copy()
-        gchang = []
+        gchang = [np.nan]
+        t_i = time.time()
         for u in range(noi):
             base = vals / (M @ guess)
             co = M.T @ base
             coe = co / M.sum(axis=0)
             guess *= coe
-            print(f"\r\033[KFinished {u} out of {noi}.", end="")
-            if u % int(noi / 100) == 0:
+            print(
+                f"\r\033[KFinished {u} out of {noi}. Convergence {gchang[-1]:.2e}.",
+                end="",
+            )
+            if u % -(-noi // 1000) == 0:
                 guess0 = guess1
                 guess1 = guess.copy()
                 chang = np.nanpercentile(
                     np.nan_to_num(
-                        np.abs(guess1 - guess0) / guess1,
+                        np.where((p := (guess1 - guess0) / guess0) > 0, p, np.nan),
                         nan=np.nan,
                         posinf=np.nan,
                         neginf=np.nan,
                     ),
-                    90,
+                    75,
                 )
-                if (
-                    len(gchang) > 10
-                    and chang < np.nanpercentile(gchang[1:10], 20) / 200
-                ):
+                if len(gchang) > 20 and chang < 0.001:
                     break
                 gchang.append(chang)
+            if t_f is not None and t_f < (time.time() - t_i):
+                break
         print(gchang)
         gval[nam] = guess
     return gval
 
 
-def OSEM(M, fluxes, c_ite=0.1, N=16):
+def OSEM(M, fluxes, c_ite=0.1, N=16, t_f=None):
     M = M if type(M) is csc_array else csc_array(M)
     gval = dict()
     inds = [[] for i in range(N)]
@@ -321,38 +332,41 @@ def OSEM(M, fluxes, c_ite=0.1, N=16):
         init = np.nanmean(vals) * M.sum() / M.shape[0]
         guess = np.ones(M.shape[1]) * init
         guess1 = guess.copy()
-        gchang = []
+        gchang = [np.nan]
+        t_i = time.time()
         for u in range(noi):
             for i in range(N):
                 base = vss[i] / (Ms[i] @ guess)
                 co = Ms[i].T @ base
                 coe = co / Ms[i].sum(axis=0)
                 guess *= coe
-            print(f"\r\033[KFinished {u} out of {noi}.", end="")
-            if u % int(noi / 100) == 0:
+            print(
+                f"\r\033[KFinished {u} out of {noi}. Convergence {gchang[-1]:.2e}.",
+                end="",
+            )
+            if u % -(-noi // 1000) == 0:
                 guess0 = guess1
                 guess1 = guess.copy()
                 chang = np.nanpercentile(
                     np.nan_to_num(
-                        np.abs(guess1 - guess0) / guess1,
+                        np.where((p := (guess1 - guess0) / guess0) > 0, p, np.nan),
                         nan=np.nan,
                         posinf=np.nan,
                         neginf=np.nan,
                     ),
-                    90,
+                    75,
                 )
-                if (
-                    len(gchang) > 10
-                    and chang < np.nanpercentile(gchang[1:10], 20) / 200
-                ):
+                if len(gchang) > 20 and chang < 0.001:
                     break
                 gchang.append(chang)
+            if t_f is not None and t_f < (time.time() - t_i):
+                break
         print(gchang)
         gval[nam] = guess
     return gval
 
 
-def FIST(M, fluxes, c_ite=0.1, lam=None):
+def FIST(M, fluxes, c_ite=0.1, lam=None, t_f=None):
     M = M if type(M) is csr_array else csr_array(M)
     if lam is None:
         mATA = lambda v: M.T @ (M @ v)
@@ -368,32 +382,55 @@ def FIST(M, fluxes, c_ite=0.1, lam=None):
         gy0 = gx9
         t0 = 1
         guess1 = gx9.copy()
-        gchang = []
+        gchang = [np.nan]
+        t_i = time.time()
         for u in range(noi):
             gx0 = gy0 - lam * (M.T @ (M @ gy0 - vals))
             gx0[gx0 < 0] = 0
             t1 = (1 + np.sqrt(1 + 4 * t0**2)) / 2
             gy1 = gx0 + (t0 - 1) / t1 * (gx0 - gx9)
             gy0, gx9, t0 = gy1, gx0, t1
-            print(f"\r\033[KFinished {u} out of {noi}.", end="")
-            if u % int(noi / 100) == 0:
+            print(
+                f"\r\033[KFinished {u} out of {noi}. Convergence {gchang[-1]:.2e}.",
+                end="",
+            )
+            if u % -(-noi // 1000) == 0:
                 guess0 = guess1
                 guess1 = gx9.copy()
                 chang = np.nanpercentile(
                     np.nan_to_num(
-                        np.abs(guess1 - guess0) / guess1,
+                        np.where((p := (guess1 - guess0) / guess0) > 0, p, np.nan),
                         nan=np.nan,
                         posinf=np.nan,
                         neginf=np.nan,
                     ),
-                    90,
+                    75,
                 )
                 if (
-                    len(gchang) > 10
-                    and chang < np.nanpercentile(gchang[1:10], 20) / 200
+                    len(gchang) > 20
+                    and chang < 0.001  # np.nanpercentile(gchang[1:10], 20) / 200
                 ):
                     break
                 gchang.append(chang)
+                if t_f is not None and t_f < (time.time() - t_i):
+                    break
         print(gchang)
         gval[nam] = gx9
     return gval
+
+
+def calculate_fluxes(
+    sources,
+    tups=ac.core_lines,
+    method=lambda M, f: OSEM(M, f, t_f=1800),
+    n_one=200,
+    n_sam=200000,
+):
+    for tup in tups:
+        M, fl, so = art_fluxes(sources, tup, n_one=n_one, n_sam=n_sam)
+        so_fl = method(M, fl)
+        for nam, vs in so_fl.items():
+            nam = "rec_" + str(nam)
+            for i, s in enumerate(so):
+                s[nam] = vs[i]
+    return sources
