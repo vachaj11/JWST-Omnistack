@@ -4,6 +4,7 @@ import time
 import astropy.io.fits as fits
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
+from scipy.ndimage import gaussian_filter1d
 
 glob = dict()
 
@@ -129,10 +130,12 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso, prin=False, **kwargs):
+def resampled_spectra(sources, rang, reso, prin=False, degrade=False, **kwargs):
     spectra = []
     sourn = []
+    lws = []
     space = wave_sp(rang[0], rang[1], reso)
+    T0 = time.time()
     for i, s in enumerate(sources):
         try:
             t0 = time.time()
@@ -143,6 +146,9 @@ def resampled_spectra(sources, rang, reso, prin=False, **kwargs):
                 t2 = time.time()
                 spectra.append(sr)
                 sourn.append(s)
+                if degrade:
+                    lw = pixel_at(sp, np.mean(rang) * (1 + s["z"])) * 2.2 / (1 + s["z"])
+                    lws.append(lw)
                 if prin:
                     print(
                         f'\r\033[KResampled: {s["srcid"]:<14}\t({i} of {len(sources)})\tTime: {(t2-t1)/(t1-t0):.2f}',
@@ -160,6 +166,16 @@ def resampled_spectra(sources, rang, reso, prin=False, **kwargs):
                     f'\r\033[KSomething strange with: {str(s["srcid"]):<14}\t({i} of {len(sources)})',
                     end="",
                 )
+    T1 = time.time()
+    if degrade and lws:
+        lwm = np.max(lws)
+        for i, lw in enumerate(lws):
+            spectra[i] = degrade_spectrum(
+                spectra[i], tpx=lwm, opx=lw, fact=1, use_astropy=False
+            )
+    T2 = time.time()
+    if prin and degrade:
+        print(f"Relative time spent degrading spectra: {(T2-T1)/(T1-T0):.2f}")
     return spectra, sourn
 
 
@@ -189,6 +205,16 @@ def useful_sp_parts(spectrum):
     spectra = np.split(x, np.argwhere(~np.isfinite(x[1])).T[0], axis=1)
     spectran = [s[:, 1:] for s in spectra if s[:, 1:].size > 0]
     return spectran
+
+
+def pixel_at(spectrum, wav):
+    wavr = np.array(spectrum[0])
+    mind = np.argmin(np.abs(wavr - wav))
+    if mind + 1 < wavr.size:
+        return wavr[mind + 1] - wavr[mind]
+    else:
+        print("No spectral coverage at requested wavelength.")
+        return wavr[1] - wavr[0]
 
 
 def resample_legacy(spectrum, space, z=0.0, normalise=False):
@@ -254,13 +280,17 @@ def spects_norm(spectra, frequency=True):
         return np.array([[spectrum[0], spectrum[1] / flux] for spectrum in spectra])
 
 
-def degrade_spectrum(spectrum, tpx=0.0005, fact=2.2):
-    opx = spectrum[0][1] - spectrum[0][0]
+def degrade_spectrum(spectrum, tpx=0.0005, opx=None, fact=2.2, use_astropy=True):
+    opxo = spectrum[0][1] - spectrum[0][0]
+    opx = opxo if opx is not None else opx
     tstd = tpx * fact / (2 * np.sqrt(2 * np.log(2)))
     ostd = opx * fact / (2 * np.sqrt(2 * np.log(2)))
     kstd = np.sqrt(tstd**2 - ostd**2)
-    ker = Gaussian1DKernel(kstd / opx)
-    convolved = convolve(spectrum[1], ker, boundary="extend")
+    if use_astropy:
+        ker = Gaussian1DKernel(kstd / opxo)
+        convolved = convolve(spectrum[1], ker, boundary="extend")
+    else:
+        convolved = gaussian_filter1d(spectrum[1], sigma=kstd / opxo, mode="nearest")
     convolved = np.where(np.isfinite(spectrum[1]), convolved, np.nan)
     return [spectrum[0], convolved]
 
