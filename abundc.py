@@ -20,15 +20,18 @@ plt.rcParams.update(
 ## Universal extinction correction class. Instantiated outside functions for added speed
 rc = pn.RedCorr(law="CCM89")
 
+
 def S_S23(sources, **kwargs):
-    if len(sources) == 1 and 'rec_S_S23' in sources[0].keys():
-        return sources[0]['rec_S_S23']
-    fsii = fit_lines(sources, [0.6718, 0.6732], {'S2_6716A': 0.6717, 'S2_6731A': 0.6732}, **kwargs)
+    if len(sources) == 1 and "rec_S_S23" in sources[0].keys():
+        return sources[0]["rec_S_S23"]
+    fsii = fit_lines(
+        sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
+    )
     fsii = sum(fsii.values())
-    fsiii = fit_lines(sources, [0.9533, 0.9551], {'S3_9531A': 0.9532}, **kwargs)
+    fsiii = fit_lines(sources, [0.9533, 0.9551], {"S3_9531A": 0.9532}, **kwargs)
     fsiii = sum(fsiii.values())
     # fsiii += fit_lines(sources, [0.9069, 0.9071], 0.9063, **kwargs)
-    fhbe = fit_lines(sources, [0.4862], {'H1r_4861A': 0.4862}, **kwargs)
+    fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
     fhbe = sum(fhbe.values())
     S23 = np.log10((fsii + fsiii) / fhbe)
     if np.isfinite(S23):
@@ -38,11 +41,13 @@ def S_S23(sources, **kwargs):
 
 
 def N_N2O2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_N_N2O2' in sources[0].keys():
-        return sources[0]['rec_N_N2O2']
-    fnii = fit_lines(sources, [0.6550, 0.6564, 0.6585], {'N2_6584A': 0.6585}, **kwargs)
+    if len(sources) == 1 and "rec_N_N2O2" in sources[0].keys():
+        return sources[0]["rec_N_N2O2"]
+    fnii = fit_lines(sources, [0.6550, 0.6564, 0.6585], {"N2_6584A": 0.6585}, **kwargs)
     fnii = sum(fnii.values())
-    foii = fit_lines(sources, [0.3726, 0.3729], {'O2_3726A': 0.3726, 'O2_3729A': 0.3729}, **kwargs)
+    foii = fit_lines(
+        sources, [0.3726, 0.3729], {"O2_3726A": 0.3726, "O2_3729A": 0.3729}, **kwargs
+    )
     foii = sum(foii.values())
     N2O2 = np.log10(fnii / foii)
     if np.isfinite(N2O2):
@@ -52,10 +57,13 @@ def N_N2O2(sources, **kwargs):
 
 
 def N_N2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_N_N2' in sources[0].keys():
-        return sources[0]['rec_N_N2']
+    if len(sources) == 1 and "rec_N_N2" in sources[0].keys():
+        return sources[0]["rec_N_N2"]
     ff = fit_lines(
-        sources, [0.6550, 0.6564, 0.6585], {"N2_6584A": 0.6585, "H1r_6563A": 0.6564}, **kwargs
+        sources,
+        [0.6550, 0.6564, 0.6585],
+        {"N2_6584A": 0.6585, "H1r_6563A": 0.6564},
+        **kwargs,
     )
     fnii = ff["N2_6584A"]
     fhal = ff["H1r_6563A"]
@@ -67,8 +75,8 @@ def N_N2(sources, **kwargs):
 
 
 def N_N2S2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_N_N2S2' in sources[0].keys():
-        return sources[0]['rec_N_N2S2']
+    if len(sources) == 1 and "rec_N_N2S2" in sources[0].keys():
+        return sources[0]["rec_N_N2S2"]
     N2S2 = O_N2(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(N2S2):
         return [N2S2], [0.85 * N2S2 - 1.00]
@@ -77,10 +85,13 @@ def N_N2S2(sources, **kwargs):
 
 
 def O_N2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_N2' in sources[0].keys():
-        return sources[0]['rec_O_N2']
+    if len(sources) == 1 and "rec_O_N2" in sources[0].keys():
+        return sources[0]["rec_O_N2"]
     ff = fit_lines(
-        sources, [0.6550, 0.6564, 0.6585], {"N2_6584A": 0.6585, "H1r_6563A": 0.6564}, **kwargs
+        sources,
+        [0.6550, 0.6564, 0.6585],
+        {"N2_6584A": 0.6585, "H1r_6563A": 0.6564},
+        **kwargs,
     )
     fnii = ff["N2_6584A"]
     fhal = ff["H1r_6563A"]
@@ -96,11 +107,11 @@ def O_N2(sources, **kwargs):
 
 
 def O_R3(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_R3' in sources[0].keys():
-        return sources[0]['rec_O_R3']
-    foiii = fit_lines(sources, [0.5007], {'O3_5007A': 0.5007}, **kwargs)
+    if len(sources) == 1 and "rec_O_R3" in sources[0].keys():
+        return sources[0]["rec_O_R3"]
+    foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
-    fhbe = fit_lines(sources, [0.4862], {'H1r_4861A': 0.4862}, **kwargs)
+    fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
     fhbe = sum(fhbe.values())
     R3 = np.log10(foiii / fhbe)
     if np.isfinite(R3):
@@ -114,8 +125,8 @@ def O_R3(sources, **kwargs):
 
 
 def O_O3N2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_O3N2' in sources[0].keys():
-        return sources[0]['rec_O_O3N2']
+    if len(sources) == 1 and "rec_O_O3N2" in sources[0].keys():
+        return sources[0]["rec_O_O3N2"]
     O3N2 = O_R3(sources, **kwargs)[0][0] - O_N2(sources, **kwargs)[0][0]
     if np.isfinite(O3N2):
         p = [0.281 - O3N2, -4.765, -2.268]
@@ -128,8 +139,8 @@ def O_O3N2(sources, **kwargs):
 
 
 def O_O3S2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_O3S2' in sources[0].keys():
-        return sources[0]['rec_O_O3S2']
+    if len(sources) == 1 and "rec_O_O3S2" in sources[0].keys():
+        return sources[0]["rec_O_O3S2"]
     O3S2 = O_R3(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(O3S2):
         p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
@@ -142,11 +153,13 @@ def O_O3S2(sources, **kwargs):
 
 
 def O_S2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_S2' in sources[0].keys():
-        return sources[0]['rec_O_S2']
-    fsii = fit_lines(sources, [0.6718, 0.6732], {'S2_6716A': 0.6717, 'S2_6731A': 0.6732}, **kwargs)
+    if len(sources) == 1 and "rec_O_S2" in sources[0].keys():
+        return sources[0]["rec_O_S2"]
+    fsii = fit_lines(
+        sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
+    )
     fsii = sum(fsii.values())
-    fhal = fit_lines(sources, [0.6550, 0.6564, 0.6585], {'H1r_6563A': 0.6564}, **kwargs)
+    fhal = fit_lines(sources, [0.6550, 0.6564, 0.6585], {"H1r_6563A": 0.6564}, **kwargs)
     fhal = sum(fhal.values())
     S2 = np.log10(fsii / fhal)
     if np.isfinite(S2):
@@ -160,11 +173,13 @@ def O_S2(sources, **kwargs):
 
 
 def O_R2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_R2' in sources[0].keys():
-        return sources[0]['rec_O_R2']
-    foii = fit_lines(sources, [0.3726, 0.3729], {'O2_3726A': 0.3726, 'O2_3729A': 0.3729}, **kwargs)
+    if len(sources) == 1 and "rec_O_R2" in sources[0].keys():
+        return sources[0]["rec_O_R2"]
+    foii = fit_lines(
+        sources, [0.3726, 0.3729], {"O2_3726A": 0.3726, "O2_3729A": 0.3729}, **kwargs
+    )
     foii = sum(foii.values())
-    fhbe = fit_lines(sources, [0.4862], {'H1r_4861A': 0.4862}, **kwargs)
+    fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
     fhbe = sum(fhbe.values())
     R2 = np.log10(foii / fhbe)
     if np.isfinite(R2):
@@ -178,8 +193,8 @@ def O_R2(sources, **kwargs):
 
 
 def O_O3O2(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_O3O2' in sources[0].keys():
-        return sources[0]['rec_O_O3O2']
+    if len(sources) == 1 and "rec_O_O3O2" in sources[0].keys():
+        return sources[0]["rec_O_O3O2"]
     O3O2 = O_R3(sources, **kwargs)[0][0] - O_R2(sources, **kwargs)[0][0]
     if np.isfinite(O3O2):
         p = [-0.691 - O3O2, -2.944, -1.308]
@@ -192,13 +207,15 @@ def O_O3O2(sources, **kwargs):
 
 
 def O_R23(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_R23' in sources[0].keys():
-        return sources[0]['rec_O_R23']
-    foiii = fit_lines(sources, [0.5007], {'O3_5007A': 0.5007}, **kwargs)
+    if len(sources) == 1 and "rec_O_R23" in sources[0].keys():
+        return sources[0]["rec_O_R23"]
+    foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
-    foii = fit_lines(sources, [0.3726, 0.3729], {'O2_3726A': 0.3726, 'O2_3729A': 0.3729}, **kwargs)
+    foii = fit_lines(
+        sources, [0.3726, 0.3729], {"O2_3726A": 0.3726, "O2_3729A": 0.3729}, **kwargs
+    )
     foii = sum(foii.values())
-    fhbe = fit_lines(sources, [0.4862], {'H1r_4861A': 0.4862}, **kwargs)
+    fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
     fhbe = sum(fhbe.values())
     R23 = np.log10((foii + foiii) / fhbe)
     if np.isfinite(R23):
@@ -212,8 +229,8 @@ def O_R23(sources, **kwargs):
 
 
 def O_RS32(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_RS32' in sources[0].keys():
-        return sources[0]['rec_O_RS32']
+    if len(sources) == 1 and "rec_O_RS32" in sources[0].keys():
+        return sources[0]["rec_O_RS32"]
     RS32 = np.log10(
         10 ** (O_R3(sources, **kwargs)[0][0]) + 10 ** (O_S2(sources, **kwargs)[0][0])
     )
@@ -300,7 +317,7 @@ def tem_den(fluxec):
         return (15000, 500)
 
 
-def abunds(flx, tem, den, N_over_O=False):
+def abunds(flx, tem, den, N_over_O=True):
     ions = dict()
     abun = dict()
 
@@ -459,8 +476,7 @@ def mark_agn(sources):
     return sources
 
 
-def abundances(sources, cal_red=None, N_over_O=False, **kwargs):
-    t0 = time.time()
+def abundances(sources, cal_red=None, N_over_O=True, **kwargs):
     if cal_red is None:
         cHbeta = red_const(sources)
     else:
@@ -479,29 +495,29 @@ def abundances(sources, cal_red=None, N_over_O=False, **kwargs):
             fluxec[l] = flux * rc.getCorrHb(wav)
         else:
             fluxec[l] = 0.0
-    t1 = time.time()
     tem, den = tem_den(fluxec)
     ions = []
-    t2 = time.time()
     abun = abunds(fluxec, tem, den, N_over_O=N_over_O)
-    t3 = time.time()
-    print(f"\r\033[K{abun}", end="")
     return abun
 
+
 def S_Dir(sources, **kwargs):
-    if len(sources) == 1 and 'rec_S_Dir' in sources[0].keys():
-        return sources[0]['rec_S_Dir']
+    if len(sources) == 1 and "rec_S_Dir" in sources[0].keys():
+        return sources[0]["rec_S_Dir"]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
+
 def N_Dir(sources, **kwargs):
-    if len(sources) == 1 and 'rec_N_Dir' in sources[0].keys():
-        return sources[0]['rec_N_Dir']
+    if len(sources) == 1 and "rec_N_Dir" in sources[0].keys():
+        return sources[0]["rec_N_Dir"]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
+
 def O_Dir(sources, **kwargs):
-    if len(sources) == 1 and 'rec_O_Dir' in sources[0].keys():
-        return sources[0]['rec_O_Dir']
+    if len(sources) == 1 and "rec_O_Dir" in sources[0].keys():
+        return sources[0]["rec_O_Dir"]
     return [[abundances(sources, **kwargs)["O"]]] * 2
+
 
 Oxygen = {
     "N2": O_N2,
@@ -568,14 +584,14 @@ def fit_lines(
     cal_red=None,
     dwidth=8,
     manual=False,
-    indiv = True,
+    indiv=True,
     **kwargs,
 ):
     if not any(sources):
         return lf.flux_nan(mline)
     if cal_red is None:
-        cal_red = red_const(sources, indiv = indiv)
-    if len(sources)==1 and indiv:
+        cal_red = red_const(sources, indiv=indiv)
+    if len(sources) == 1 and indiv:
         return indiv_extract(sources[0], mline, cal_red)
     grats = [s["grat"] for s in sources]
     grat = max(set(grats), key=grats.count)
@@ -595,6 +611,7 @@ def fit_lines(
     else:
         return lf.flux_nan(mline)
 
+
 def indiv_extract(source, mline, cal_red):
     outd = True
     rca = lambda f, l: redd(f, l, [source], cal_red)
@@ -603,8 +620,8 @@ def indiv_extract(source, mline, cal_red):
         outd = False
     fluxes = dict()
     for k, l in mline.items():
-        if f'rec_{k}' in source.keys():
-            fluxes[k] = rca(source[f'rec_{k}'], l)
+        if f"rec_{k}" in source.keys():
+            fluxes[k] = rca(source[f"rec_{k}"], l)
         else:
             fluxes[k] = np.nan
     if outd:
@@ -621,11 +638,34 @@ def red_const(sources, T=12000, **kwargs):
         4340.0: 0.0254 + 0.1922 * lT - 0.0204 * lT**2,
         4102.0: -0.07132 + 0.1436 * lT - 0.0153 * lT**2,
     }
-    flub = sum(fit_lines(sources, [0.4862], {'H1r_4861A': 0.4862}, cal_red=0, **kwargs).values())
+    flub = sum(
+        fit_lines(
+            sources, [0.4862], {"H1r_4861A": 0.4862}, cal_red=0, **kwargs
+        ).values()
+    )
     flux = {
-        6563.0: sum(fit_lines(sources, [0.6550, 0.6564, 0.6585], {'H1r_6563A': 0.6564}, cal_red=0, **kwargs).values()) / flub,
-        4340.0: sum(fit_lines(sources, [0.4341, 0.4364], {'H1r_4341A': 0.4341}, cal_red=0, **kwargs).values()) / flub,
-        4102.0: sum(fit_lines(sources, [0.4102], {'H1r_4102A': 0.4102}, cal_red=0, **kwargs).values()) / flub,
+        6563.0: sum(
+            fit_lines(
+                sources,
+                [0.6550, 0.6564, 0.6585],
+                {"H1r_6563A": 0.6564},
+                cal_red=0,
+                **kwargs,
+            ).values()
+        )
+        / flub,
+        4340.0: sum(
+            fit_lines(
+                sources, [0.4341, 0.4364], {"H1r_4341A": 0.4341}, cal_red=0, **kwargs
+            ).values()
+        )
+        / flub,
+        4102.0: sum(
+            fit_lines(
+                sources, [0.4102], {"H1r_4102A": 0.4102}, cal_red=0, **kwargs
+            ).values()
+        )
+        / flub,
     }
     consts = []
     for k in wavs:
@@ -639,25 +679,32 @@ def red_const(sources, T=12000, **kwargs):
 def redd(flux, line, sources, cal_red):
     if cal_red is None:
         cal_red = red_const(sources)
-    if cal_red == 0.:
+    if cal_red == 0.0:
         return flux
     else:
         rc.cHbeta = cal_red
         return flux * rc.getCorrHb(line * 10**4)
 
 
-def iprocess(funct, srs, ind, zs, vs, it, val, sind, **kwargs):
-    itl = 0
-    for i, sr in enumerate(srs):
-        if (v:=sr.get(val)) is not None:
-            vi = funct([sr], **kwargs)[ind]
-            zs[sind+i] = [sr[val]] * len(vi)
-            vs[sind+i] = vi
-            if vi:
-                it.value += 1
-        else:
-            zs[sind+i] = []
-            vs[sind+i] = []
+def iprocess(funct, srs, calib, zs, vs, it, val, sind, **kwargs):
+    if calib is None:
+        for i, sr in enumerate(srs):
+            vi = funct([sr], **kwargs)
+            vs[sind + i] = vi
+            zs[sind + i] = vi
+            it.value += 1
+    else:
+        ind = 1 if calib else 0
+        for i, sr in enumerate(srs):
+            if (v := sr.get(val)) is not None:
+                vi = funct([sr], **kwargs)[ind]
+                zs[sind + i] = [sr[val]] * len(vi)
+                vs[sind + i] = vi
+                if vi:
+                    it.value += 1
+            else:
+                zs[sind + i] = []
+                vs[sind + i] = []
 
 
 def bprocess(funct, srs, ind, vis, **kwargs):
@@ -686,7 +733,7 @@ def boots_stat(funct, sources, ite=100, calib=True, manual=False, **kwargs):
                     np.random.choice(sources, size=len(sources)) for l in range(noi)
                 ]
                 args = (funct, rsourcs, ind, vis)
-                kwargs['indiv'] = False
+                kwargs["indiv"] = False
                 t = Process(target=bprocess, args=args, kwargs=kwargs)
                 t.start()
                 active.append(t)
@@ -706,7 +753,6 @@ def boots_stat(funct, sources, ite=100, calib=True, manual=False, **kwargs):
 
 
 def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
-    ind = 1 if calib else 0
     no = len(sources)
     manag = Manager()
     va = manag.dict()
@@ -723,7 +769,7 @@ def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
             for l in range(min(pr_no, proc - len(active))):
                 print(f"\r\033[KCalculating {i} out of {no} points. ", end="")
                 sr = sources[i : i + nos]
-                args = (funct, sr, ind, zs, vs, it, val, i)
+                args = (funct, sr, calib, zs, vs, it, val, i)
                 t = Process(target=iprocess, args=args, kwargs=kwargs)
                 t.start()
                 active.append(t)
@@ -733,21 +779,24 @@ def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
                 t.terminate()
                 active.remove(t)
         time.sleep(0.1)
-    vs = list(zip(*sorted(vs.items(), key = lambda x:x[0])))[1]
-    zs = list(zip(*sorted(zs.items(), key = lambda x:x[0])))[1]
-    if sum(list(vs), []):
-        vals = np.full((len(vs), max([len(v) for v in vs])), np.nan)
-        for l in range(len(vs)):
-            vi = np.flip(vs[l])
-            vals[l, : vi.shape[0]] = vi[: vals.shape[1]]
-        vals = np.nan_to_num(vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
-        medians = np.nanmedian(vals, axis=0)
-        err33 = np.nanpercentile(vals, 33, axis=0)
-        err67 = np.nanpercentile(vals, 67, axis=0)
+    vs = list(zip(*sorted(vs.items(), key=lambda x: x[0])))[1]
+    zs = list(zip(*sorted(zs.items(), key=lambda x: x[0])))[1]
+    if calib is not None:
+        if sum(list(vs), []):
+            vals = np.full((len(vs), max([len(v) for v in vs])), np.nan)
+            for l in range(len(vs)):
+                vi = np.flip(vs[l])
+                vals[l, : vi.shape[0]] = vi[: vals.shape[1]]
+            vals = np.nan_to_num(vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
+            medians = np.nanmedian(vals, axis=0)
+            err33 = np.nanpercentile(vals, 33, axis=0)
+            err67 = np.nanpercentile(vals, 67, axis=0)
+        else:
+            medians, err33, err67 = [np.array([np.nan])] * 3
+        print(f"Needed {i} out of {len(sources)} for {it.value} results.")
+        return (zs, vs), (
+            medians,
+            np.nan_to_num([medians - err33, err67 - medians], nan=0.0),
+        )
     else:
-        medians, err33, err67 = [np.array([np.nan])] * 3
-    print(f"Needed {i} out of {len(sources)} for {it.value} results.")
-    return (zs, vs), (
-        medians,
-        np.nan_to_num([medians - err33, err67 - medians], nan=0.0),
-    )
+        return vs

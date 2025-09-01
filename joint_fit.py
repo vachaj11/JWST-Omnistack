@@ -58,7 +58,7 @@ def abundance_in_z(
     title=None,
     yax=None,
     indiv=True,
-    indso = None,
+    indso=None,
     manual=False,
     **kwargs,
 ):
@@ -89,8 +89,8 @@ def abundance_in_z(
             cal_red = ac.red_const(indrz) if indso is None else None
             if indiv:
                 ind, _ = ac.indiv_stat(ab, indrz, cal_red=cal_red, val=val, **kwargs)
-                x = sum(list(ind[0]),[])
-                y = sum(list(ind[1]),[])
+                x = sum(list(ind[0]), [])
+                y = sum(list(ind[1]), [])
                 if x:
                     axs[i].plot(
                         x,
@@ -180,8 +180,8 @@ def ratios_in_z(
                 ind, sta = ac.indiv_stat(
                     ab, indrz, val=val, calib=False, cal_red=cal_red, **kwargs
                 )
-                x = sum(list(ind[0]),[])
-                y = sum(list(ind[1]),[])
+                x = sum(list(ind[0]), [])
+                y = sum(list(ind[1]), [])
                 if x:
                     zmean = [(zrang[1] + zrang[0]) / 2] * len(sta[0])
                     zerr = [(zrang[1] - zrang[0]) / 2] * len(sta[0])
@@ -263,7 +263,7 @@ def abundance_calib(
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
-    indss=sources if indso is None else indso
+    indss = sources if indso is None else indso
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0)
     axes = gs.subplots(sharex="col")
@@ -282,14 +282,19 @@ def abundance_calib(
         vs = [l[0].get(binval) for l in s]
         vbins.append([min(vs), max(vs)])
     if indiv:
-        ibins = [[[],] for v in vbins]
+        ibins = [
+            [
+                [],
+            ]
+            for v in vbins
+        ]
         for s in indss:
             for i, (vl, vh) in enumerate(vbins):
-                if (v:=s.get(binval)) is not None and vl<v<vh:
+                if (v := s.get(binval)) is not None and vl < v < vh:
                     ibins[i][0].append(s)
         for ib in ibins:
             cal_red = ac.red_const(ib) if indso is None else None
-            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])                    
+            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
         yrang = []
@@ -304,7 +309,7 @@ def abundance_calib(
                 x, y = ([], [])
                 for k in range(len(indy[1])):
                     y += indy[1][i]
-                    x += indx[1][0]*len(indy[1][i])
+                    x += indx[1][0] * len(indy[1][i])
                 if x:
                     axs[i].plot(
                         x,
@@ -375,7 +380,7 @@ def abundance_compar(
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
-    indss=sources if indso is None else indso
+    indss = sources if indso is None else indso
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
     fig = plt.figure()
@@ -393,10 +398,15 @@ def abundance_compar(
         for sb in sbins:
             xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
     if indiv:
-        ibins = [[[],] for v in vbins]
+        ibins = [
+            [
+                [],
+            ]
+            for v in vbins
+        ]
         for s in indss:
             for i, (vl, vh) in enumerate(vbins):
-                if (v:=s.get(binval)) is not None and vl<v<vh:
+                if (v := s.get(binval)) is not None and vl < v < vh:
                     ibins[i][0].append(s)
         for ib in ibins:
             cal_red = ac.red_const(ib) if indso is None else None
@@ -407,14 +417,12 @@ def abundance_compar(
             sourz = sb[0]
             if indiv:
                 cal_red = ac.red_const(ibins[l][0]) if indso is None else None
-                indy, _ = ac.indiv_stat(
-                    ab, ibins[l][0], cal_red=cal_red, **kwargs
-                )
+                indy, _ = ac.indiv_stat(ab, ibins[l][0], cal_red=cal_red, **kwargs)
                 indx, _ = ibins[l][1]
                 x, y = ([], [])
                 for k in range(len(indy[1])):
                     y += indy[1][i]
-                    x += indx[1][0]*len(indy[1][i])
+                    x += indx[1][0] * len(indy[1][i])
                 if x:
                     axs[i].plot(
                         x,
@@ -529,7 +537,7 @@ def abundance_in_val_z(
     val_name = val_name if val_name is not None else val
     zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
-    indss = sources if indso is None else indso 
+    indss = sources if indso is None else indso
     rat = 15 * n
     fig = plt.figure(figsize=((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5))
     spec = mpl.gridspec.GridSpec(ncols=2, nrows=1, figure=fig, width_ratios=[rat, 1])
@@ -581,8 +589,8 @@ def abundance_in_val_z(
                         ind, _ = ac.indiv_stat(
                             ab, isourz, cal_red=cal_red, val=val, **kwargs
                         )
-                        ind[0]= sum(list(ind[0]),[])
-                        ind[1]= sum(list(ind[1]),[])
+                        ind[0] = sum(list(ind[0]), [])
+                        ind[1] = sum(list(ind[1]), [])
                         if ind[0]:
                             axs[i].plot(
                                 ind[0],
@@ -662,7 +670,7 @@ def abundance_compar_z(
 ):
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
-    indss = sources if indso is None else indso 
+    indss = sources if indso is None else indso
     zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
 
@@ -733,14 +741,12 @@ def abundance_compar_z(
                 iso, idb = ivs[k]
                 if indiv:
                     cal_red = ac.red_const(iso) if indso is None else None
-                    indy, _ = ac.indiv_stat(
-                        ab, iso, cal_red=cal_red, **kwargs
-                    )
+                    indy, _ = ac.indiv_stat(ab, iso, cal_red=cal_red, **kwargs)
                     indx, _ = idb
                     x, y = ([], [])
                     for k in range(len(indy[1])):
                         y += indy[1][i]
-                        x += indx[1][0]*len(indy[1][i])
+                        x += indx[1][0] * len(indy[1][i])
                     if x:
                         axs[i].plot(
                             x,

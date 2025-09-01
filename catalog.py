@@ -33,29 +33,26 @@ def fetch_json(path):
     return data
 
 
-def unique(sources, adiff = 0.0003):
-    """Assumes that same "srcid" are assigned only to same sources within catalogs. Otherwise also checks by coordinate matching
-    """
+def unique(sources, adiff=0.0003):
+    """Assumes that same "srcid" are assigned only to same sources within catalogs. Otherwise also checks by coordinate matching"""
     sourn = []
     for source in sources:
         new = True
         sn = source["sn50"]
         for i, s in enumerate(sourn):
-            if (
-                (source["srcid"] == s["srcid"]
-                and source["root"] == s["root"])
-                and (abs(source["ra"] - s["ra"]) < adiff
+            if (source["srcid"] == s["srcid"] and source["root"] == s["root"]) and (
+                abs(source["ra"] - s["ra"]) < adiff
                 and abs(source["dec"] - s["dec"]) < adiff
-                and abs(source["z"] - s["z"] < 0.5))
+                and abs(source["z"] - s["z"] < 0.5)
             ):
                 if sn is not None and sn > s["sn50"]:
                     sourn[i] = copy_params(s, source)
                 else:
                     sourn[i] = copy_params(source, s)
                 new = False
-                mn = np.log10(m) if (m:=source["phot_mass"]) is not None else None
-                m = np.log10(m) if (m:=s["phot_mass"]) is not None else None
-                if mn is not None and m is not None and abs(mn-m)>0.5:
+                mn = np.log10(m) if (m := source["phot_mass"]) is not None else None
+                m = np.log10(m) if (m := s["phot_mass"]) is not None else None
+                if mn is not None and m is not None and abs(mn - m) > 0.5:
                     print(
                         f'Disagreeing masses for {s["srcid"]}\n {mn:.2f} and {m:.2f}.'
                     )
@@ -67,11 +64,13 @@ def unique(sources, adiff = 0.0003):
             sourn.append(source)
     return sourn
 
+
 def copy_params(s_from, s_to):
     for k, v in s_from.items():
-        if k[:4] == 'rec_' and k not in s_to.keys():
+        if k[:4] == "rec_" and k not in s_to.keys():
             s_to[k] = v
     return s_to
+
 
 def rm_bad(sources, ppxf=False, agn=False):
     sourn = []
