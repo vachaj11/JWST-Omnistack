@@ -424,7 +424,7 @@ def calculate_fluxes(
     tups=ac.core_lines,
     method=lambda M, f: OSEM(M, f, t_f=1800),
     n_one=200,
-    n_sam=200000,
+    n_sam=250000,
 ):
     for tup in tups:
         M, fl, so = art_fluxes(sources, tup, n_one=n_one, n_sam=n_sam)

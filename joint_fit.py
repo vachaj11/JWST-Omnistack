@@ -58,10 +58,12 @@ def abundance_in_z(
     title=None,
     yax=None,
     indiv=True,
+    indso = None,
     manual=False,
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
+    indso = sources if indso is None else indso
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
@@ -79,13 +81,20 @@ def abundance_in_z(
                 for s in sources
                 if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
             ]
-            cal_red = ac.red_const(sourz)
+            indrz = [
+                s
+                for s in indso
+                if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
+            ]
+            cal_red = ac.red_const(indrz) if indso is None else None
             if indiv:
-                ind, _ = ac.indiv_stat(ab, sourz, cal_red=cal_red, val=val, **kwargs)
-                if ind[0]:
+                ind, _ = ac.indiv_stat(ab, indrz, cal_red=cal_red, val=val, **kwargs)
+                x = sum(list(ind[0]),[])
+                y = sum(list(ind[1]),[])
+                if x:
                     axs[i].plot(
-                        ind[0],
-                        ind[1],
+                        x,
+                        y,
                         ls="",
                         marker=".",
                         c="gray",
@@ -138,10 +147,12 @@ def ratios_in_z(
     save=None,
     title=None,
     indiv=True,
+    indso=None,
     manual=False,
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
+    indss = sources if indso is None else indso
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0)
     axes = gs.subplots(sharex="col")
@@ -159,17 +170,24 @@ def ratios_in_z(
                 for s in sources
                 if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
             ]
-            cal_red = ac.red_const(sourz)
+            indrz = [
+                s
+                for s in indss
+                if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
+            ]
+            cal_red = ac.red_const(indrz) if indso is None else None
             if indiv:
                 ind, sta = ac.indiv_stat(
-                    ab, sourz, val=val, calib=False, cal_red=cal_red, **kwargs
+                    ab, indrz, val=val, calib=False, cal_red=cal_red, **kwargs
                 )
-                if ind[0]:
+                x = sum(list(ind[0]),[])
+                y = sum(list(ind[1]),[])
+                if x:
                     zmean = [(zrang[1] + zrang[0]) / 2] * len(sta[0])
                     zerr = [(zrang[1] - zrang[0]) / 2] * len(sta[0])
                     axs[i].plot(
-                        ind[0],
-                        ind[1],
+                        x,
+                        y,
                         ls="",
                         marker=".",
                         c="gray",
@@ -238,12 +256,14 @@ def abundance_calib(
     save=None,
     title=None,
     xax=None,
-    indiv=False,
+    indiv=True,
+    indso=None,
     manual=False,
     xbins=None,
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
+    indss=sources if indso is None else indso
     fig = plt.figure()
     gs = fig.add_gridspec(n, n, hspace=0)
     axes = gs.subplots(sharex="col")
@@ -257,20 +277,38 @@ def abundance_calib(
         xbins = []
         for sb in sbins:
             xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
+    vbins = []
+    for x in xbins:
+        vs = [l[0].get(binval) for l in s]
+        vbins.append([min(vs), max(vs)])
+    if indiv:
+        ibins = [[[],] for v in vbins]
+        for s in indss:
+            for i, (vl, vh) in enumerate(vbins):
+                if (v:=s.get(binval)) is not None and vl<v<vh:
+                    ibins[i][0].append(s)
+        for ib in ibins:
+            cal_red = ac.red_const(ib) if indso is None else None
+            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])                    
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
         yrang = []
-        for sb in xbins:
+        for l, sb in enumerate(xbins):
             sourz = sb[0]
-            cal_red = ac.red_const(sourz)
             if indiv:
-                ind, _ = ac.indiv_stat(
-                    ab, sourz, val=val, calib=False, cal_red=cal_red, **kwargs
+                cal_red = ac.red_const(ibins[l][0]) if indso is None else None
+                indy, _ = ac.indiv_stat(
+                    ab, ibins[l][0], calib=False, cal_red=cal_red, **kwargs
                 )
-                if ind[0]:
+                indx, _ = ibins[l][1]
+                x, y = ([], [])
+                for k in range(len(indy[1])):
+                    y += indy[1][i]
+                    x += indx[1][0]*len(indy[1][i])
+                if x:
                     axs[i].plot(
-                        ind[0],
-                        ind[1],
+                        x,
+                        y,
                         ls="",
                         marker=".",
                         c="gray",
@@ -330,11 +368,14 @@ def abundance_compar(
     title=None,
     yax=None,
     xax=None,
+    indiv=True,
+    indso=None,
     manual=False,
     xbins=None,
     **kwargs,
 ):
     n = int(-(-np.sqrt(len(abund)) // 1))
+    indss=sources if indso is None else indso
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
     fig = plt.figure()
@@ -351,11 +392,41 @@ def abundance_compar(
         xbins = []
         for sb in sbins:
             xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
+    if indiv:
+        ibins = [[[],] for v in vbins]
+        for s in indss:
+            for i, (vl, vh) in enumerate(vbins):
+                if (v:=s.get(binval)) is not None and vl<v<vh:
+                    ibins[i][0].append(s)
+        for ib in ibins:
+            cal_red = ac.red_const(ib) if indso is None else None
+            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
-        for sb in xbins:
+        for l, sb in enumerate(xbins):
             sourz = sb[0]
-            cal_red = ac.red_const(sourz)
+            if indiv:
+                cal_red = ac.red_const(ibins[l][0]) if indso is None else None
+                indy, _ = ac.indiv_stat(
+                    ab, ibins[l][0], cal_red=cal_red, **kwargs
+                )
+                indx, _ = ibins[l][1]
+                x, y = ([], [])
+                for k in range(len(indy[1])):
+                    y += indy[1][i]
+                    x += indx[1][0]*len(indy[1][i])
+                if x:
+                    axs[i].plot(
+                        x,
+                        y,
+                        ls="",
+                        marker=".",
+                        c="gray",
+                        alpha=0.15,
+                        markersize=2,
+                    )
+            if not sourz:
+                continue
             v, m, st = ac.boots_stat(ab, sourz, cal_red=None, manual=manual, **kwargs)
             if v.size:
                 zv = [sb[1][0][0]] * len(v)
@@ -451,13 +522,14 @@ def abundance_in_val_z(
     title=None,
     yax=None,
     indiv=True,
+    indso=None,
     manual=False,
     **kwargs,
 ):
     val_name = val_name if val_name is not None else val
     zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
-
+    indss = sources if indso is None else indso 
     rat = 15 * n
     fig = plt.figure(figsize=((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5))
     spec = mpl.gridspec.GridSpec(ncols=2, nrows=1, figure=fig, width_ratios=[rat, 1])
@@ -486,6 +558,11 @@ def abundance_in_val_z(
                 for s in sources
                 if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
             ]
+            izsour = [
+                s
+                for s in indss
+                if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
+            ]
             cl = cmap.to_rgba(np.mean(zrang))
             for vrang in valrangs:
                 sourz = [
@@ -493,23 +570,31 @@ def abundance_in_val_z(
                     for s in zsour
                     if s.get(val) is not None and vrang[0] < s[val] < vrang[1]
                 ]
+                isourz = [
+                    s
+                    for s in izsour
+                    if s.get(val) is not None and vrang[0] < s[val] < vrang[1]
+                ]
+                if isourz:
+                    cal_red = ac.red_const(isourz) if indso is None else None
+                    if indiv:
+                        ind, _ = ac.indiv_stat(
+                            ab, isourz, cal_red=cal_red, val=val, **kwargs
+                        )
+                        ind[0]= sum(list(ind[0]),[])
+                        ind[1]= sum(list(ind[1]),[])
+                        if ind[0]:
+                            axs[i].plot(
+                                ind[0],
+                                ind[1],
+                                ls="",
+                                marker=".",
+                                c=cl,
+                                alpha=0.1,
+                                markersize=1.5,
+                            )
                 if not sourz:
                     continue
-                cal_red = ac.red_const(sourz)
-                if indiv:
-                    ind, _ = ac.indiv_stat(
-                        ab, sourz, cal_red=cal_red, val=val, **kwargs
-                    )
-                    if ind[0]:
-                        axs[i].plot(
-                            ind[0],
-                            ind[1],
-                            ls="",
-                            marker=".",
-                            c=cl,
-                            alpha=0.1,
-                            markersize=1.5,
-                        )
                 v, m, st = ac.boots_stat(
                     ab, sourz, cal_red=None, manual=manual, **kwargs
                 )
@@ -570,11 +655,14 @@ def abundance_compar_z(
     yax=None,
     xax=None,
     lim=None,
+    indiv=True,
+    indso=None,
     manual=False,
     **kwargs,
 ):
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
+    indss = sources if indso is None else indso 
     zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
 
@@ -599,13 +687,20 @@ def abundance_compar_z(
     yrang = []
     xrang = []
     zs = []
+    izs = []
     for zrang in zrangs:
         zsour = [
             s
             for s in sources
             if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
         ]
+        izsour = [
+            s
+            for s in indss
+            if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
+        ]
         vs = []
+        ivs = []
         for vrang in valrangs:
             sourz = [
                 s
@@ -616,12 +711,46 @@ def abundance_compar_z(
                 vs.append((sourz, ac.boots_stat(xmetr, sourz, manual=manual, **kwargs)))
             else:
                 vs.append((sourz, None))
+            isourz = [
+                s
+                for s in izsour
+                if s.get(val) is not None and vrang[0] < s[val] < vrang[1]
+            ]
+            if isourz and indiv:
+                ivs.append((isourz, ac.indiv_stat(xmetr, isourz, **kwargs)))
+            else:
+                ivs.append((isourz, None))
         zs.append((zrang, vs))
+        izs.append(ivs)
     for i, (nam, ab) in enumerate(abund.items()):
-        for zrang, vs in zs:
+        for l in range(len(zrangs)):
+            zrang, vs = zs[l]
+            ivs = izs[l]
             cl = cmap.to_rgba(np.mean(zrang))
             valss = []
-            for so, db in vs:
+            for k in range(len(valrangs)):
+                so, db = vs[k]
+                iso, idb = ivs[k]
+                if indiv:
+                    cal_red = ac.red_const(iso) if indso is None else None
+                    indy, _ = ac.indiv_stat(
+                        ab, iso, cal_red=cal_red, **kwargs
+                    )
+                    indx, _ = idb
+                    x, y = ([], [])
+                    for k in range(len(indy[1])):
+                        y += indy[1][i]
+                        x += indx[1][0]*len(indy[1][i])
+                    if x:
+                        axs[i].plot(
+                            x,
+                            y,
+                            ls="",
+                            marker=".",
+                            c="gray",
+                            alpha=0.15,
+                            markersize=2,
+                        )
                 if not so:
                     continue
                 v, m, st = ac.boots_stat(ab, so, cal_red=None, manual=manual, **kwargs)
@@ -652,6 +781,9 @@ def abundance_compar_z(
         ax.axline((0, 0), (1, 1), c="gray", ls="--", alpha=0.7)
         ax.set_xlim(minc, maxc)
         ax.set_ylim(minc, maxc)
+    for i in range(n):
+        axs[-i - 1].set_xlabel(xax)
+        axs[i * n].set_ylabel(yax)
 
     fig.suptitle(title)
     fig.set_layout_engine(layout="tight")
@@ -664,43 +796,48 @@ def abundance_compar_z(
 
 
 if __name__ == "__main__":
-    f = catalog.fetch_json("../catalog_z.json")["sources"]
+    f = catalog.fetch_json("../catalog_f.json")["sources"]
     for s in f:
         s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
+    ffmu = catalog.unique(ffm)
     """
-    abundance_in_z(
+    abundance_in_z(#yess
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Sulphur,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal.pdf",
+        indso=ffmu,
     )
-    abundance_in_z(
+    abundance_in_z(#yess
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Nitrogen,
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal.pdf",
+        indso=ffmu,
     )
-    abundance_in_z(
+    abundance_in_z(#yess
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Oxygen,
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal.pdf",
+        indso=ffmu,
     )
     
-    ratios_in_z(
+    ratios_in_z(#yess
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Sulphur,
         title="Line fluxes for sulphur abundance calibration\n in medium resolution",
         save="../Plots/abund/sulphur_flu.pdf",
+        indso=ffmu,
     )
     ratios_in_z(
         ffm,
@@ -708,6 +845,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         title="Line fluxes for nitrogen abundance calibration\n in medium resolution",
         save="../Plots/abund/nitrogen_flu.pdf",
+        indso=ffmu,
     )
     ratios_in_z(
         ffm,
@@ -715,8 +853,9 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         title="Line fluxes for oxygen abundance calibration in medium resolution",
         save="../Plots/abund/oxygen_flu.pdf",
+        indso=ffmu,
     )
-
+    
     abundance_compar(
         ffm,
         xmetr=ac.S_Dir,
@@ -726,6 +865,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_com.pdf",
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        indso=ffmu,
     )
     abundance_compar(
         ffm,
@@ -736,6 +876,7 @@ if __name__ == "__main__":
         save="../Plots/abund/nitrogen_com.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        indso=ffmu,
     )
     abundance_compar(
         ffm,
@@ -746,8 +887,9 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_com.pdf",
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        indso=ffmu,
     )
-
+    
     abundance_calib(
         ffm,
         xmetr=ac.S_Dir,
@@ -757,6 +899,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_clf.pdf",
         title="Sulphur abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        indso=ffmu,
     )
     abundance_calib(
         ffm,
@@ -767,6 +910,7 @@ if __name__ == "__main__":
         save="../Plots/abund/nitrogen_clf.pdf",
         title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        indso=ffmu,
     )
     abundance_calib(
         ffm,
@@ -777,6 +921,7 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_clf.pdf",
         title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        indso=ffmu,
     )
     
     abundance_in_z(
@@ -787,7 +932,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
     abundance_in_z(
         ffm,
@@ -797,7 +942,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{N}/\\mathrm{H})$",
         save="../Plots/abund/nitrogen_dir.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
     abundance_in_z(
         ffm,
@@ -807,7 +952,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
 
     abundance_in_z(
@@ -819,6 +964,7 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal_mass.pdf",
+        indso=ffmu,
     )
     abundance_in_z(
         ffm,
@@ -829,8 +975,8 @@ if __name__ == "__main__":
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_mass.pdf",
+        indso=ffmu,
     )
-    
     abundance_in_z(
         ffm,
         [[i, i + 1] for i in range(6, 12)],
@@ -840,6 +986,7 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal_mass.pdf",
+        indso=ffmu,
     )
 
     ratios_in_z(
@@ -850,6 +997,7 @@ if __name__ == "__main__":
         abund=ac.Sulphur,
         title="Line fluxes for sulphur abundance calibration\n in medium resolution",
         save="../Plots/abund/sulphur_flu_mass.pdf",
+        indso=ffmu,
     )
     ratios_in_z(
         ffm,
@@ -859,6 +1007,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen,
         title="Line fluxes for nitrogen abundance calibration\n in medium resolution",
         save="../Plots/abund/nitrogen_flu_mass.pdf",
+        indso=ffmu,
     )
     ratios_in_z(
         ffm,
@@ -868,6 +1017,7 @@ if __name__ == "__main__":
         abund=ac.Oxygen,
         title="Line fluxes for oxygen abundance calibration in medium resolution",
         save="../Plots/abund/oxygen_flu_mass.pdf",
+        indso=ffmu,
     )
     
     abundance_compar(
@@ -879,6 +1029,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_com_mass.pdf",
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        indso=ffmu,
     )
     abundance_compar(
         ffm,
@@ -889,6 +1040,7 @@ if __name__ == "__main__":
         save="../Plots/abund/nitrogen_com_mass.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        indso=ffmu,
     )
     abundance_compar(
         ffm,
@@ -899,6 +1051,7 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_com_mass.pdf",
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        indso=ffmu,
     )
     
     abundance_calib(
@@ -910,6 +1063,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_clf_mass.pdf",
         title="Sulphur abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        indso=ffmu,
     )
     abundance_calib(
         ffm,
@@ -920,6 +1074,7 @@ if __name__ == "__main__":
         save="../Plots/abund/nitrogen_clf_mass.pdf",
         title="Nitrogen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        indso=ffmu,
     )
     abundance_calib(
         ffm,
@@ -930,6 +1085,7 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_clf_mass.pdf",
         title="Oxygen abundance in medium resolution\n via compared to broad line calibrations",
         xax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        indso=ffmu,
     )
     
     abundance_in_z(
@@ -942,7 +1098,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_mass.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
     abundance_in_z(
         ffm,
@@ -954,7 +1110,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{N}/\\mathrm{H})$",
         save="../Plots/abund/nitrogen_dir_mass.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
     abundance_in_z(
         ffm,
@@ -966,7 +1122,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_mass.pdf",
         #manual=True,
-        indiv=False,
+        indso=ffmu,
     )
     
     abundance_in_val_z(
@@ -980,6 +1136,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     abundance_in_val_z(
         ffm,
@@ -992,6 +1149,7 @@ if __name__ == "__main__":
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     abundance_in_val_z(
         ffm,
@@ -1004,6 +1162,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     
     abundance_in_val_z(
@@ -1017,6 +1176,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     abundance_in_val_z(
         ffm,
@@ -1029,6 +1189,7 @@ if __name__ == "__main__":
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     abundance_in_val_z(
         ffm,
@@ -1041,6 +1202,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_z_mass.pdf",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     
     abundance_compar_z(
@@ -1055,6 +1217,7 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         zval_name = "Redshift $z$",
+        indso=ffmu,
     )
     abundance_compar_z(
         ffm,
@@ -1069,6 +1232,7 @@ if __name__ == "__main__":
         yax="\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         zval_name = "Redshift $z$",
         lim = [-2.15,0],
+        indso=ffmu,
     )
     abundance_compar_z(
         ffm,
@@ -1083,5 +1247,6 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         zval_name = "Redshift $z$",
         lim = [7.35,8.8],
+        indso=ffmu,
     )
     """
