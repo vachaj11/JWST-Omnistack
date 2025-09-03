@@ -24,46 +24,69 @@ import catalog
 import spectr
 
 
-def ppxf_fit(source, spectrum, silent=True, plot=False):
-    """For potential later implementation of photometric fitting:
-    https://github.com/micappe/ppxf_examples/blob/main/ppxf_example_population_photometry.ipynb
-    """
-    lam, galaxy = spectrum[0] * 10**4, spectrum[1]
-    old_stdout = sys.stdout
+def ppxf_fit(sources, spectra, silent=True, plot=False):
+    """Despite the list formatisation, will function reliably only with single source/spectra passed."""
+    if type(sources) is not list:
+        sources = [sources]
+    if type(spectra) is not list or len(spectra[0]) != 2:
+        spectra = [spectra]
+    if len(sources) != len(spectra):
+        sources = sources[: len(spectra)]
+
+    old_stdout = sys.__stdout__
     if silent:
         sys.stdout = open(os.devnull, "w")
+    galaxy_s = np.array([])
+    lam_s = np.array([])
+    velscale_s = np.array([])
+    mask_s = np.array([], dtype=bool)
+    noise_s = np.array([])
+    FWHM_gal_s = np.array([])
+    for so, sp in zip(sources, spectra):
+        lam, galaxy = sp[0] * 10**4, sp[1]
+        match so["grat"]:
+            case int() | float():
+                R = R
+            case "prism":
+                R = 100
+            case x if x[-1:] == "h":
+                R = 2700
+            case x if x[-1:] == "m":
+                R = 1000
+            case _:
+                R = len(lam)
+        z = so["z"]
+        vl = velscale_s[-1] if velscale_s.size else None
+        galaxy, ln_lam, velscale = util.log_rebin(lam, galaxy, velscale=vl)
+        lam = np.exp(ln_lam) / (1 + z)
+        mask = np.isfinite(galaxy)
+        noise = np.full_like(galaxy, np.abs(np.nanmean(galaxy) / so["sn50"]))
+        FWHM_gal = np.full_like(galaxy, np.sqrt(lam.min() * lam.max()) / R / (1 + z))
+        velscale = np.full_like(galaxy, velscale)
 
-    match source["grat"]:
-        case "prism":
-            R = 100
-        case x if x[-1:] == "h":
-            R = 2700
-        case x if x[-1:] == "m":
-            R = 1000
-        case _:
-            R = len(lam)
-
-    galaxy, ln_lam, velscale = util.log_rebin(lam, galaxy)
-    lam = np.exp(ln_lam)
-    mask = np.isfinite(galaxy)
-
-    FWHM_gal = np.sqrt(lam.min() * lam.max()) / R
-
-    z = source["z"]
-    lam /= 1 + z
-    FWHM_gal /= 1 + z
-    galaxy = galaxy
-
-    noise = np.full_like(galaxy, np.abs(np.nanmean(galaxy) / source["sn50"]))
-
+        galaxy_s = np.concatenate([galaxy_s, galaxy])
+        lam_s = np.concatenate([lam_s, lam])
+        velscale_s = np.concatenate([velscale_s, velscale])
+        mask_s = np.concatenate([mask_s, mask])
+        noise_s = np.concatenate([noise_s, noise])
+        FWHM_gal_s = np.concatenate([FWHM_gal_s, FWHM_gal])
     sps_name = "fsps"
+    if sps_name in ["fsps", "galaxev"]:
+        w = lam_s < 7400
+        galaxy_s = galaxy_s[w]
+        lam_s = lam_s[w]
+        velscale_s = velscale_s[w]
+        mask_s = mask_s[w]
+        noise_s = noise_s[w]
+        FWHM_gal_s = FWHM_gal_s[w]
+
     ppxf_dir = Path(lib.__file__).parent
     basename = f"spectra_{sps_name}_9.0.npz"
     filename = ppxf_dir / "sps_models" / basename
     if not filename.is_file():
         url = "https://raw.githubusercontent.com/micappe/ppxf_data/main/" + basename
         request.urlretrieve(url, filename)
-    sps = lib.sps_lib(filename, velscale)
+    sps = lib.sps_lib(filename, np.mean(velscale_s))
 
     reg_dim = sps.templates.shape[1:]
     stars_templates = sps.templates.reshape(sps.templates.shape[0], -1)
@@ -71,10 +94,10 @@ def ppxf_fit(source, spectrum, silent=True, plot=False):
     gas_templates = np.array([[] for i in range(stars_templates.shape[0])])
     gas_names = np.array([])
     line_wave = np.array([])
-    for laml, fluxl in spectr.useful_sp_parts((lam, galaxy)):
+    for laml, fluxl, FWHM_gall in spectr.useful_sp_parts((lam_s, galaxy_s, FWHM_gal_s)):
         lam_range_gal = [np.min(laml), np.max(laml)]
         g_templates, g_names, l_wave = util.emission_lines(
-            sps.ln_lam_temp, lam_range_gal, FWHM_gal, tie_balmer=1
+            sps.ln_lam_temp, lam_range_gal, np.mean(FWHM_gall), tie_balmer=1
         )
         gas_templates = np.concatenate([gas_templates, g_templates], axis=1)
         gas_names = np.concatenate([gas_names, g_names])
@@ -99,17 +122,17 @@ def ppxf_fit(source, spectrum, silent=True, plot=False):
         gas_component = None
         gas_redenning = None
 
-    galaxy = np.where(np.isfinite(galaxy), galaxy, 10**5)
+    galaxy_s = np.where(np.isfinite(galaxy_s), galaxy_s, 10**5)
     pp = ppxf(
         templates,
-        galaxy,
-        noise,
-        velscale,
+        galaxy_s,
+        noise_s,
+        np.mean(velscale_s),
         starts,
         moments=moments,
         degree=-1,
         mdegree=-1,
-        lam=lam,
+        lam=lam_s,
         lam_temp=sps.lam_temp,
         reg_dim=reg_dim,
         component=component,
@@ -117,12 +140,21 @@ def ppxf_fit(source, spectrum, silent=True, plot=False):
         reddening=0,
         gas_reddening=gas_redenning,
         gas_names=gas_names,
-        mask=mask,
+        mask=mask_s,
     )
+    light_weights = pp.weights if gas_component is None else pp.weights[~gas_component]
+    light_weights = light_weights.reshape(reg_dim)
+    light_weights /= light_weights.sum()
+    sps.mean_age_metal(light_weights)
+    sps.mass_to_light(light_weights)
     if plot:
         plt.figure(figsize=(15, 5))
         pp.plot()
         plt.title(f"pPXF fit with {sps_name} SPS templates")
+        plt.figure(figsize=(10, 3))
+        sps.plot(light_weights)
+        plt.title("Light Fraction")
+        plt.tight_layout()
         plt.show()
     sys.stdout = old_stdout
     return pp

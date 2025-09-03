@@ -33,6 +33,22 @@ def fetch_json(path):
     return data
 
 
+def join_sources(sources, adiff=0.0003):
+    """Creates dictionary of lists joining different spectra of the same source under a unique key."""
+    snew = dict()
+    for source in sources:
+        iden = f"{source['root']}/{source['srcid']}"
+        if (s := snew.get(iden)) is not None and (
+            abs(source["ra"] - s[-1]["ra"]) < adiff
+            and abs(source["dec"] - s[-1]["dec"]) < adiff
+            and abs(source["z"] - s[-1]["z"] < 0.5)
+        ):
+            snew[iden].append(source)
+        else:
+            snew[iden] = [source]
+    return snew
+
+
 def unique(sources, adiff=0.0003):
     """Assumes that same "srcid" are assigned only to same sources within catalogs. Otherwise also checks by coordinate matching"""
     sourn = []

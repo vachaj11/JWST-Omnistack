@@ -8,6 +8,8 @@ from scipy.ndimage import gaussian_filter1d
 
 glob = dict()
 
+flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") else [l]
+
 
 def get_spectrum_fits(
     source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
@@ -130,7 +132,7 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso, prin=False, degrade=700, **kwargs):
+def resampled_spectra(sources, rang, reso, prin=False, degrade=700, z=None, **kwargs):
     spectra = []
     sourn = []
     lws = []
@@ -142,7 +144,8 @@ def resampled_spectra(sources, rang, reso, prin=False, degrade=700, **kwargs):
             sp = get_spectrum(s, **kwargs)
             t1 = time.time()
             if sp is not None:
-                sr = resample(sp, space, s["z"])
+                zv = s["z"] if z is None else z
+                sr = resample(sp, space, zv)
                 t2 = time.time()
                 spectra.append(sr)
                 sourn.append(s)
@@ -184,6 +187,19 @@ def resampled_spectra(sources, rang, reso, prin=False, degrade=700, **kwargs):
     if prin and degrade:
         print(f"Relative time spent degrading spectra: {(T2-T1)/(T1-T0):.2f}")
     return spectra, sourn
+
+
+def join_source(sources):
+    """Joins spectra of multiple sources into a single array, resolving overlaps with median stacking."""
+    rgs = flatten([s["range"] for s in sources])
+    ran = [min(rgs), max(rgs)]
+    res = int((ran[1] - ran[0]) / (ran[0] / 3000))
+    sp, sn = resampled_spectra(sources, ran, reso=res, z=0.0)
+    com = combine_spectra(sp)
+    stacc = stack(com, sn, typ="median")
+    ms = max(sources, key=lambda x: x["sn50"])
+    ms["sn50"] = min([s["sn50"] for s in sources])
+    return ms, stacc
 
 
 def wave_sp(minw, maxw, points):
@@ -345,7 +361,7 @@ def stack(sp_stack, sources, typ="median", normalise=False):
         sp_cube = np.array([spect_norm((wav, c))[1] for c in sp_cube.T]).T
     match typ:
         case "mean":
-            return (wav, np.mean(sp_cube, axis=1))
+            return (wav, np.nanmean(sp_cube, axis=1))
         case "sn":
             weights = []
             specn = []
@@ -357,8 +373,9 @@ def stack(sp_stack, sources, typ="median", normalise=False):
                 else:
                     specn.append(False)
             sp_cubn = sp_cube[:, np.array(specn)]
+            sp_cubn = np.ma.MaskedArray(sp_cubn, mask=np.isnan(sp_cubn))
             weights = np.array(weights) / np.sum(weights)
-            return (wav, np.average(sp_cubn, axis=1, weights=weights))
+            return (wav, np.ma.average(sp_cubn, axis=1, weights=weights))
         case "ha":
             weights = []
             specn = []
@@ -370,9 +387,10 @@ def stack(sp_stack, sources, typ="median", normalise=False):
                 else:
                     specn.append(False)
             sp_cubn = sp_cube[:, np.array(specn)]
+            sp_cubn = np.ma.MaskedArray(sp_cubn, mask=np.isnan(sp_cubn))
             return (wav, np.average(sp_cubn, axis=1, weights=weights))
         case "median" | _:
-            return (wav, np.median(sp_cube, axis=1))
+            return (wav, np.nanmedian(sp_cube, axis=1))
 
 
 def combine_spectra(spectra):

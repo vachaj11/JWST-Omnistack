@@ -233,8 +233,8 @@ def match_cosmos(sources):
         if f and s["z"] is not None:
             for i, r, d, z in zis:
                 if (
-                    abs(s["ra"] - r) < 0.0005
-                    and abs(s["dec"] - d) < 0.0005
+                    abs(s["ra"] - r) < 0.0003
+                    and abs(s["dec"] - d) < 0.0003
                     and abs(s["z"] - z) < 0.2
                 ):
                     s["COSMOS25_match"].append(int(i))
