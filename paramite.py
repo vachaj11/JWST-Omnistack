@@ -434,3 +434,27 @@ def calculate_fluxes(
             for i, s in enumerate(so):
                 s[nam] = vs[i]
     return sources
+
+
+def calculate_indiv_lines(sources):
+    uniq = catalog.unique(sources)
+    abun = dict()
+    values = dict()
+    for k, v in ac.Sulphur.items():
+        abun["rec_S_" + k] = v
+    for k, v in ac.Nitrogen.items():
+        abun["rec_N_" + k] = v
+    for k, v in ac.Oxygen.items():
+        abun["rec_O_" + k] = v
+    abun["direct"] = ac.abundances
+    for k, f in abun.items():
+        values[k] = ac.indiv_stat(f, uniq, calib=None)
+    skeys = list(values.keys())[:-1]
+    for i in range(len(uniq)):
+        for k in skeys:
+            uniq[i][k] = values[k][i]
+    for i in range(len(uniq)):
+        uniq[i]["rec_O_Dir"] = [[values["direct"][i]["O"]], [values["direct"][i]["O"]]]
+        uniq[i]["rec_N_Dir"] = [[values["direct"][i]["N"]], [values["direct"][i]["N"]]]
+        uniq[i]["rec_S_Dir"] = [[values["direct"][i]["S"]], [values["direct"][i]["S"]]]
+    return uniq
