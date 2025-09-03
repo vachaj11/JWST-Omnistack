@@ -87,7 +87,7 @@ def abundance_in_z(
                 if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
             ]
             cal_red = ac.red_const(indrz) if indso is None else None
-            if indiv:
+            if indiv and indrz:
                 ind, _ = ac.indiv_stat(ab, indrz, cal_red=cal_red, val=val, **kwargs)
                 x = sum(list(ind[0]), [])
                 y = sum(list(ind[1]), [])
@@ -176,7 +176,7 @@ def ratios_in_z(
                 if s.get(val) is not None and zrang[0] < s[val] < zrang[1]
             ]
             cal_red = ac.red_const(indrz) if indso is None else None
-            if indiv:
+            if indiv and indrz:
                 ind, sta = ac.indiv_stat(
                     ab, indrz, val=val, calib=False, cal_red=cal_red, **kwargs
                 )
@@ -203,10 +203,12 @@ def ratios_in_z(
                         c="gainsboro",
                         capsize=5,
                     )
+                    """
                     yrang += [
                         np.nanmin(sta[0] - sta[1][0]),
                         np.nanmax(sta[0] + sta[1][1]),
                     ]
+                    """
             v, m, st = ac.boots_stat(
                 ab, sourz, calib=False, cal_red=None, manual=manual, **kwargs
             )
@@ -279,7 +281,7 @@ def abundance_calib(
             xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
     vbins = []
     for x in xbins:
-        vs = [l[0].get(binval) for l in s]
+        vs = [l.get(binval) for l in x[0]]
         vbins.append([min(vs), max(vs)])
     if indiv:
         ibins = [
@@ -293,14 +295,17 @@ def abundance_calib(
                 if (v := s.get(binval)) is not None and vl < v < vh:
                     ibins[i][0].append(s)
         for ib in ibins:
-            cal_red = ac.red_const(ib) if indso is None else None
-            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])
+            if ib[0]:
+                cal_red = ac.red_const(ib[0]) if indso is None else None
+                ib.append(ac.indiv_stat(xmetr, ib[0], cal_red=cal_red, calib=False))
+            else:
+                ib.append([])
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
         yrang = []
         for l, sb in enumerate(xbins):
             sourz = sb[0]
-            if indiv:
+            if indiv and ibins[l][0]:
                 cal_red = ac.red_const(ibins[l][0]) if indso is None else None
                 indy, _ = ac.indiv_stat(
                     ab, ibins[l][0], calib=False, cal_red=cal_red, **kwargs
@@ -308,8 +313,8 @@ def abundance_calib(
                 indx, _ = ibins[l][1]
                 x, y = ([], [])
                 for k in range(len(indy[1])):
-                    y += indy[1][i]
-                    x += indx[1][0] * len(indy[1][i])
+                    y += indy[1][k]
+                    x += [indx[1][k][0]] * len(indy[1][k])
                 if x:
                     axs[i].plot(
                         x,
@@ -397,6 +402,10 @@ def abundance_compar(
         xbins = []
         for sb in sbins:
             xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
+    vbins = []
+    for x in xbins:
+        vs = [l.get(binval) for l in x[0]]
+        vbins.append([min(vs), max(vs)])
     if indiv:
         ibins = [
             [
@@ -409,20 +418,23 @@ def abundance_compar(
                 if (v := s.get(binval)) is not None and vl < v < vh:
                     ibins[i][0].append(s)
         for ib in ibins:
-            cal_red = ac.red_const(ib) if indso is None else None
-            ib.append(ac.indiv_stat(xmetr, ib, cal_red=cal_red, calib=False)[0])
+            if ib[0]:
+                cal_red = ac.red_const(ib[0]) if indso is None else None
+                ib.append(ac.indiv_stat(xmetr, ib[0], cal_red=cal_red, calib=False))
+            else:
+                ib.append([])
     valss = []
     for i, (nam, ab) in enumerate(abund.items()):
         for l, sb in enumerate(xbins):
             sourz = sb[0]
-            if indiv:
+            if indiv and ibins[l][0]:
                 cal_red = ac.red_const(ibins[l][0]) if indso is None else None
                 indy, _ = ac.indiv_stat(ab, ibins[l][0], cal_red=cal_red, **kwargs)
                 indx, _ = ibins[l][1]
                 x, y = ([], [])
                 for k in range(len(indy[1])):
-                    y += indy[1][i]
-                    x += indx[1][0] * len(indy[1][i])
+                    y += indy[1][k]
+                    x += [indx[1][k][0]] * len(indy[1][k])
                 if x:
                     axs[i].plot(
                         x,
@@ -589,12 +601,12 @@ def abundance_in_val_z(
                         ind, _ = ac.indiv_stat(
                             ab, isourz, cal_red=cal_red, val=val, **kwargs
                         )
-                        ind[0] = sum(list(ind[0]), [])
-                        ind[1] = sum(list(ind[1]), [])
-                        if ind[0]:
+                        x = sum(list(ind[0]), [])
+                        y = sum(list(ind[1]), [])
+                        if x:
                             axs[i].plot(
-                                ind[0],
-                                ind[1],
+                                x,
+                                y,
                                 ls="",
                                 marker=".",
                                 c=cl,
@@ -739,14 +751,14 @@ def abundance_compar_z(
             for k in range(len(valrangs)):
                 so, db = vs[k]
                 iso, idb = ivs[k]
-                if indiv:
+                if indiv and iso:
                     cal_red = ac.red_const(iso) if indso is None else None
                     indy, _ = ac.indiv_stat(ab, iso, cal_red=cal_red, **kwargs)
                     indx, _ = idb
                     x, y = ([], [])
-                    for k in range(len(indy[1])):
-                        y += indy[1][i]
-                        x += indx[1][0] * len(indy[1][i])
+                    for m in range(len(indy[1])):
+                        y += indy[1][m]
+                        x += [indx[1][m][0]] * len(indy[1][m])
                     if x:
                         axs[i].plot(
                             x,
@@ -803,13 +815,15 @@ def abundance_compar_z(
 
 if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_f.json")["sources"]
-    for s in f:
-        s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
-    ffmu = catalog.unique(ffm)
+    ffmu = catalog.fetch_json("../catalog_indiv.json")["sources"]
+    for s in f:
+        s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
+    for s in ffmu:
+        s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     """
-    abundance_in_z(#yess
+    abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Sulphur,
@@ -818,7 +832,7 @@ if __name__ == "__main__":
         save="../Plots/abund/sulphur_cal.pdf",
         indso=ffmu,
     )
-    abundance_in_z(#yess
+    abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Nitrogen,
@@ -827,7 +841,7 @@ if __name__ == "__main__":
         save="../Plots/abund/nitrogen_cal.pdf",
         indso=ffmu,
     )
-    abundance_in_z(#yess
+    abundance_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Oxygen,
@@ -837,7 +851,7 @@ if __name__ == "__main__":
         indso=ffmu,
     )
     
-    ratios_in_z(#yess
+    ratios_in_z(
         ffm,
         [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6.5], [6.5, 8], [8, 12]],
         abund=ac.Sulphur,
@@ -960,7 +974,7 @@ if __name__ == "__main__":
         #manual=True,
         indso=ffmu,
     )
-
+    
     abundance_in_z(
         ffm,
         [[i, i + 1] for i in range(6, 12)],
@@ -994,7 +1008,7 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_cal_mass.pdf",
         indso=ffmu,
     )
-
+    
     ratios_in_z(
         ffm,
         [[i, i + 1] for i in range(6, 12)],

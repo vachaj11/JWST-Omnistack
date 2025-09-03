@@ -50,9 +50,9 @@ def unique(sources, adiff=0.0003):
                 else:
                     sourn[i] = copy_params(source, s)
                 new = False
-                mn = np.log10(m) if (m := source["phot_mass"]) is not None else None
-                m = np.log10(m) if (m := s["phot_mass"]) is not None else None
-                if mn is not None and m is not None and abs(mn - m) > 0.5:
+                mn = np.log10(m) if (m := source["phot_mass"]) is not None else np.nan
+                m = np.log10(m) if (m := s["phot_mass"]) is not None else np.nan
+                if (d := abs(mn - m)) > 0.5 or not np.isfinite(d):
                     print(
                         f'Disagreeing masses for {s["srcid"]}\n {mn:.2f} and {m:.2f}.'
                     )
@@ -66,8 +66,9 @@ def unique(sources, adiff=0.0003):
 
 
 def copy_params(s_from, s_to):
+    copynam = ["phot_mass", "z"]
     for k, v in s_from.items():
-        if k[:4] == "rec_" and k not in s_to.keys():
+        if (k[:4] == "rec_" or k in copynam) and s_to.get(k) is None:
             s_to[k] = v
     return s_to
 

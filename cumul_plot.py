@@ -15,40 +15,69 @@ plt.rcParams.update(
     }
 )
 lines = {
-    0.9532: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9532\\AA}$", 0.02],
-    0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 0.01],
-    0.6585: ["$\\mathrm{N}_\\mathrm{II} \\mathrm{\\,\\, 6585\\AA}$", 0.005],
-    0.6564: ["$\\mathrm{H}_\\mathrm{\\alpha} \\mathrm{\\,\\, 6564\\AA}$", 0.025],
-    0.5008: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5008\\AA}$", 0.025],
-    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 0.01],
-    0.4686: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 4686\\AA}$", 0.005],
-    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 0.01],
-    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 0.02],
-    0.3728: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3728\\AA}$", 0.02],
-    0.1907: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1907\\AA}$", 0.02],
-    0.1883: ["$\\mathrm{Si}_\\mathrm{III} \\mathrm{\\,\\, 1883\\AA}$", 0.02],
-    0.166: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 1660\\AA}$", 0.02],
-    0.164: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 1640\\AA}$", 0.02],
-    0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 0.03],
+    0.9532: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9532\\AA}$", 4],
+    0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 2],
+    0.6585: ["$\\mathrm{N}_\\mathrm{II} \\mathrm{\\,\\, 6585\\AA}$", 1],
+    0.6564: ["$\\mathrm{H}_\\mathrm{\\alpha} \\mathrm{\\,\\, 6564\\AA}$", 5],
+    0.5008: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5008\\AA}$", 5],
+    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 2],
+    0.4686: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 4686\\AA}$", 1],
+    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 2],
+    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 4],
+    0.3728: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3728\\AA}$", 4],
+    0.1907: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1907\\AA}$", 4],
+    0.1883: ["$\\mathrm{Si}_\\mathrm{III} \\mathrm{\\,\\, 1883\\AA}$", 4],
+    0.166: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 1660\\AA}$", 4],
+    0.164: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 1640\\AA}$", 4],
+    0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 6],
+}
+core_lines = {
+    0.9531: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9531\\AA}$", 4],
+    0.9069: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9069\\AA}$", 4],
+    0.7325: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 7325\\AA}$", 4],
+    0.6725: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 6725\\AA}$", 4],
+    0.6564: ["$\\mathrm{H}_\\mathrm{\\alpha} \\mathrm{\\,\\, 6564\\AA}$", 4],
+    0.6312: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 6312\\AA}$", 4],
+    0.5755: ["$\\mathrm{N}_\\mathrm{II} \\mathrm{\\,\\, 5755\\AA}$", 4],
+    0.5007: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5007\\AA}$", 4],
+    0.4959: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4959\\AA}$", 4],
+    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 4],
+    0.4363: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4363\\AA}$", 4],
+    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 4],
+    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 4],
+    0.4073: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 4073\\AA}$", 4],
+    0.3726: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3726\\AA}$", 4],
 }
 
 lines_C = {
-    0.5007: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5007\\AA}$", 0.025],
-    0.4959: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4959\\AA}$", 0.025],
-    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 0.01],
-    0.4363: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4363\\AA}$", 0.025],
-    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 0.01],
-    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 0.02],
-    0.3869: ["$\\mathrm{Ne}_\\mathrm{III} \\mathrm{\\,\\, 3869\\AA}$", 0.02],
-    0.3727: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3727\\AA}$", 0.02],
-    0.2465: ["$\\mathrm{Fe}_\\mathrm{III} \\mathrm{\\,\\, 2465\\AA}$", 0.02],
-    0.1908: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1908\\AA}$", 0.02],
+    0.5007: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5007\\AA}$", 5],
+    0.4959: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4959\\AA}$", 5],
+    0.4862: ["$\\mathrm{H}_\\mathrm{\\beta} \\mathrm{\\,\\, 4862\\AA}$", 2],
+    0.4363: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 4363\\AA}$", 5],
+    0.4341: ["$\\mathrm{H}_\\mathrm{\\gamma} \\mathrm{\\,\\, 4341\\AA}$", 2],
+    0.4102: ["$\\mathrm{H}_\\mathrm{\\delta} \\mathrm{\\,\\, 4102\\AA}$", 4],
+    0.3869: ["$\\mathrm{Ne}_\\mathrm{III} \\mathrm{\\,\\, 3869\\AA}$", 4],
+    0.3727: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3727\\AA}$", 4],
+    0.2465: ["$\\mathrm{Fe}_\\mathrm{III} \\mathrm{\\,\\, 2465\\AA}$", 4],
+    0.1908: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1908\\AA}$", 4],
 }
 
 ratios = {
     "Sulphur": ("gold", [0, 1, 5]),
     "Nitrogen": ("grey", [1, 2, 3, 9]),
     "Oxygen": ("green", [4, 5, 9]),
+}
+
+core_ratios = {
+    "Sulphur": ("gold", [0, 3, 9], [0, 1, 3, 5]),
+    "Nitrogen": (
+        "grey",
+        [3, 4, 14],
+        [
+            4,
+        ],
+    ),
+    "Oxygen": ("green", [3, 4, 7, 9, 14], [2, 7, 8, 14]),
 }
 
 
@@ -60,7 +89,7 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
     for i, l in enumerate(lines):
         sourl = catalog.filter_zranges(
             sources,
-            [[l - lines[l][1] / narrow, l + lines[l][1] / narrow]],
+            [[l - lines[l][1] * l / narrow, l + lines[l][1] * l / narrow]],
             z_shift=True,
         )
         hist, bins, _ = catalog.value_bins(sourl, "z", bins=24, range=[0, 12])
@@ -80,11 +109,38 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
         lc.set_clim(1, hmax)
         line = axs.add_collection(lc)
     if ratios is not None:
-        for i, (nam, (c, itm)) in enumerate(ratios.items()):
+        for i, (nam, (c, itm, *itp)) in enumerate(ratios.items()):
             xs = [-0.5 * (i + 1)] * len(itm)
-            lin = axs.plot(xs, itm, c=c, mfcalt=c, marker=".", alpha=0.3, markersize=25)
+            lin = axs.plot(
+                xs,
+                itm,
+                c=c,
+                mfc=c,
+                marker=".",
+                alpha=0.3,
+                markersize=30,
+                zorder=0,
+                mew=0,
+                lw=0,
+            )
             lin[0].set_clip_on(False)
             axs.text(xs[0], -1, nam, c=c, rotation=-40, rotation_mode="anchor")
+            if itp:
+                itp = itp[0]
+                xp = [-0.5 * (i + 1)] * len(itp)
+                lin = axs.plot(
+                    xp,
+                    itp,
+                    c=c,
+                    mfc="none",
+                    marker=".",
+                    alpha=1,
+                    markersize=30,
+                    zorder=0,
+                    mew=2,
+                    lw=0,
+                )
+                lin[0].set_clip_on(False)
     axs.set_xlim(0, 12)
     axs.set_ylim(-0.5, len(lines) - 0.5)
     axs.set_yticks(tickp, labels=tickl)
@@ -125,7 +181,7 @@ def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
     for i, l in enumerate(lines):
         lin = lines[l]
         al = catalog.filter_zranges(
-            sources, [[l - lin[1] / narrow, l + lin[1] / narrow]]
+            sources, [[l - lin[1] * l / narrow, l + lin[1] * l / narrow]]
         )
         plots.histogram_in(
             al,
@@ -182,7 +238,7 @@ def plot_stacks(
     bases = ["../Data/Npy/", "../Data/Subtracted/", "../Data/Subtracted_b/"]
     for i, l in enumerate(keys):
         lin = lines[l]
-        rangs = [[l - lin[1] / narrow, l + lin[1] / narrow]]
+        rangs = [[l - lin[1] * l / narrow, l + lin[1] * l / narrow]]
         al = catalog.filter_zranges(sources, rangs)
         for b, bas in enumerate(bases):
             fits = [l] if b == 0 and fit else None
@@ -248,6 +304,7 @@ if __name__ == "__main__":
             zrang=[[7, 20]],
             fit=True,
             save=f"../Plots/linesC/spectr_prism_{i}.pdf",
+            narrow=100,
             title=f"Stack of lines in prism ({i} of 1)",
             typ=stack_type,
         )
@@ -258,7 +315,7 @@ if __name__ == "__main__":
             zrang=[[7, 20]],
             fit=True,
             save=f"../Plots/linesC/spectr_medium_{i}.pdf",
-            narrow=3,
+            narrow=700,
             title=f"Stack of lines in medium resolution ({i} of 1)",
             typ=stack_type,
         )
@@ -270,7 +327,7 @@ if __name__ == "__main__":
             zrang=[[7, 20]],
             fit = True,
             save=f"../Plots/linesC/spectr_high_{i}.pdf",
-            narrow=5,
+            narrow=2500,
             title=f"Stack of lines in high resolution ({i} of 1)",
             typ=stack_type,
         )
@@ -279,28 +336,29 @@ if __name__ == "__main__":
     for i in range(3):
         plot_stacks(
             afp,
-            lines,
+            core_lines,
             ite=i,
             save=f"../Plots/lines4/spectr_prism_{i}.pdf",
+            narrow=100,
             title=f"Stack of lines in prism ({i} of 2)",
             typ=stack_type,
         )
         plot_stacks(
             afm,
-            lines,
+            core_lines,
             ite=i,
             save=f"../Plots/lines4/spectr_medium_{i}.pdf",
-            narrow=3,
+            narrow=700,
             title=f"Stack of lines in medium resolution ({i} of 2)",
             typ=stack_type,
         )
         """
         plot_stacks(
             afh,
-            lines,
+            core_lines,
             ite=i,
             save=f"../Plots/lines4/spectr_high_{i}.pdf",
-            narrow=5,
+            narrow=2500,
             title=f"Stack of lines in high resolution ({i} of 2)",
             typ=stack_type,
         )
@@ -320,53 +378,54 @@ if __name__ == "__main__":
     
     plot_histograms(
         afp,
-        lines,
+        core_lines,
         title="Coverage of lines in prism",
         save="../Plots/lines4/hist_prism.pdf",
         ymax=3350,
+        narrow=100,
     )
     plot_histograms(
         afm,
-        lines,
+        core_lines,
         title="Coverage of lines in medium resolution",
         save="../Plots/lines4/hist_medium.pdf",
         ymax=2300,
-        narrow=3,
+        narrow=700,
     )
     """
     plot_histograms(
         afh,
-        lines,
+        core_lines,
         title="Coverage of lines in high resolution",
         save="../Plots/lines4/hist_high.pdf",
         ymax=630,
-        narrow=5,
+        narrow=2500,
     )
     """
-    
+    '''
     plot_lines(
         afp,
-        lines,
+        core_lines,
         title="Coverage of lines in prism",
         save="../Plots/lines4/lines_prism.pdf",
-        ratios=ratios,
+        narrow=100,
+        ratios=core_ratios,
     )
     plot_lines(
         afm,
-        lines,
+        core_lines,
         title="Coverage of lines in medium resolution",
         save="../Plots/lines4/lines_medium.pdf",
-        narrow=3,
-        ratios=ratios,
+        narrow=700,
+        ratios=core_ratios,
     )
     """
     plot_lines(
         afh,
-        lines,
+        core_lines,
         title="Coverage of lines in high resolution",
         save="../Plots/lines4/lines_high.pdf",
-        narrow=5,
-        ratios = ratios,
+        narrow=2500,
+        ratios = core_ratios,
     )
     """
-    '''

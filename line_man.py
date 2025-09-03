@@ -26,7 +26,7 @@ class App(QWidget):
         self.resize(700, 700)
         self.title = f"Fitting {mline}"
         self.setWindowTitle(self.title)
-        self.canv = PlotCanvas(fit, spectrum, mline, parent=self)
+        self.canv = PlotCanvas(fit, spectrum, mline, grat=grat, parent=self)
 
         layout = QVBoxLayout()
         layout.addWidget(self.canv)

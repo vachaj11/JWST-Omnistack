@@ -130,7 +130,7 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso, prin=False, degrade=False, **kwargs):
+def resampled_spectra(sources, rang, reso, prin=False, degrade=700, **kwargs):
     spectra = []
     sourn = []
     lws = []
@@ -147,7 +147,11 @@ def resampled_spectra(sources, rang, reso, prin=False, degrade=False, **kwargs):
                 spectra.append(sr)
                 sourn.append(s)
                 if degrade:
-                    lw = pixel_at(sp, np.mean(rang) * (1 + s["z"])) * 2.2 / (1 + s["z"])
+                    lw = (
+                        pixel_at(sp, np.mean(rang) * (1 + s["z"]), source=s)
+                        * 2.2
+                        / (1 + s["z"])
+                    )
                     lws.append(lw)
                 if prin:
                     print(
@@ -168,7 +172,10 @@ def resampled_spectra(sources, rang, reso, prin=False, degrade=False, **kwargs):
                 )
     T1 = time.time()
     if degrade and lws:
-        lwm = np.max(lws)
+        if type(degrade) is bool:
+            lwm = np.max(lws)
+        else:
+            lwm = np.mean(rang) / degrade
         for i, lw in enumerate(lws):
             spectra[i] = degrade_spectrum(
                 spectra[i], tpx=lwm, opx=lw, fact=1, use_astropy=False
@@ -207,9 +214,16 @@ def useful_sp_parts(spectrum):
     return spectran
 
 
-def pixel_at(spectrum, wav):
+def pixel_at(spectrum, wav, source=None):
+    mpx = {
+        "g140h": 0.00060000,
+        "g235h": 0.00100952,
+        "g395h": 0.00170476,
+    }
     wavr = np.array(spectrum[0])
     mind = np.argmin(np.abs(wavr - wav))
+    if source is not None and source.get("grat_orig") in mpx.keys():
+        return mpx[source["grat_orig"]]
     if mind + 1 < wavr.size:
         return wavr[mind + 1] - wavr[mind]
     else:
@@ -283,6 +297,8 @@ def spects_norm(spectra, frequency=True):
 def degrade_spectrum(spectrum, tpx=0.0005, opx=None, fact=2.2, use_astropy=True):
     opxo = spectrum[0][1] - spectrum[0][0]
     opx = opxo if opx is not None else opx
+    if tpx < opx:
+        return spectrum
     tstd = tpx * fact / (2 * np.sqrt(2 * np.log(2)))
     ostd = opx * fact / (2 * np.sqrt(2 * np.log(2)))
     kstd = np.sqrt(tstd**2 - ostd**2)

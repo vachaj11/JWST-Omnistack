@@ -17,7 +17,7 @@ plt.rcParams.update(
     }
 )
 
-## Universal extinction correction class. Instantiated outside functions for added speed
+## Universal extinction correction class. Instantiated outside other functions for added speed
 rc = pn.RedCorr(law="CCM89")
 
 
@@ -553,19 +553,19 @@ Names = {
 }
 core_lines = (
     ({"O2_3726A": 0.3726, "O2_3729A": 0.3729}, [0.3726, 0.3729], 7),
-    ({"S2_4069A": 0.4070, "S2_4076A": 0.4076}, [0.4070, 0.4076], 3),
-    ({"H1r_4102A": 0.4102}, [0.4102], 5),
-    ({"H1r_4341A": 0.4341}, [0.4341, 0.4364], 8),
-    ({"O3_4363A": 0.4363}, [0.4364, 0.4372], 7),
+    ({"S2_4069A": 0.4070, "S2_4076A": 0.4076}, [0.4070, 0.4076], 2.7),
+    ({"H1r_4102A": 0.4102}, [0.4102], 4),
+    ({"H1r_4341A": 0.4341}, [0.4341, 0.4364], 7),
+    ({"O3_4363A": 0.4363}, [0.4364, 0.4372], 5),
     ({"H1r_4861A": 0.4862}, [0.4862], 8),
     ({"O3_4959A": 0.4959}, [0.4959], 8),
     ({"O3_5007A": 0.5007}, [0.5007], 8),
     ({"N2_5755A": 0.5756}, [0.5756, 0.5750], 3),
-    ({"S3_6312A": 0.6313}, [0.6314], 3),
+    ({"S3_6312A": 0.6313}, [0.6302, 0.6312], 3),
     (
         {"H1r_6563A": 0.6564, "N2_6548A": 0.6548, "N2_6584A": 0.6585},
         [0.6550, 0.6564, 0.6585],
-        8,
+        6,
     ),
     ({"S2_6716A": 0.6717, "S2_6731A": 0.6732}, [0.6718, 0.6732], 7),
     ({"O2_7319A": 0.7320, "O2_7330A": 0.7331}, [0.7320, 0.7331], 8),
@@ -585,6 +585,7 @@ def fit_lines(
     dwidth=8,
     manual=False,
     indiv=True,
+    R=700,
     **kwargs,
 ):
     if not any(sources):
@@ -594,10 +595,10 @@ def fit_lines(
     if len(sources) == 1 and indiv:
         return indiv_extract(sources[0], mline, cal_red)
     grats = [s["grat"] for s in sources]
-    grat = max(set(grats), key=grats.count)
+    grat = max(set(grats), key=grats.count) if R is None else R
     rang, _ = lf.line_range(lines, grat=grat)
     sources = catalog.filter_zranges(sources, [rang])
-    spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base)
+    spectra, sourn = spectr.resampled_spectra(sources, rang, reso, base=base, degrade=R)
     if len(sourn):
         stack = spectr.combine_spectra(spectra)
         stacc = spectr.stack(stack, sourn, typ=typ)
@@ -643,37 +644,44 @@ def red_const(sources, T=12000, **kwargs):
             sources, [0.4862], {"H1r_4861A": 0.4862}, cal_red=0, **kwargs
         ).values()
     )
-    flux = {
-        6563.0: sum(
-            fit_lines(
-                sources,
-                [0.6550, 0.6564, 0.6585],
-                {"H1r_6563A": 0.6564},
-                cal_red=0,
-                **kwargs,
-            ).values()
-        )
-        / flub,
-        4340.0: sum(
-            fit_lines(
-                sources, [0.4341, 0.4364], {"H1r_4341A": 0.4341}, cal_red=0, **kwargs
-            ).values()
-        )
-        / flub,
-        4102.0: sum(
-            fit_lines(
-                sources, [0.4102], {"H1r_4102A": 0.4102}, cal_red=0, **kwargs
-            ).values()
-        )
-        / flub,
-    }
-    consts = []
-    for k in wavs:
-        if np.isfinite(flux[k]) and flux[k] > 0:
-            rc.setCorr(obs_over_theo=flux[k] / wavs[k], wave1=k, wave2=4862.0)
-            consts.append(rc.cHbeta)
-    # print("cHbeta values: " + str(consts))
-    return consts[0] if consts else 0.0
+    if flub:
+        flux = {
+            6563.0: sum(
+                fit_lines(
+                    sources,
+                    [0.6550, 0.6564, 0.6585],
+                    {"H1r_6563A": 0.6564},
+                    cal_red=0,
+                    **kwargs,
+                ).values()
+            )
+            / flub,
+            4340.0: sum(
+                fit_lines(
+                    sources,
+                    [0.4341, 0.4364],
+                    {"H1r_4341A": 0.4341},
+                    cal_red=0,
+                    **kwargs,
+                ).values()
+            )
+            / flub,
+            4102.0: sum(
+                fit_lines(
+                    sources, [0.4102], {"H1r_4102A": 0.4102}, cal_red=0, **kwargs
+                ).values()
+            )
+            / flub,
+        }
+        consts = []
+        for k in wavs:
+            if np.isfinite(flux[k]) and flux[k] > 0:
+                rc.setCorr(obs_over_theo=flux[k] / wavs[k], wave1=k, wave2=4862.0)
+                consts.append(rc.cHbeta)
+        # print("cHbeta values: " + str(consts))
+        return consts[0] if consts else 0.0
+    else:
+        return 0.0
 
 
 def redd(flux, line, sources, cal_red):

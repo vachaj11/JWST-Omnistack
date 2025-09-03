@@ -25,6 +25,9 @@ import spectr
 
 
 def ppxf_fit(source, spectrum, silent=True, plot=False):
+    """For potential later implementation of photometric fitting:
+    https://github.com/micappe/ppxf_examples/blob/main/ppxf_example_population_photometry.ipynb
+    """
     lam, galaxy = spectrum[0] * 10**4, spectrum[1]
     old_stdout = sys.stdout
     if silent:

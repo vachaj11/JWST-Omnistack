@@ -117,15 +117,18 @@ def get_closest(spectrum, line):
 
 
 def line_range(lines, grat="", dwidth=8):
-    match grat:
-        case "prism":
-            R = 100
-        case x if x[-1:] == "h":
-            R = 2700
-        case x if x[-1:] == "m":
-            R = 1000
-        case _:
-            R = len(spectrum[0])
+    if type(grat) is not str:
+        R = grat
+    else:
+        match grat:
+            case "prism":
+                R = 100
+            case x if x[-1:] == "h":
+                R = 2700
+            case x if x[-1:] == "m":
+                R = 1000
+            case _:
+                R = len(spectrum[0])
     delta = max(lines) / R / 2.35 * dwidth
     rang = [min(lines) - delta, max(lines) + delta]
     return rang, R
@@ -141,10 +144,12 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mlin
         amplitude = abs(get_closest(spectrum, line) - yav)
         if amplitude is not None:
             models.append(Gaussian1D(mean=line, stddev=std, amplitude=amplitude))
-            models[-1].stddev.max = std * 2
-            models[-1].stddev.min = std / 2
-            models[-1].mean.min = rang[0]
-            models[-1].mean.max = rang[1]
+            dev = 1.3 if grat == R else 2
+            coe = 1.5 if grat == R else 4
+            models[-1].stddev.max = std * dev
+            models[-1].stddev.min = std / dev
+            models[-1].mean.min = max(rang[0], line - std * coe)
+            models[-1].mean.max = min(rang[1], line + std * coe)
             models[-1].amplitude.min = 0
     mline = mline if mline is not None else lines[0]
     if models:
@@ -157,7 +162,7 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mlin
         if not manual:
             return fit, x, spect
         else:
-            return lm.manfit(fit, x, spect, mline, info=False)
+            return lm.manfit(fit, x, spect, mline, grat=grat, info=False)
     else:
         return None
 
