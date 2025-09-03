@@ -225,6 +225,8 @@ def plot_stacks(
     narrow=1,
     fit=False,
     typ="median",
+    ratios=None,
+    **kwargs
 ):
     fig = plt.figure()
     gs = fig.add_gridspec(3, 5, hspace=0)
@@ -243,13 +245,69 @@ def plot_stacks(
         for b, bas in enumerate(bases):
             fits = [l] if b == 0 and fit else None
             joint.plot_zstacks(
-                al, rangs, z, 300, base=bas, axis=axs[b, i], fits=fits, typ=typ
+                al,
+                rangs,
+                z,
+                300,
+                base=bas,
+                axis=axs[b, i],
+                fits=fits,
+                typ=typ,
+                **kwargs
             )
             if b != 2:
                 axs[b, i].get_legend().remove()
             else:
                 axs[b, i].get_legend().set(loc=1)
         axs[0, i].set_title(lin[0])
+    if ratios is not None:
+        for i, (nam, (c, itm, *itp)) in enumerate(ratios.items()):
+            itp = itp[0] if itp else []
+            for l, ax in enumerate(axs[0]):
+                xlim = ax.get_xlim()
+                ylim = ax.get_ylim()
+                ax.set_xlim(xlim)
+                ax.set_ylim(ylim)
+                xpos = xlim[1] - (xlim[1] - xlim[0]) * ((i + 0.5) / 10)
+                ypos = ylim[1] + (ylim[1] - ylim[0]) / 16
+                if l + ite * 5 in itm:
+                    lin = ax.plot(
+                        [xpos],
+                        [ypos],
+                        c=c,
+                        mfc=c,
+                        marker=".",
+                        alpha=0.3,
+                        markersize=30,
+                        zorder=0,
+                        mew=0,
+                        lw=0,
+                    )
+                    lin[0].set_clip_on(False)
+                if l + ite * 5 in itp:
+                    lin = ax.plot(
+                        [xpos],
+                        [ypos],
+                        c=c,
+                        mfc="none",
+                        marker=".",
+                        alpha=1,
+                        markersize=30,
+                        zorder=0,
+                        mew=2,
+                        lw=0,
+                    )
+                    lin[0].set_clip_on(False)
+            ax.text(
+                xpos - (xlim[1] - xlim[0]) / 120,
+                ypos - (ylim[1] - ylim[0]) / 12,
+                nam,
+                c=c,
+                rotation=-90,
+                rotation_mode="anchor",
+                ha="left",
+                va="center",
+            )
     axs[0, 0].set_ylabel("Flux\n ($\mu$J)")
     axs[1, 0].set_ylabel("Flux (Ppxf-subtracted)\n ($\mu$J)")
     axs[2, 0].set_ylabel("Flux (Smooth-subtracted)\n ($\mu$J)")
@@ -342,6 +400,8 @@ if __name__ == "__main__":
             narrow=100,
             title=f"Stack of lines in prism ({i} of 2)",
             typ=stack_type,
+            ratios = core_ratios,
+            cred=True,
         )
         plot_stacks(
             afm,
@@ -351,6 +411,8 @@ if __name__ == "__main__":
             narrow=700,
             title=f"Stack of lines in medium resolution ({i} of 2)",
             typ=stack_type,
+            ratios = core_ratios,
+            cred=True,
         )
         """
         plot_stacks(
@@ -361,6 +423,7 @@ if __name__ == "__main__":
             narrow=2500,
             title=f"Stack of lines in high resolution ({i} of 2)",
             typ=stack_type,
+            cred=True,
         )
         """
 
@@ -402,7 +465,6 @@ if __name__ == "__main__":
         narrow=2500,
     )
     """
-    '''
     plot_lines(
         afp,
         core_lines,
@@ -429,3 +491,4 @@ if __name__ == "__main__":
         ratios = core_ratios,
     )
     """
+    '''

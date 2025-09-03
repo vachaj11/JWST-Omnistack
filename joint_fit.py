@@ -523,7 +523,7 @@ def constr_ax(fig, n):
         n + 1,
         tuple((np.where(inds.flatten() == 0)[0] + 1)[[0, -1]]),
         visible=True,
-        aspect=100 * n,
+        # aspect=100 * n,
     )
     axc.tick_params(labelleft=False, labelbottom=False)
     return axs, axc
@@ -565,7 +565,11 @@ def abundance_in_val_z(
     cmap = mpl.cm.ScalarMappable(cmap="inferno")
     cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
     cbr = fig.colorbar(
-        cmap, location="right", label=zval_name, cax=cbar_ax, aspect=25 * n, pad=0
+        cmap,
+        location="right",
+        label=zval_name,
+        cax=cbar_ax,
+        pad=0,  # aspect=25 * n,
     )
 
     # axs, cbar_ax = constr_ax(fig, n)
@@ -701,7 +705,11 @@ def abundance_compar_z(
     cmap = mpl.cm.ScalarMappable(cmap="inferno")
     cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
     cbr = fig.colorbar(
-        cmap, location="right", label=zval_name, cax=cbar_ax, aspect=25 * n, pad=0
+        cmap,
+        location="right",
+        label=zval_name,
+        cax=cbar_ax,
+        pad=0,  # aspect=25 * n
     )
 
     yrang = []
@@ -814,10 +822,10 @@ def abundance_compar_z(
 
 
 if __name__ == "__main__":
-    f = catalog.fetch_json("../catalog_f.json")["sources"]
+    f = catalog.fetch_json("../catalog_fn.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
-    ffmu = catalog.fetch_json("../catalog_indiv.json")["sources"]
+    ffmu = catalog.fetch_json("../catalog_indivn.json")["sources"]
     for s in f:
         s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     for s in ffmu:
@@ -1039,7 +1047,7 @@ if __name__ == "__main__":
         save="../Plots/abund/oxygen_flu_mass.pdf",
         indso=ffmu,
     )
-    
+    """
     abundance_compar(
         ffm,
         xmetr=ac.S_Dir,
@@ -1073,7 +1081,7 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         indso=ffmu,
     )
-    
+    """
     abundance_calib(
         ffm,
         xmetr=ac.S_Dir,
@@ -1144,7 +1152,7 @@ if __name__ == "__main__":
         #manual=True,
         indso=ffmu,
     )
-    
+    """
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1155,7 +1163,7 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1168,7 +1176,7 @@ if __name__ == "__main__":
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1181,10 +1189,10 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
-    
+
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1195,7 +1203,7 @@ if __name__ == "__main__":
         title="Sulphur abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1208,7 +1216,7 @@ if __name__ == "__main__":
         title="Nitrogen abundance in medium resolution\n via direct method",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_dir_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1221,10 +1229,10 @@ if __name__ == "__main__":
         title="Oxygen abundance in medium resolution\n via direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_z_mass.pdf",
-        zval_name = "Redshift $z$",
+        zval_name="Redshift $z$",
         indso=ffmu,
     )
-    
+    """
     abundance_compar_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],

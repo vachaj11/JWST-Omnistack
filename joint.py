@@ -1,6 +1,6 @@
-import matplotlib
+import matplotlib as mpl
 
-matplotlib.use("qtagg")
+mpl.use("qtagg")
 
 import csv
 
@@ -11,6 +11,9 @@ import catalog
 import line_fit as lf
 import plots
 import spectr
+
+flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") else [l]
+
 
 colors = ["b", "g", "r", "c", "m", "y"]
 
@@ -82,6 +85,7 @@ def plot_zstacks(
     axis=None,
     fits=None,
     typ="median",
+    cred=False,
 ):
     """Plots stacks of sources covering specified range in separately in specified redshift bins."""
     if axis is None:
@@ -93,9 +97,13 @@ def plot_zstacks(
     ahfr = [catalog.value_range(sources, "z", r) for r in zrangs]
     print("")
     print([len(s) for s in ahfr])
+    rmap = mpl.cm.ScalarMappable(cmap="inferno")
+    rmap.set_clim((min(np.arcsinh(flatten(zrangs))), max(np.arcsinh(flatten(zrangs)))))
     for k, sours in enumerate(ahfr):
         if len(sours) != 0:
             c = colors[k % len(colors)]
+            if cred:
+                c = rmap.to_rgba(np.arcsinh(np.mean(zrangs[k])))
             stacked = []
             for i, rang in enumerate(rangs):
                 if type(resos) is list:
