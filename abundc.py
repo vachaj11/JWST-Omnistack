@@ -316,20 +316,20 @@ def O_RS32(sources, new=False, **kwargs):
     else:
         return [RS32], []
         
-def O_O3S2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3S2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_O3S2"+"_n"*new]
+def O_Rh(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_Rh"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_Rh"+"_n"*new]
     or3 = O_R3(sources, **kwargs)[0][0]
-    os2 = O_S2(sources, **kwargs)[0][0]
-    O3S2 = or3-os2
-    if np.isfinite(O3S2):
-        p = [1.997 - O3S2, -1.981]
+    or2 = O_R2(sources, **kwargs)[0][0]
+    Rh = 0.47*or2+0.88*or3
+    if np.isfinite(Rh):
+        p = [0.779 - Rh, 0.263,-0.849,-0.493]
         roots = [
             np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
         ]
-        return [O3S2], roots
+        return [Rh], roots
     else:
-        return [O3S2], []
+        return [Rh], []
 
 def SFR(O_ab, H_a, z):
     """This will only work if slit loss correction is done."""
@@ -634,19 +634,19 @@ Nitrogen = {
 }
 Sulphur = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=False)}
 Oxygen_new = {
-    "R3": lambda *args, **kwargs: O_R3(*args, **kwargs, new=True),
     "R2": lambda *args, **kwargs: O_R2(*args, **kwargs, new=True),
+    "R3": lambda *args, **kwargs: O_R3(*args, **kwargs, new=True),
     "R23": lambda *args, **kwargs: O_R23(*args, **kwargs, new=True),
     "O3O2": lambda *args, **kwargs: O_O3O2(*args, **kwargs, new=True),
+    "$\\hat{R}$": lambda *args, **kwargs: O_Rh(*args, **kwargs, new=True),
     "N2": lambda *args, **kwargs: O_N2(*args, **kwargs, new=True),
     "O3N2": lambda *args, **kwargs: O_O3N2(*args, **kwargs, new=True),
-    "O3S2": lambda *args, **kwargs: O_O3S2(*args, **kwargs, new=True),
     "S2": lambda *args, **kwargs: O_S2(*args, **kwargs, new=True),
     "O3S2": lambda *args, **kwargs: O_O3S2(*args, **kwargs, new=True),
 }
 Nitrogen_new = {
-    "N2O2": lambda *args, **kwargs: N_N2O2(*args, **kwargs, new=True),
     "N2": lambda *args, **kwargs: N_N2(*args, **kwargs, new=True),
+    "N2O2": lambda *args, **kwargs: N_N2O2(*args, **kwargs, new=True),
     "N2S2": lambda *args, **kwargs: N_N2S2(*args, **kwargs, new=True),
 }
 Sulphur_new = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=False)}
