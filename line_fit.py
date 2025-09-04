@@ -51,7 +51,7 @@ class Gaussian1D(Fittable1DModel):
     @property
     def flux(self):
         """In W/m^2"""
-        c = 3 * 10**-14
+        c = 3 * 10**-18
         return self.amplitude * self.stddev * np.sqrt(2 * np.pi) * c / self.mean**2
 
 
