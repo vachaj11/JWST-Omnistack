@@ -617,39 +617,39 @@ def O_Dir(sources, new=False, **kwargs):
 
 
 Oxygen = {
-    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=False),
-    "R3": lambda *args, **kwags: O_R3(*args, **kwargs, new=False),
-    "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=False),
-    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=False),
-    "S2": lambda *args, **kwags: O_S2(*args, **kwargs, new=False),
-    "R2": lambda *args, **kwags: O_R2(*args, **kwargs, new=False),
-    "O3O2": lambda *args, **kwags: O_O3O2(*args, **kwargs, new=False),
-    "R23": lambda *args, **kwags: O_R23(*args, **kwargs, new=False),
-    "RS32": lambda *args, **kwags: O_RS32(*args, **kwargs, new=False),
+    "N2": lambda *args, **kwargs: O_N2(*args, **kwargs, new=False),
+    "R3": lambda *args, **kwargs: O_R3(*args, **kwargs, new=False),
+    "O3N2": lambda *args, **kwargs: O_O3N2(*args, **kwargs, new=False),
+    "O3S2": lambda *args, **kwargs: O_O3S2(*args, **kwargs, new=False),
+    "S2": lambda *args, **kwargs: O_S2(*args, **kwargs, new=False),
+    "R2": lambda *args, **kwargs: O_R2(*args, **kwargs, new=False),
+    "O3O2": lambda *args, **kwargs: O_O3O2(*args, **kwargs, new=False),
+    "R23": lambda *args, **kwargs: O_R23(*args, **kwargs, new=False),
+    "RS32": lambda *args, **kwargs: O_RS32(*args, **kwargs, new=False),
 }
 Nitrogen = {
-    "N2O2": lambda *args, **kwags: N_N2O2(*args, **kwargs, new=False),
-    "N2": lambda *args, **kwags: N_N2(*args, **kwargs, new=False),
-    "N2S2": lambda *args, **kwags: N_N2S2(*args, **kwargs, new=False),
+    "N2O2": lambda *args, **kwargs: N_N2O2(*args, **kwargs, new=False),
+    "N2": lambda *args, **kwargs: N_N2(*args, **kwargs, new=False),
+    "N2S2": lambda *args, **kwargs: N_N2S2(*args, **kwargs, new=False),
 }
-Sulphur = {"S23": lambda *args, **kwags: S_S23(*args, **kwargs, new=False)}
+Sulphur = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=False)}
 Oxygen_new = {
-    "R3": lambda *args, **kwags: O_R3(*args, **kwargs, new=True),
-    "R2": lambda *args, **kwags: O_R2(*args, **kwargs, new=True),
-    "R23": lambda *args, **kwags: O_R23(*args, **kwargs, new=True),
-    "O3O2": lambda *args, **kwags: O_O3O2(*args, **kwargs, new=True),
-    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=True),
-    "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=True),
-    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=True),
-    "S2": lambda *args, **kwags: O_S2(*args, **kwargs, new=True),
-    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=True),
+    "R3": lambda *args, **kwargs: O_R3(*args, **kwargs, new=True),
+    "R2": lambda *args, **kwargs: O_R2(*args, **kwargs, new=True),
+    "R23": lambda *args, **kwargs: O_R23(*args, **kwargs, new=True),
+    "O3O2": lambda *args, **kwargs: O_O3O2(*args, **kwargs, new=True),
+    "N2": lambda *args, **kwargs: O_N2(*args, **kwargs, new=True),
+    "O3N2": lambda *args, **kwargs: O_O3N2(*args, **kwargs, new=True),
+    "O3S2": lambda *args, **kwargs: O_O3S2(*args, **kwargs, new=True),
+    "S2": lambda *args, **kwargs: O_S2(*args, **kwargs, new=True),
+    "O3S2": lambda *args, **kwargs: O_O3S2(*args, **kwargs, new=True),
 }
 Nitrogen_new = {
-    "N2O2": lambda *args, **kwags: N_N2O2(*args, **kwargs, new=True),
-    "N2": lambda *args, **kwags: N_N2(*args, **kwargs, new=True),
-    "N2S2": lambda *args, **kwags: N_N2S2(*args, **kwargs, new=True),
+    "N2O2": lambda *args, **kwargs: N_N2O2(*args, **kwargs, new=True),
+    "N2": lambda *args, **kwargs: N_N2(*args, **kwargs, new=True),
+    "N2S2": lambda *args, **kwargs: N_N2S2(*args, **kwargs, new=True),
 }
-Sulphur_new = {"S23": lambda *args, **kwags: S_S23(*args, **kwargs, new=False)}
+Sulphur_new = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=False)}
 Names = {
     "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
     "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
