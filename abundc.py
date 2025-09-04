@@ -299,31 +299,37 @@ def O_R23(sources, new=True, **kwargs):
         return [R23], []
 
 
-def O_RS32(sources, new=True, **kwargs):
+def O_RS32(sources, new=False, **kwargs):
     if len(sources) == 1 and "rec_O_RS32"+"_n"*new in sources[0].keys():
         return sources[0]["rec_O_RS32"+"_n"*new]
     or3 = O_R3(sources, **kwargs)[0][0]
     os2 = O_S2(sources, **kwargs)[0][0]
-
-    if np.isfinite(or3+os2):
-        if new:
-            RS32 = or3-os2
-            p = [1.997 - RS32, -1.981]
-            roots = [
-                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
-            ]
-            return [RS32], roots
-        else:
-            RS32 = np.log10(
-                10 ** (or3) + 10 ** (os2)
-            )
-            p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
-            roots = [
-                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-            ]
-            return [RS32], roots
+    RS32 = np.log10(
+        10 ** (or3) + 10 ** (os2)
+    )
+    if np.isfinite(RS32):
+        p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
+        roots = [
+            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+        ]
+        return [RS32], roots
     else:
         return [RS32], []
+        
+def O_O3S2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_O3S2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_O3S2"+"_n"*new]
+    or3 = O_R3(sources, **kwargs)[0][0]
+    os2 = O_S2(sources, **kwargs)[0][0]
+    O3S2 = or3-os2
+    if np.isfinite(O3S2):
+        p = [1.997 - O3S2, -1.981]
+        roots = [
+            np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
+        ]
+        return [O3S2], roots
+    else:
+        return [O3S2], []
 
 def SFR(O_ab, H_a, z):
     """This will only work if slit loss correction is done."""
@@ -611,32 +617,50 @@ def O_Dir(sources, new=False, **kwargs):
 
 
 Oxygen = {
-    "N2": O_N2,
-    "R3": O_R3,
-    "O3N2": O_O3N2,
-    "O3S2": O_O3S2,
-    "S2": O_S2,
-    "R2": O_R2,
-    "O3O2": O_O3O2,
-    "R23": O_R23,
-    "RS32": O_RS32,
+    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=False)
+    "R3": lambda *args, **kwags: O_R3(*args, **kwargs, new=False),
+    "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=False),
+    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=False),
+    "S2": lambda *args, **kwags: O_S2(*args, **kwargs, new=False),
+    "R2": lambda *args, **kwags: O_R2(*args, **kwargs, new=False),
+    "O3O2": lambda *args, **kwags: O_O3O2(*args, **kwargs, new=False),
+    "R23": lambda *args, **kwags: O_R23(*args, **kwargs, new=False),
+    "RS32": lambda *args, **kwags: O_RS32(*args, **kwargs, new=False),
 }
 Nitrogen = {
-    "N2O2": N_N2O2,
-    "N2": N_N2,
-    "N2S2": N_N2S2,
+    "N2O2": lambda *args, **kwags: N_N2O2(*args, **kwargs, new=False),
+    "N2": lambda *args, **kwags: N_N2(*args, **kwargs, new=False),
+    "N2S2": lambda *args, **kwags: N_N2S2(*args, **kwargs, new=False),
 }
-Sulphur = {"S23": S_S23}
+Sulphur = {"S23": lambda *args, **kwags: S_S23(*args, **kwargs, new=False)}
+Oxygen_new = {
+    "R3": lambda *args, **kwags: O_R3(*args, **kwargs, new=True),
+    "R2": lambda *args, **kwags: O_R2(*args, **kwargs, new=True),
+    "R23": lambda *args, **kwags: O_R23(*args, **kwargs, new=True),
+    "O3O2": lambda *args, **kwags: O_O3O2(*args, **kwargs, new=True),
+    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=True)
+    "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=True),
+    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=True),
+    "S2": lambda *args, **kwags: O_S2(*args, **kwargs, new=True),
+    "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=True),
+}
+Nitrogen_new = {
+    "N2O2": lambda *args, **kwags: N_N2O2(*args, **kwargs, new=True),
+    "N2": lambda *args, **kwags: N_N2(*args, **kwargs, new=True),
+    "N2S2": lambda *args, **kwags: N_N2S2(*args, **kwargs, new=True),
+}
+Sulphur_new = {"S23": lambda *args, **kwags: S_S23(*args, **kwargs, new=False)}
 Names = {
     "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
     "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
-    "O3N2": "$\\mathrm{R}3-\\mathrm{N}2$",
-    "O3S2": "$\\mathrm{R}3-\\mathrm{S}2$",
+    "O3N2": "$\\mathrm{R}3-\\mathrm{N2}$",
+    "O3S2": "$\\mathrm{R}3-\\mathrm{S2}$",
     "S2": "$\\mathrm{log}([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731/\\mathrm{H}_\\alpha)$",
     "R2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{II}]\\lambda 3727/\\mathrm{H}_\\beta)$",
     "O3O2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
     "R23": "$\\mathrm{log}(([\\mathrm{O}_\\mathrm{II}]\\lambda 3727+[\\mathrm{O}_\\mathrm{III}]\\lambda 5007)/\\mathrm{H}_\\beta)$",
     "RS32": "$\\mathrm{log}(10^\\mathrm{R3}+10^\\mathrm{S2})$",
+    "O3S2": "$\\mathrm{R3}-\\mathrm{S2}$",
     "N2O2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
     "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{H}_\\alpha)$",
     "N2S2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731)$",

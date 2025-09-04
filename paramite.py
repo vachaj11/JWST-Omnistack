@@ -440,16 +440,20 @@ def calculate_indiv_lines(sources, new=True, direct=True):
     uniq = catalog.unique(sources)
     abun = dict()
     values = dict()
-    for k, v in ac.Sulphur.items():
+    if new:
+        sul, nit, oxy = ac.Sulphur_new, ac.Nitrogen_new, ac.Oxygen_new
+    else:
+        sul, nit, oxy = ac.Sulphur, ac.Nitrogen, ac.Oxygen
+    for k, v in sul.items():
         abun["rec_S_" + k+"_n"*new] = v
-    for k, v in ac.Nitrogen.items():
+    for k, v in nit.items():
         abun["rec_N_" + k+"_n"*new] = v
-    for k, v in ac.Oxygen.items():
+    for k, v in oxy.items():
         abun["rec_O_" + k+"_n"*new] = v
     if direct:
         abun["direct"] = ac.abundances
     for k, f in abun.items():
-        values[k] = ac.indiv_stat(f, uniq, calib=None, new=new)
+        values[k] = ac.indiv_stat(f, uniq, calib=None)
     skeys = list(values.keys())[:-1]
     for i in range(len(uniq)):
         for k in skeys:
