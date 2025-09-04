@@ -132,7 +132,7 @@ def remove_nan(spectrum):
     return np.array([np.array(wavn), np.array(fluxn)])
 
 
-def resampled_spectra(sources, rang, reso, prin=False, degrade=700, z=None, **kwargs):
+def resampled_spectra(sources, rang, reso, prin=False, degrade=850, z=None, **kwargs):
     spectra = []
     sourn = []
     lws = []

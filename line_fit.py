@@ -144,7 +144,7 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mlin
         amplitude = abs(get_closest(spectrum, line) - yav)
         if amplitude is not None:
             models.append(Gaussian1D(mean=line, stddev=std, amplitude=amplitude))
-            dev = 1.3 if grat == R else 2
+            dev = 1.4 if grat == R else 2
             coe = 1.5 if grat == R else 4
             models[-1].stddev.max = std * dev
             models[-1].stddev.min = std / dev

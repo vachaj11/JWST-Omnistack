@@ -585,7 +585,7 @@ def fit_lines(
     dwidth=8,
     manual=False,
     indiv=True,
-    R=700,
+    R=850,
     **kwargs,
 ):
     if not any(sources):
@@ -721,7 +721,7 @@ def bprocess(funct, srs, ind, vis, **kwargs):
         vis.append(vi)
 
 
-def boots_stat(funct, sources, ite=100, calib=True, manual=False, **kwargs):
+def boots_stat(funct, sources, ite=200, calib=True, manual=False, **kwargs):
     ind = 1 if calib else 0
     vs = np.flip(funct(sources, manual=manual, indiv=False, **kwargs)[ind])
     vals = np.full((ite, len(vs)), np.nan)
