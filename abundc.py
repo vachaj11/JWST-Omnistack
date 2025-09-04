@@ -4,6 +4,7 @@ from multiprocessing import Manager, Process, cpu_count
 import matplotlib.pyplot as plt
 import numpy as np
 import pyneb as pn
+from astropy.cosmology import LambdaCDM
 
 import catalog
 import line_fit as lf
@@ -17,13 +18,21 @@ plt.rcParams.update(
     }
 )
 
+# cosmological parameters from Planck 2018
+H0 = 67.49
+Om0 = 0.315
+Od0 = 0.6847
+
+# astropy cosmology
+cosm = LambdaCDM(H0, Om0, Od0)
+
 ## Universal extinction correction class. Instantiated outside other functions for added speed
 rc = pn.RedCorr(law="CCM89")
 
 
-def S_S23(sources, **kwargs):
-    if len(sources) == 1 and "rec_S_S23" in sources[0].keys():
-        return sources[0]["rec_S_S23"]
+def S_S23(sources, new=False, **kwargs):
+    if len(sources) == 1 and "rec_S_S23"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_S_S23"+"_n"*new]
     fsii = fit_lines(
         sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
     )
@@ -40,9 +49,9 @@ def S_S23(sources, **kwargs):
         return [S23], []
 
 
-def N_N2O2(sources, **kwargs):
-    if len(sources) == 1 and "rec_N_N2O2" in sources[0].keys():
-        return sources[0]["rec_N_N2O2"]
+def N_N2O2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_N_N2O2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_N_N2O2"+"_n"*new]
     fnii = fit_lines(sources, [0.6550, 0.6564, 0.6585], {"N2_6584A": 0.6585}, **kwargs)
     fnii = sum(fnii.values())
     foii = fit_lines(
@@ -51,14 +60,17 @@ def N_N2O2(sources, **kwargs):
     foii = sum(foii.values())
     N2O2 = np.log10(fnii / foii)
     if np.isfinite(N2O2):
-        return [N2O2], [0.52 * N2O2 - 0.65]
+        if new:
+            return [N2O2], [0.69 * N2O2 - 0.65]
+        else:
+            return [N2O2], [0.52 * N2O2 - 0.65]
     else:
         return [N2O2], []
 
 
-def N_N2(sources, **kwargs):
-    if len(sources) == 1 and "rec_N_N2" in sources[0].keys():
-        return sources[0]["rec_N_N2"]
+def N_N2(sources, new=False, **kwargs):
+    if len(sources) == 1 and "rec_N_N2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_N_N2"+"_n"*new]
     ff = fit_lines(
         sources,
         [0.6550, 0.6564, 0.6585],
@@ -74,19 +86,22 @@ def N_N2(sources, **kwargs):
         return [N2], []
 
 
-def N_N2S2(sources, **kwargs):
-    if len(sources) == 1 and "rec_N_N2S2" in sources[0].keys():
-        return sources[0]["rec_N_N2S2"]
+def N_N2S2(sources, new = True, **kwargs):
+    if len(sources) == 1 and "rec_N_N2S2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_N_N2S2"+"_n"*new]
     N2S2 = O_N2(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(N2S2):
-        return [N2S2], [0.85 * N2S2 - 1.00]
+        if new:
+            return [N2S2], [1.12 * N2S2 - 0.93]
+        else:
+            return [N2S2], [0.85 * N2S2 - 1.00]
     else:
         return [N2S2], []
 
 
-def O_N2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_N2" in sources[0].keys():
-        return sources[0]["rec_O_N2"]
+def O_N2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_N2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_N2"+"_n"*new]
     ff = fit_lines(
         sources,
         [0.6550, 0.6564, 0.6585],
@@ -97,64 +112,92 @@ def O_N2(sources, **kwargs):
     fhal = ff["H1r_6563A"]
     N2 = np.log10(fnii / fhal)
     if np.isfinite(N2):
-        p = [-0.489 - N2, 1.513, -2.554, -5.293, -2.867]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [N2], roots
+        if new:
+            p = [-1.356 - N2, 1.532]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.8 < v < 8.6
+            ]
+            return [N2], roots
+        else:
+            p = [-0.489 - N2, 1.513, -2.554, -5.293, -2.867]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [N2], roots
     else:
         return [N2], []
 
 
-def O_R3(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_R3" in sources[0].keys():
-        return sources[0]["rec_O_R3"]
+def O_R3(sources, new = True, **kwargs):
+    if len(sources) == 1 and "rec_O_R3"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_R3"+"_n"*new]
     foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
     fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
     fhbe = sum(fhbe.values())
     R3 = np.log10(foiii / fhbe)
     if np.isfinite(R3):
-        p = [-0.277 - R3, -3.549, -3.593, -0.981]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [R3], roots
+        if new:
+            p = [0.852 - R3, -0.162, -1.149, -0.553]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.3 < v < 8.6
+            ]
+            return [R3], roots
+        else:
+            p = [-0.277 - R3, -3.549, -3.593, -0.981]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [R3], roots
     else:
         return [R3], []
 
 
-def O_O3N2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_O3N2" in sources[0].keys():
-        return sources[0]["rec_O_O3N2"]
+def O_O3N2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_O3N2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_O3N2"+"_n"*new]
     O3N2 = O_R3(sources, **kwargs)[0][0] - O_N2(sources, **kwargs)[0][0]
     if np.isfinite(O3N2):
-        p = [0.281 - O3N2, -4.765, -2.268]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [O3N2], roots
+        if new:
+            p = [2.294 - O3N2, -1.411, -3.077]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.8 < v < 8.6
+            ]
+            return [O3N2], roots
+        else:
+            p = [0.281 - O3N2, -4.765, -2.268]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [O3N2], roots
     else:
         return [O3N2], []
 
 
-def O_O3S2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_O3S2" in sources[0].keys():
-        return sources[0]["rec_O_O3S2"]
+def O_O3S2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_O3S2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_O3S2"+"_n"*new]
     O3S2 = O_R3(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(O3S2):
-        p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [O3S2], roots
+        if new:
+            p = [1.997 - O3S2, -1.981]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
+            ]
+            return [O3S2], roots
+        else:
+            p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [O3S2], roots
     else:
         return [O3S2], []
 
 
-def O_S2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_S2" in sources[0].keys():
-        return sources[0]["rec_O_S2"]
+def O_S2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_S2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_S2"+"_n"*new]
     fsii = fit_lines(
         sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
     )
@@ -163,18 +206,25 @@ def O_S2(sources, **kwargs):
     fhal = sum(fhal.values())
     S2 = np.log10(fsii / fhal)
     if np.isfinite(S2):
-        p = [-0.442 - S2, -0.360, -6.271, -8.339, -3.559]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [S2], roots
+        if new:
+            p = [-1.139 - S2, 0.723]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
+            ]
+            return [S2], roots
+        else:
+            p = [-0.442 - S2, -0.360, -6.271, -8.339, -3.559]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [S2], roots
     else:
         return [S2], []
 
 
-def O_R2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_R2" in sources[0].keys():
-        return sources[0]["rec_O_R2"]
+def O_R2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_R2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_R2"+"_n"*new]
     foii = fit_lines(
         sources, [0.3726, 0.3729], {"O2_3726A": 0.3726, "O2_3729A": 0.3729}, **kwargs
     )
@@ -183,32 +233,46 @@ def O_R2(sources, **kwargs):
     fhbe = sum(fhbe.values())
     R2 = np.log10(foii / fhbe)
     if np.isfinite(R2):
-        p = [0.435 - R2, -1.362, -5.655, -4.851, -0.478, 0.736]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [R2], roots
+        if new:
+            p = [0.172 - R2, 0.954, -0.832]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.3 < v < 8.6
+            ]
+            return [R2], roots
+        else:
+            p = [0.435 - R2, -1.362, -5.655, -4.851, -0.478, 0.736]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [R2], roots
     else:
         return [R2], []
 
 
-def O_O3O2(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_O3O2" in sources[0].keys():
-        return sources[0]["rec_O_O3O2"]
+def O_O3O2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_O3O2"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_O3O2"+"_n"*new]
     O3O2 = O_R3(sources, **kwargs)[0][0] - O_R2(sources, **kwargs)[0][0]
     if np.isfinite(O3O2):
-        p = [-0.691 - O3O2, -2.944, -1.308]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [O3O2], roots
+        if new:
+            p = [0.697 - O3O2, -1.245, -0.869]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.3 < v < 8.6
+            ]
+            return [O3O2], roots
+        else:
+            p = [-0.691 - O3O2, -2.944, -1.308]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [O3O2], roots
     else:
         return [O3O2], []
 
 
-def O_R23(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_R23" in sources[0].keys():
-        return sources[0]["rec_O_R23"]
+def O_R23(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_R23"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_R23"+"_n"*new]
     foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
     foii = fit_lines(
@@ -219,30 +283,57 @@ def O_R23(sources, **kwargs):
     fhbe = sum(fhbe.values())
     R23 = np.log10((foii + foiii) / fhbe)
     if np.isfinite(R23):
-        p = [0.527 - R23, -1.569, -1.652, -0.421]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [R23], roots
+        if new:
+            p = [0.998 - R23, 0.053, -0.141, -0.493,-0.774]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.3 < v < 8.6
+            ]
+            return [R23], roots
+        else:
+            p = [0.527 - R23, -1.569, -1.652, -0.421]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [R23], roots
     else:
         return [R23], []
 
 
-def O_RS32(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_RS32" in sources[0].keys():
-        return sources[0]["rec_O_RS32"]
-    RS32 = np.log10(
-        10 ** (O_R3(sources, **kwargs)[0][0]) + 10 ** (O_S2(sources, **kwargs)[0][0])
-    )
-    if np.isfinite(RS32):
-        p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
-        roots = [
-            np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
-        ]
-        return [RS32], roots
+def O_RS32(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_RS32"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_RS32"+"_n"*new]
+    or3 = O_R3(sources, **kwargs)[0][0]
+    os2 = O_S2(sources, **kwargs)[0][0]
+
+    if np.isfinite(or3+os2):
+        if new:
+            RS32 = or3-os2
+            p = [1.997 - RS32, -1.981]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
+            ]
+            return [RS32], roots
+        else:
+            RS32 = np.log10(
+                10 ** (or3) + 10 ** (os2)
+            )
+            p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
+            roots = [
+                np.real(v) for v in np.roots(p) + 8.69 if np.isreal(v) and 7.6 < v < 8.9
+            ]
+            return [RS32], roots
     else:
         return [RS32], []
 
+def SFR(O_ab, H_a, z):
+    """This will only work if slit loss correction is done."""
+    Z = 0.014*10**(O_ab-8.69)
+    C = -40.26+0.89*np.log(Z)+0.14*np.log(Z)**2
+    dist = cosm.luminosity_distance(z).to('m').value
+    L_a = H_a*4*np.pi*dist**2*10**7
+    M_0 = 1
+    SFR = M_0*10**C*L_a
+    return SFR
 
 def tem_den(fluxec):
     diagn = dict()
@@ -501,21 +592,21 @@ def abundances(sources, cal_red=None, N_over_O=True, **kwargs):
     return abun
 
 
-def S_Dir(sources, **kwargs):
-    if len(sources) == 1 and "rec_S_Dir" in sources[0].keys():
-        return sources[0]["rec_S_Dir"]
+def S_Dir(sources, new=False, **kwargs):
+    if len(sources) == 1 and "rec_S_Dir"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_S_Dir"+"_n"*new]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
 
-def N_Dir(sources, **kwargs):
-    if len(sources) == 1 and "rec_N_Dir" in sources[0].keys():
-        return sources[0]["rec_N_Dir"]
+def N_Dir(sources, new=False, **kwargs):
+    if len(sources) == 1 and "rec_N_Dir"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_N_Dir"+"_n"*new]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
 
-def O_Dir(sources, **kwargs):
-    if len(sources) == 1 and "rec_O_Dir" in sources[0].keys():
-        return sources[0]["rec_O_Dir"]
+def O_Dir(sources, new=False, **kwargs):
+    if len(sources) == 1 and "rec_O_Dir"+"_n"*new in sources[0].keys():
+        return sources[0]["rec_O_Dir"+"_n"*new]
     return [[abundances(sources, **kwargs)["O"]]] * 2
 
 

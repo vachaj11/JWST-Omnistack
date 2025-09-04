@@ -436,25 +436,27 @@ def calculate_fluxes(
     return sources
 
 
-def calculate_indiv_lines(sources):
+def calculate_indiv_lines(sources, new=True, direct=True):
     uniq = catalog.unique(sources)
     abun = dict()
     values = dict()
     for k, v in ac.Sulphur.items():
-        abun["rec_S_" + k] = v
+        abun["rec_S_" + k+"_n"*new] = v
     for k, v in ac.Nitrogen.items():
-        abun["rec_N_" + k] = v
+        abun["rec_N_" + k+"_n"*new] = v
     for k, v in ac.Oxygen.items():
-        abun["rec_O_" + k] = v
-    abun["direct"] = ac.abundances
+        abun["rec_O_" + k+"_n"*new] = v
+    if direct:
+        abun["direct"] = ac.abundances
     for k, f in abun.items():
-        values[k] = ac.indiv_stat(f, uniq, calib=None)
+        values[k] = ac.indiv_stat(f, uniq, calib=None, new=new)
     skeys = list(values.keys())[:-1]
     for i in range(len(uniq)):
         for k in skeys:
             uniq[i][k] = values[k][i]
-    for i in range(len(uniq)):
-        uniq[i]["rec_O_Dir"] = [[values["direct"][i]["O"]], [values["direct"][i]["O"]]]
-        uniq[i]["rec_N_Dir"] = [[values["direct"][i]["N"]], [values["direct"][i]["N"]]]
-        uniq[i]["rec_S_Dir"] = [[values["direct"][i]["S"]], [values["direct"][i]["S"]]]
+    if direct:
+        for i in range(len(uniq)):
+            uniq[i]["rec_O_Dir"+"_n"*new] = [[values["direct"][i]["O"]], [values["direct"][i]["O"]]]
+            uniq[i]["rec_N_Dir"+"_n"*new] = [[values["direct"][i]["N"]], [values["direct"][i]["N"]]]
+            uniq[i]["rec_S_Dir"+"_n"*new] = [[values["direct"][i]["S"]], [values["direct"][i]["S"]]]
     return uniq
