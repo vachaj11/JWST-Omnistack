@@ -617,7 +617,7 @@ def O_Dir(sources, new=False, **kwargs):
 
 
 Oxygen = {
-    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=False)
+    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=False),
     "R3": lambda *args, **kwags: O_R3(*args, **kwargs, new=False),
     "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=False),
     "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=False),
@@ -638,7 +638,7 @@ Oxygen_new = {
     "R2": lambda *args, **kwags: O_R2(*args, **kwargs, new=True),
     "R23": lambda *args, **kwags: O_R23(*args, **kwargs, new=True),
     "O3O2": lambda *args, **kwags: O_O3O2(*args, **kwargs, new=True),
-    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=True)
+    "N2": lambda *args, **kwags: O_N2(*args, **kwargs, new=True),
     "O3N2": lambda *args, **kwags: O_O3N2(*args, **kwargs, new=True),
     "O3S2": lambda *args, **kwags: O_O3S2(*args, **kwargs, new=True),
     "S2": lambda *args, **kwags: O_S2(*args, **kwargs, new=True),
