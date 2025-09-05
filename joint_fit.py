@@ -545,6 +545,7 @@ def abundance_in_val_z(
     indso=None,
     lim=None,
     manual=False,
+    hsh=False,
     **kwargs,
 ):
     val_name = val_name if val_name is not None else val
@@ -604,7 +605,7 @@ def abundance_in_val_z(
                     cal_red = ac.red_const(isourz) if indso is None else None
                     if indiv:
                         ind, _ = ac.indiv_stat(
-                            ab, isourz, cal_red=cal_red, val=val, **kwargs
+                            ab, isourz, cal_red=cal_red, val=val, hsh=False, **kwargs
                         )
                         x = sum(list(ind[0]), [])
                         y = sum(list(ind[1]), [])
@@ -621,7 +622,7 @@ def abundance_in_val_z(
                 if not sourz:
                     continue
                 v, m, st = ac.boots_stat(
-                    ab, sourz, cal_red=None, manual=manual, **kwargs
+                    ab, sourz, cal_red=None, manual=manual, hsh=hsh, **kwargs
                 )
                 if v.size:
                     vmean = [(vrang[1] + vrang[0]) / 2] * len(v)
@@ -630,7 +631,9 @@ def abundance_in_val_z(
                     axs[i].errorbar(
                         vmean, v, xerr=verr, ls="", c=cl, capsize=5, alpha=0.3
                     )
-                    axs[i].errorbar(vmean, m, yerr=st, ls="", c=cl, capsize=5, alpha=0.5)
+                    axs[i].errorbar(
+                        vmean, m, yerr=st, ls="", c=cl, capsize=5, alpha=0.5
+                    )
                     yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                     valss.append([vmean[0]] + list(m))
             if valss:
@@ -739,7 +742,12 @@ def abundance_compar_z(
                 if s.get(val) is not None and vrang[0] < s[val] < vrang[1]
             ]
             if sourz:
-                vs.append((sourz, ac.boots_stat(xmetr, sourz, manual=manual, **kwargs)))
+                vs.append(
+                    (
+                        sourz,
+                        ac.boots_stat(xmetr, sourz, manual=manual, hsh=True, **kwargs),
+                    )
+                )
             else:
                 vs.append((sourz, None))
             isourz = [
@@ -788,7 +796,9 @@ def abundance_compar_z(
                     zm = [db[1][0]] * len(v)
                     zerr = [[db[2][0][0]] * len(v), [db[2][1][0]] * len(v)]
                     axs[i].plot(zv, v, ls="", marker="D", c=cl)
-                    axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=5, alpha=0.5)
+                    axs[i].errorbar(
+                        zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=5, alpha=0.5
+                    )
                     yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                     xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
                     valss.append([zm[0]] + list(m))
@@ -828,7 +838,7 @@ if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_fn.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
-    ffmu = catalog.fetch_json("../catalog_indivn.json")["sources"]
+    ffmu = catalog.fetch_json("../catalog_indiv2.json")["sources"]
     for s in f:
         s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     for s in ffmu:
@@ -1155,19 +1165,19 @@ if __name__ == "__main__":
         #manual=True,
         indso=ffmu,
     )
-    """
+    
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
         [[i, i + 1] for i in range(6, 12)],
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
-        abund=ac.Sulphur,
+        abund=ac.Sulphur_new,
         title="Sulphur abundance in medium resolution\n via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        save="../Plots/abund/sulphur_cal_z_mass.pdf",
+        save="../Plots/abund/sulphur_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim=[5.6,7.5],
+        lim=[5.55,7.65],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1176,12 +1186,12 @@ if __name__ == "__main__":
         [[i, i + 1] for i in range(6, 12)],
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
-        abund=ac.Nitrogen,
+        abund=ac.Nitrogen_new,
         title="Nitrogen abundance in medium resolution\n via different calibrations",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        save="../Plots/abund/nitrogen_cal_z_mass.pdf",
+        save="../Plots/abund/nitrogen_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim = [-2.1,0],
+        lim = [-2.2,0.1],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1190,12 +1200,12 @@ if __name__ == "__main__":
         [[i, i + 1] for i in range(6, 12)],
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
-        abund=ac.Oxygen,
+        abund=ac.Oxygen_new,
         title="Oxygen abundance in medium resolution via different calibrations",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        save="../Plots/abund/oxygen_cal_z_mass.pdf",
+        save="../Plots/abund/oxygen_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim = [7.4,8.55],
+        lim = [7.25,8.65],
         indso=ffmu,
     )
     
@@ -1210,8 +1220,9 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim=[5.6,7.5],
+        lim=[5.55,7.65],
         indso=ffmu,
+        hsh=True,
     )
     abundance_in_val_z(
         ffm,
@@ -1224,8 +1235,9 @@ if __name__ == "__main__":
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim = [-2.1,0],
+        lim = [-2.2,0.1],
         indso=ffmu,
+        hsh=True,
     )
     abundance_in_val_z(
         ffm,
@@ -1238,10 +1250,11 @@ if __name__ == "__main__":
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim = [7.4,8.55],
+        lim = [7.25,8.65],
         indso=ffmu,
+        hsh=True,
     )
-    
+    """
     abundance_compar_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1249,12 +1262,12 @@ if __name__ == "__main__":
         val="_pmass",
         zval="z",
         xmetr=ac.S_Dir,
-        abund=ac.Sulphur,
-        save="../Plots/abund/sulphur_com_z_mass.pdf",
+        abund=ac.Sulphur_new,
+        save="../Plots/abund/sulphur_com_z_mass_new.pdf",
         title="Sulphur abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
-        zval_name = "Redshift $z$",
-        lim=[5.7,7.3],
+        zval_name="Redshift $z$",
+        lim=[5.55, 7.65],
         indso=ffmu,
     )
     abundance_compar_z(
@@ -1264,12 +1277,12 @@ if __name__ == "__main__":
         val="_pmass",
         zval="z",
         xmetr=ac.N_Dir,
-        abund=ac.Nitrogen,
-        save="../Plots/abund/nitrogen_com_z_mass.pdf",
+        abund=ac.Nitrogen_new,
+        save="../Plots/abund/nitrogen_com_z_mass_new.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
         yax="\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
-        zval_name = "Redshift $z$",
-        lim = [-2.1,0],
+        zval_name="Redshift $z$",
+        lim=[-2.2, 0.1],
         indso=ffmu,
     )
     abundance_compar_z(
@@ -1279,12 +1292,11 @@ if __name__ == "__main__":
         val="_pmass",
         zval="z",
         xmetr=ac.O_Dir,
-        abund=ac.Oxygen,
-        save="../Plots/abund/oxygen_com_z_mass.pdf",
+        abund=ac.Oxygen_new,
+        save="../Plots/abund/oxygen_com_z_mass_new.pdf",
         title="Oxygen abundance in medium resolution\n via direct method and strong lines",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
-        zval_name = "Redshift $z$",
-        lim = [7.4,8.55],
+        zval_name="Redshift $z$",
+        lim=[7.25, 8.65],
         indso=ffmu,
     )
-    

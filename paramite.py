@@ -445,22 +445,31 @@ def calculate_indiv_lines(sources, new=True, direct=True):
     else:
         sul, nit, oxy = ac.Sulphur, ac.Nitrogen, ac.Oxygen
     for k, v in sul.items():
-        abun["rec_S_" + k+"_n"*new] = v
+        abun["rec_S_" + k + "_n" * new] = v
     for k, v in nit.items():
-        abun["rec_N_" + k+"_n"*new] = v
+        abun["rec_N_" + k + "_n" * new] = v
     for k, v in oxy.items():
-        abun["rec_O_" + k+"_n"*new] = v
+        abun["rec_O_" + k + "_n" * new] = v
     if direct:
         abun["direct"] = ac.abundances
     for k, f in abun.items():
         values[k] = ac.indiv_stat(f, uniq, calib=None)
-    skeys = list(values.keys())[:-1]
+    skeys = list(values.keys())[:-1] if direct else values.keys()
     for i in range(len(uniq)):
         for k in skeys:
             uniq[i][k] = values[k][i]
     if direct:
         for i in range(len(uniq)):
-            uniq[i]["rec_O_Dir"+"_n"*new] = [[values["direct"][i]["O"]], [values["direct"][i]["O"]]]
-            uniq[i]["rec_N_Dir"+"_n"*new] = [[values["direct"][i]["N"]], [values["direct"][i]["N"]]]
-            uniq[i]["rec_S_Dir"+"_n"*new] = [[values["direct"][i]["S"]], [values["direct"][i]["S"]]]
+            uniq[i]["rec_O_Dir" + "_n" * new] = [
+                [values["direct"][i]["O"]],
+                [values["direct"][i]["O"]],
+            ]
+            uniq[i]["rec_N_Dir" + "_n" * new] = [
+                [values["direct"][i]["N"]],
+                [values["direct"][i]["N"]],
+            ]
+            uniq[i]["rec_S_Dir" + "_n" * new] = [
+                [values["direct"][i]["S"]],
+                [values["direct"][i]["S"]],
+            ]
     return uniq

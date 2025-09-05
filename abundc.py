@@ -1,4 +1,5 @@
 import time
+from hashlib import sha1
 from multiprocessing import Manager, Process, cpu_count
 
 import matplotlib.pyplot as plt
@@ -18,6 +19,9 @@ plt.rcParams.update(
     }
 )
 
+# global object storing calculated results so that they are not recalculated later
+glob_hash = dict()
+
 # cosmological parameters from Planck 2018
 H0 = 67.49
 Om0 = 0.315
@@ -26,13 +30,13 @@ Od0 = 0.6847
 # astropy cosmology
 cosm = LambdaCDM(H0, Om0, Od0)
 
-## Universal extinction correction class. Instantiated outside other functions for added speed
+# Universal extinction correction class. Instantiated outside other functions for added speed
 rc = pn.RedCorr(law="CCM89")
 
 
 def S_S23(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_S_S23"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_S_S23"+"_n"*new]
+    if len(sources) == 1 and "rec_S_S23" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_S_S23" + "_n" * new]
     fsii = fit_lines(
         sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
     )
@@ -50,8 +54,8 @@ def S_S23(sources, new=False, **kwargs):
 
 
 def N_N2O2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_N_N2O2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_N_N2O2"+"_n"*new]
+    if len(sources) == 1 and "rec_N_N2O2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_N_N2O2" + "_n" * new]
     fnii = fit_lines(sources, [0.6550, 0.6564, 0.6585], {"N2_6584A": 0.6585}, **kwargs)
     fnii = sum(fnii.values())
     foii = fit_lines(
@@ -69,8 +73,8 @@ def N_N2O2(sources, new=True, **kwargs):
 
 
 def N_N2(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_N_N2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_N_N2"+"_n"*new]
+    if len(sources) == 1 and "rec_N_N2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_N_N2" + "_n" * new]
     ff = fit_lines(
         sources,
         [0.6550, 0.6564, 0.6585],
@@ -86,9 +90,9 @@ def N_N2(sources, new=False, **kwargs):
         return [N2], []
 
 
-def N_N2S2(sources, new = True, **kwargs):
-    if len(sources) == 1 and "rec_N_N2S2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_N_N2S2"+"_n"*new]
+def N_N2S2(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_N_N2S2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_N_N2S2" + "_n" * new]
     N2S2 = O_N2(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(N2S2):
         if new:
@@ -100,8 +104,8 @@ def N_N2S2(sources, new = True, **kwargs):
 
 
 def O_N2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_N2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_N2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_N2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_N2" + "_n" * new]
     ff = fit_lines(
         sources,
         [0.6550, 0.6564, 0.6585],
@@ -128,9 +132,9 @@ def O_N2(sources, new=True, **kwargs):
         return [N2], []
 
 
-def O_R3(sources, new = True, **kwargs):
-    if len(sources) == 1 and "rec_O_R3"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_R3"+"_n"*new]
+def O_R3(sources, new=True, **kwargs):
+    if len(sources) == 1 and "rec_O_R3" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_R3" + "_n" * new]
     foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
     fhbe = fit_lines(sources, [0.4862], {"H1r_4861A": 0.4862}, **kwargs)
@@ -154,8 +158,8 @@ def O_R3(sources, new = True, **kwargs):
 
 
 def O_O3N2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3N2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_O3N2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_O3N2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_O3N2" + "_n" * new]
     O3N2 = O_R3(sources, **kwargs)[0][0] - O_N2(sources, **kwargs)[0][0]
     if np.isfinite(O3N2):
         if new:
@@ -175,8 +179,8 @@ def O_O3N2(sources, new=True, **kwargs):
 
 
 def O_O3S2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3S2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_O3S2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_O3S2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_O3S2" + "_n" * new]
     O3S2 = O_R3(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
     if np.isfinite(O3S2):
         if new:
@@ -196,8 +200,8 @@ def O_O3S2(sources, new=True, **kwargs):
 
 
 def O_S2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_S2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_S2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_S2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_S2" + "_n" * new]
     fsii = fit_lines(
         sources, [0.6718, 0.6732], {"S2_6716A": 0.6717, "S2_6731A": 0.6732}, **kwargs
     )
@@ -223,8 +227,8 @@ def O_S2(sources, new=True, **kwargs):
 
 
 def O_R2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_R2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_R2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_R2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_R2" + "_n" * new]
     foii = fit_lines(
         sources, [0.3726, 0.3729], {"O2_3726A": 0.3726, "O2_3729A": 0.3729}, **kwargs
     )
@@ -250,8 +254,8 @@ def O_R2(sources, new=True, **kwargs):
 
 
 def O_O3O2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3O2"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_O3O2"+"_n"*new]
+    if len(sources) == 1 and "rec_O_O3O2" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_O3O2" + "_n" * new]
     O3O2 = O_R3(sources, **kwargs)[0][0] - O_R2(sources, **kwargs)[0][0]
     if np.isfinite(O3O2):
         if new:
@@ -271,8 +275,8 @@ def O_O3O2(sources, new=True, **kwargs):
 
 
 def O_R23(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_R23"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_R23"+"_n"*new]
+    if len(sources) == 1 and "rec_O_R23" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_R23" + "_n" * new]
     foiii = fit_lines(sources, [0.5007], {"O3_5007A": 0.5007}, **kwargs)
     foiii = sum(foiii.values())
     foii = fit_lines(
@@ -284,7 +288,7 @@ def O_R23(sources, new=True, **kwargs):
     R23 = np.log10((foii + foiii) / fhbe)
     if np.isfinite(R23):
         if new:
-            p = [0.998 - R23, 0.053, -0.141, -0.493,-0.774]
+            p = [0.998 - R23, 0.053, -0.141, -0.493, -0.774]
             roots = [
                 np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.3 < v < 8.6
             ]
@@ -300,13 +304,11 @@ def O_R23(sources, new=True, **kwargs):
 
 
 def O_RS32(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_O_RS32"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_RS32"+"_n"*new]
+    if len(sources) == 1 and "rec_O_RS32" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_RS32" + "_n" * new]
     or3 = O_R3(sources, **kwargs)[0][0]
     os2 = O_S2(sources, **kwargs)[0][0]
-    RS32 = np.log10(
-        10 ** (or3) + 10 ** (os2)
-    )
+    RS32 = np.log10(10 ** (or3) + 10 ** (os2))
     if np.isfinite(RS32):
         p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
         roots = [
@@ -315,15 +317,16 @@ def O_RS32(sources, new=False, **kwargs):
         return [RS32], roots
     else:
         return [RS32], []
-        
+
+
 def O_Rh(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_Rh"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_Rh"+"_n"*new]
+    if len(sources) == 1 and "rec_O_Rh" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_Rh" + "_n" * new]
     or3 = O_R3(sources, **kwargs)[0][0]
     or2 = O_R2(sources, **kwargs)[0][0]
-    Rh = 0.47*or2+0.88*or3
+    Rh = 0.47 * or2 + 0.88 * or3
     if np.isfinite(Rh):
-        p = [0.779 - Rh, 0.263,-0.849,-0.493]
+        p = [0.779 - Rh, 0.263, -0.849, -0.493]
         roots = [
             np.real(v) for v in np.roots(p) + 8.0 if np.isreal(v) and 7.9 < v < 8.6
         ]
@@ -331,15 +334,17 @@ def O_Rh(sources, new=True, **kwargs):
     else:
         return [Rh], []
 
+
 def SFR(O_ab, H_a, z):
     """This will only work if slit loss correction is done."""
-    Z = 0.014*10**(O_ab-8.69)
-    C = -40.26+0.89*np.log(Z)+0.14*np.log(Z)**2
-    dist = cosm.luminosity_distance(z).to('m').value
-    L_a = H_a*4*np.pi*dist**2*10**7
+    Z = 0.014 * 10 ** (O_ab - 8.69)
+    C = -40.26 + 0.89 * np.log(Z) + 0.14 * np.log(Z) ** 2
+    dist = cosm.luminosity_distance(z).to("m").value
+    L_a = H_a * 4 * np.pi * dist**2 * 10**7
     M_0 = 1
-    SFR = M_0*10**C*L_a
+    SFR = M_0 * 10**C * L_a
     return SFR
+
 
 def tem_den(fluxec):
     diagn = dict()
@@ -573,7 +578,12 @@ def mark_agn(sources):
     return sources
 
 
-def abundances(sources, cal_red=None, N_over_O=True, **kwargs):
+def abundances(sources, cal_red=None, N_over_O=True, hsh=True, **kwargs):
+    hsh = hsh if len(sources) > 1 else False
+    if hsh:
+        hax = hashed(sources, "abundances", cal_red, N_over_O, **kwargs)
+        if hax in glob_hash:
+            return glob_hash[hax]
     if cal_red is None:
         cHbeta = red_const(sources)
     else:
@@ -595,24 +605,26 @@ def abundances(sources, cal_red=None, N_over_O=True, **kwargs):
     tem, den = tem_den(fluxec)
     ions = []
     abun = abunds(fluxec, tem, den, N_over_O=N_over_O)
+    if hsh:
+        glob_hash[hax] = abun
     return abun
 
 
 def S_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_S_Dir"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_S_Dir"+"_n"*new]
+    if len(sources) == 1 and "rec_S_Dir" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_S_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
 
 def N_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_N_Dir"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_N_Dir"+"_n"*new]
+    if len(sources) == 1 and "rec_N_Dir" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_N_Dir" + "_n" * new]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
 
 def O_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_O_Dir"+"_n"*new in sources[0].keys():
-        return sources[0]["rec_O_Dir"+"_n"*new]
+    if len(sources) == 1 and "rec_O_Dir" + "_n" * new in sources[0].keys():
+        return sources[0]["rec_O_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["O"]]] * 2
 
 
@@ -701,8 +713,15 @@ def fit_lines(
     manual=False,
     indiv=True,
     R=850,
+    hsh=False,
     **kwargs,
 ):
+    hsh = hsh if len(sources) > 1 else False
+    if hsh:
+        args = (lines, mline, reso, base, typ, cal_red, dwidth, R)
+        hax = hashed(sources, "fit_lines", *args, **kwargs)
+        if hax in glob_hash:
+            return glob_hash[hax]
     if not any(sources):
         return lf.flux_nan(mline)
     if cal_red is None:
@@ -723,9 +742,12 @@ def fit_lines(
         flux = lf.flux_extract(
             fit, mline, grat=grat, red=lambda f, l: redd(f, l, sources, cal_red)
         )
-        return flux
+        out = flux
     else:
-        return lf.flux_nan(mline)
+        out = lf.flux_nan(mline)
+    if hsh:
+        glob_hash[hax] = out
+    return out
 
 
 def indiv_extract(source, mline, cal_red):
@@ -809,7 +831,9 @@ def redd(flux, line, sources, cal_red):
         return flux * rc.getCorrHb(line * 10**4)
 
 
-def iprocess(funct, srs, calib, zs, vs, it, val, sind, **kwargs):
+def iprocess(funct, srs, calib, zs, vs, it, val, sind, glob, **kwargs):
+    if glob is not None:
+        glob_hash.update(glob)
     if calib is None:
         for i, sr in enumerate(srs):
             vi = funct([sr], **kwargs)
@@ -828,20 +852,34 @@ def iprocess(funct, srs, calib, zs, vs, it, val, sind, **kwargs):
             else:
                 zs[sind + i] = []
                 vs[sind + i] = []
+    if glob is not None:
+        glob.update(glob_hash)
 
 
-def bprocess(funct, srs, ind, vis, **kwargs):
+def bprocess(funct, srs, ind, vis, glob, **kwargs):
+    if glob is not None:
+        glob_hash.update(glob)
     for sr in srs:
         vi = np.flip(funct(sr, **kwargs)[ind])
         vis.append(vi)
+    if glob is not None:
+        glob.update(glob_hash)
 
 
-def boots_stat(funct, sources, ite=200, calib=True, manual=False, **kwargs):
+def boots_stat(
+    funct, sources, ite=200, calib=True, manual=False, hsh=False, seed=0, **kwargs
+):
+    if hsh:
+        hax = hashed(sources, "boots_stat", funct, ite, calib, **kwargs)
+        if hax in glob_hash:
+            return glob_hash[hax]
     ind = 1 if calib else 0
+    r = np.random.RandomState(seed)
     vs = np.flip(funct(sources, manual=manual, indiv=False, **kwargs)[ind])
     vals = np.full((ite, len(vs)), np.nan)
     manag = Manager()
     vis = manag.list()
+    glob = manag.dict(glob_hash) if hsh else None
     i = 0
     nos = 5
     proc = int(cpu_count() * 1.5)
@@ -852,10 +890,8 @@ def boots_stat(funct, sources, ite=200, calib=True, manual=False, **kwargs):
             for l in range(min(pr_no, proc - len(active))):
                 print(f"\r\033[KBootstrapping {i} out of {ite}.", end="")
                 noi = min(nos, ite - i)
-                rsourcs = [
-                    np.random.choice(sources, size=len(sources)) for l in range(noi)
-                ]
-                args = (funct, rsourcs, ind, vis)
+                rsourcs = [r.choice(sources, size=len(sources)) for l in range(noi)]
+                args = (funct, rsourcs, ind, vis, glob)
                 kwargs["indiv"] = False
                 t = Process(target=bprocess, args=args, kwargs=kwargs)
                 t.start()
@@ -866,21 +902,31 @@ def boots_stat(funct, sources, ite=200, calib=True, manual=False, **kwargs):
                 t.terminate()
                 active.remove(t)
         time.sleep(0.1)
+    if hsh:
+        glob_hash.update(glob)
     for i, vi in enumerate(vis):
         vals[i, : vi.shape[0]] = vi[: vals.shape[1]]
     vals = np.nan_to_num(vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
     medians = np.nanmedian(vals, axis=0)
     err33 = np.nanpercentile(vals, 33, axis=0)
     err67 = np.nanpercentile(vals, 67, axis=0)
-    return vs, medians, [medians - err33, err67 - medians]
+    out = vs, medians, [medians - err33, err67 - medians]
+    if hsh:
+        glob_hash[hax] = out
+    return out
 
 
-def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
+def indiv_stat(funct, sources, val="z", calib=True, hsh=False, **kwargs):
+    if hsh:
+        hax = hashed(sources, "indiv_stat", funct, calib, val, **kwargs)
+        if hax in glob_hash:
+            return glob_hash[hax]
     no = len(sources)
     manag = Manager()
     va = manag.dict()
     zs = manag.dict()
     vs = manag.dict()
+    glob = manag.dict(glob_hash) if hsh else None
     i = 0
     nos = 50
     it = manag.Value(int, 0)
@@ -892,7 +938,7 @@ def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
             for l in range(min(pr_no, proc - len(active))):
                 print(f"\r\033[KCalculating {i} out of {no} points. ", end="")
                 sr = sources[i : i + nos]
-                args = (funct, sr, calib, zs, vs, it, val, i)
+                args = (funct, sr, calib, zs, vs, it, val, i, glob)
                 t = Process(target=iprocess, args=args, kwargs=kwargs)
                 t.start()
                 active.append(t)
@@ -902,6 +948,8 @@ def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
                 t.terminate()
                 active.remove(t)
         time.sleep(0.1)
+    if hsh:
+        glob_hash.update(glob)
     vs = list(zip(*sorted(vs.items(), key=lambda x: x[0])))[1]
     zs = list(zip(*sorted(zs.items(), key=lambda x: x[0])))[1]
     if calib is not None:
@@ -917,9 +965,26 @@ def indiv_stat(funct, sources, val="z", calib=True, **kwargs):
         else:
             medians, err33, err67 = [np.array([np.nan])] * 3
         print(f"Needed {i} out of {len(sources)} for {it.value} results.")
-        return (zs, vs), (
+        out = (zs, vs), (
             medians,
             np.nan_to_num([medians - err33, err67 - medians], nan=0.0),
         )
     else:
-        return vs
+        out = vs
+    if hsh:
+        glob_hash[hax] = out
+    return out
+
+
+def hashed(sources, *args, **kwargs):
+    hsh = sha1()
+    # keys = ['srcid', 'ra', 'dec', 'root', 'file', 'grat','grat_orig', 'comment', 'comment_old']
+    keys = ["root", "file", "grat"]
+    for s in sources:
+        for k in keys:
+            hsh.update((k + repr(s.get(k))).encode())
+    for ar in args:
+        hsh.update(repr(ar).encode())
+    for i in kwargs.items():
+        hsh.update(repr(i).encode())
+    return hsh.hexdigest()
