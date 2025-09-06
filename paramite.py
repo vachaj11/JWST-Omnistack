@@ -421,7 +421,7 @@ def FIST(M, fluxes, c_ite=0.1, lam=None, t_f=None):
 
 def calculate_fluxes(
     sources,
-    tups=ac.core_lines,
+    tups=tuple(ac.core_lines.values()),
     method=lambda M, f: OSEM(M, f, t_f=1800),
     n_one=200,
     n_sam=250000,

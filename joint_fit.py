@@ -545,7 +545,6 @@ def abundance_in_val_z(
     indso=None,
     lim=None,
     manual=False,
-    hsh=False,
     **kwargs,
 ):
     val_name = val_name if val_name is not None else val
@@ -605,7 +604,7 @@ def abundance_in_val_z(
                     cal_red = ac.red_const(isourz) if indso is None else None
                     if indiv:
                         ind, _ = ac.indiv_stat(
-                            ab, isourz, cal_red=cal_red, val=val, hsh=False, **kwargs
+                            ab, isourz, cal_red=cal_red, val=val, **kwargs
                         )
                         x = sum(list(ind[0]), [])
                         y = sum(list(ind[1]), [])
@@ -622,7 +621,7 @@ def abundance_in_val_z(
                 if not sourz:
                     continue
                 v, m, st = ac.boots_stat(
-                    ab, sourz, cal_red=None, manual=manual, hsh=hsh, **kwargs
+                    ab, sourz, cal_red=None, manual=manual, **kwargs
                 )
                 if v.size:
                     vmean = [(vrang[1] + vrang[0]) / 2] * len(v)
@@ -745,7 +744,7 @@ def abundance_compar_z(
                 vs.append(
                     (
                         sourz,
-                        ac.boots_stat(xmetr, sourz, manual=manual, hsh=True, **kwargs),
+                        ac.boots_stat(xmetr, sourz, manual=manual, **kwargs),
                     )
                 )
             else:
@@ -1222,7 +1221,6 @@ if __name__ == "__main__":
         zval_name="Redshift $z$",
         lim=[5.55,7.65],
         indso=ffmu,
-        hsh=True,
     )
     abundance_in_val_z(
         ffm,
@@ -1237,7 +1235,6 @@ if __name__ == "__main__":
         zval_name="Redshift $z$",
         lim = [-2.2,0.1],
         indso=ffmu,
-        hsh=True,
     )
     abundance_in_val_z(
         ffm,
@@ -1252,9 +1249,8 @@ if __name__ == "__main__":
         zval_name="Redshift $z$",
         lim = [7.25,8.65],
         indso=ffmu,
-        hsh=True,
     )
-    """
+    
     abundance_compar_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1280,7 +1276,7 @@ if __name__ == "__main__":
         abund=ac.Nitrogen_new,
         save="../Plots/abund/nitrogen_com_z_mass_new.pdf",
         title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
-        yax="\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         zval_name="Redshift $z$",
         lim=[-2.2, 0.1],
         indso=ffmu,
@@ -1300,3 +1296,4 @@ if __name__ == "__main__":
         lim=[7.25, 8.65],
         indso=ffmu,
     )
+    """
