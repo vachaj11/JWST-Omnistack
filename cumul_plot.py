@@ -234,7 +234,8 @@ def plot_stacks(
     keys = list(lines.keys())[ite * 5 : (ite + 1) * 5]
     if zrang is None:
         # z = [[0, 1.5], [1.5, 3], [3, 4.5], [4.5, 20]]
-        z = [[0, 1.5], [1.5, 3], [3, 6.5], [6.5, 14]]
+        # z = [[0, 1.5], [1.5, 3], [3, 6.5], [6.5, 14]]
+        z = [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]]
     else:
         z = zrang
     bases = ["../Data/Npy/", "../Data/Subtracted/", "../Data/Subtracted_b/"]
@@ -312,7 +313,10 @@ def plot_stacks(
     axs[1, 0].set_ylabel("Flux (Ppxf-subtracted)\n ($\mu$J)")
     axs[2, 0].set_ylabel("Flux (Smooth-subtracted)\n ($\mu$J)")
     fig.suptitle(title)
-    fig.set_size_inches(19, 10)
+    if title is not None:
+        fig.set_size_inches(19, 10)
+    else:
+        fig.set_size_inches(19, 9)
     fig.tight_layout()
     if save is not None:
         fig.savefig(save, dpi=150)
@@ -339,7 +343,7 @@ def plot_mz(sources, title=None, save=None, **kwargs):
 
 
 if __name__ == "__main__":
-    a = catalog.fetch_json("../catalog_z.json")["sources"]
+    a = catalog.fetch_json("../catalog_fn.json")["sources"]
     af = catalog.rm_bad(a)
     af = catalog.rm_quasars(af)
     afp = [s for s in af if s["grat"] == "prism"]
@@ -390,7 +394,7 @@ if __name__ == "__main__":
             typ=stack_type,
         )
         """
-
+    
     for i in range(3):
         plot_stacks(
             afp,
@@ -398,7 +402,7 @@ if __name__ == "__main__":
             ite=i,
             save=f"../Plots/lines4/spectr_prism_{i}.pdf",
             narrow=100,
-            title=f"Stack of lines in prism ({i} of 2)",
+            # title=f"Stack of lines in prism ({i} of 2)",
             typ=stack_type,
             ratios = core_ratios,
             cred=True,
@@ -409,7 +413,7 @@ if __name__ == "__main__":
             ite=i,
             save=f"../Plots/lines4/spectr_medium_{i}.pdf",
             narrow=700,
-            title=f"Stack of lines in medium resolution ({i} of 2)",
+            # title=f"Stack of lines in medium resolution ({i} of 2)",
             typ=stack_type,
             ratios = core_ratios,
             cred=True,
@@ -421,12 +425,12 @@ if __name__ == "__main__":
             ite=i,
             save=f"../Plots/lines4/spectr_high_{i}.pdf",
             narrow=2500,
-            title=f"Stack of lines in high resolution ({i} of 2)",
+            # title=f"Stack of lines in high resolution ({i} of 2)",
             typ=stack_type,
             cred=True,
         )
         """
-
+    
     plot_mz(
         afp, title="Mass vs Redshift for prism", save="../Plots/lines4/mz_prism.pdf"
     )
@@ -442,7 +446,7 @@ if __name__ == "__main__":
     plot_histograms(
         afp,
         core_lines,
-        title="Coverage of lines in prism",
+        # title="Coverage of lines in prism",
         save="../Plots/lines4/hist_prism.pdf",
         ymax=3350,
         narrow=100,
@@ -450,7 +454,7 @@ if __name__ == "__main__":
     plot_histograms(
         afm,
         core_lines,
-        title="Coverage of lines in medium resolution",
+        # title="Coverage of lines in medium resolution",
         save="../Plots/lines4/hist_medium.pdf",
         ymax=2300,
         narrow=700,
@@ -459,16 +463,17 @@ if __name__ == "__main__":
     plot_histograms(
         afh,
         core_lines,
-        title="Coverage of lines in high resolution",
+        # title="Coverage of lines in high resolution",
         save="../Plots/lines4/hist_high.pdf",
         ymax=630,
         narrow=2500,
     )
     """
+    
     plot_lines(
         afp,
         core_lines,
-        title="Coverage of lines in prism",
+        # title="Coverage of lines in prism",
         save="../Plots/lines4/lines_prism.pdf",
         narrow=100,
         ratios=core_ratios,
@@ -476,7 +481,7 @@ if __name__ == "__main__":
     plot_lines(
         afm,
         core_lines,
-        title="Coverage of lines in medium resolution",
+        # title="Coverage of lines in medium resolution",
         save="../Plots/lines4/lines_medium.pdf",
         narrow=700,
         ratios=core_ratios,
@@ -485,7 +490,7 @@ if __name__ == "__main__":
     plot_lines(
         afh,
         core_lines,
-        title="Coverage of lines in high resolution",
+        # title="Coverage of lines in high resolution",
         save="../Plots/lines4/lines_high.pdf",
         narrow=2500,
         ratios = core_ratios,

@@ -105,9 +105,9 @@ def abundance_in_z(
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
-                axs[i].plot(zmean, v, ls="", marker="D", c="black")
-                axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
-                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
+                axs[i].plot(zmean, v, ls="", marker="D", ms=4, c="black")
+                axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=4)
+                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=4)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1]), v]
             valss = np.concatenate([valss, v])
         axs[i].set_title(nam, y=0.85)
@@ -201,7 +201,7 @@ def ratios_in_z(
                         xerr=zerr,
                         ls="",
                         c="gainsboro",
-                        capsize=5,
+                        capsize=4,
                     )
                     """
                     yrang += [
@@ -215,9 +215,9 @@ def ratios_in_z(
             if v.size:
                 zmean = [(zrang[1] + zrang[0]) / 2] * len(v)
                 zerr = [(zrang[1] - zrang[0]) / 2] * len(v)
-                axs[i].plot(zmean, v, ls="", marker="D", c="black")
-                axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=5)
-                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=5)
+                axs[i].plot(zmean, v, ls="", marker="D", ms=4, c="black")
+                axs[i].errorbar(zmean, v, xerr=zerr, ls="", c="black", capsize=4)
+                axs[i].errorbar(zmean, m, yerr=st, ls="", c="black", capsize=4)
                 axs[i].set_ylabel(ac.Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1]), v]
@@ -332,8 +332,8 @@ def abundance_calib(
                 zv = [sb[1][0][0]] * len(v)
                 zm = [sb[1][1][0]] * len(v)
                 zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
-                axs[i].plot(zv, v, ls="", marker="D", c="black")
-                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=5)
+                axs[i].plot(zv, v, ls="", marker="D", ms=4, c="black")
+                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=4)
                 axs[i].set_ylabel(ac.Names[nam], fontsize=11)
                 axs[i].yaxis.set_tick_params(labelsize=11)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
@@ -452,8 +452,8 @@ def abundance_compar(
                 zv = [sb[1][0][0]] * len(v)
                 zm = [sb[1][1][0]] * len(v)
                 zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
-                axs[i].plot(zv, v, ls="", marker="D", c="black")
-                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=5)
+                axs[i].plot(zv, v, ls="", marker="D", ms=4, c="black")
+                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=4)
                 yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                 xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
             valss = np.concatenate([valss, v])
@@ -564,7 +564,12 @@ def abundance_in_val_z(
     else:
         axs = axes.flatten()
     cmap = mpl.cm.ScalarMappable(cmap="inferno")
-    cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
+    forw = lambda x: np.arcsinh(x)
+    inve = lambda x: np.sinh(x)
+    norm = mpl.colors.FuncNorm(
+        (forw, inve), vmin=min(flatten(zrangs)), vmax=max(flatten(zrangs))
+    )
+    cmap.set_norm(norm)
     cbr = fig.colorbar(
         cmap,
         location="right",
@@ -588,7 +593,7 @@ def abundance_in_val_z(
                 for s in indss
                 if s.get(zval) is not None and zrang[0] < s[zval] < zrang[1]
             ]
-            cl = cmap.to_rgba(np.mean(zrang))
+            cl = cmap.to_rgba(np.min(zrang))
             for vrang in valrangs:
                 sourz = [
                     s
@@ -626,12 +631,12 @@ def abundance_in_val_z(
                 if v.size:
                     vmean = [(vrang[1] + vrang[0]) / 2] * len(v)
                     verr = [(vrang[1] - vrang[0]) / 2] * len(v)
-                    axs[i].plot(vmean, v, ls="", marker="D", c=cl)
+                    axs[i].plot(vmean, v, ls="", marker="D", ms=4, c=cl)
                     axs[i].errorbar(
-                        vmean, v, xerr=verr, ls="", c=cl, capsize=5, alpha=0.3
+                        vmean, v, xerr=verr, ls="", c=cl, capsize=4, alpha=0.3
                     )
                     axs[i].errorbar(
-                        vmean, m, yerr=st, ls="", c=cl, capsize=5, alpha=0.5
+                        vmean, m, yerr=st, ls="", c=cl, capsize=4, alpha=0.5
                     )
                     yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                     valss.append([vmean[0]] + list(m))
@@ -708,7 +713,13 @@ def abundance_compar_z(
     else:
         axs = axes.flatten()
     cmap = mpl.cm.ScalarMappable(cmap="inferno")
-    cmap.set_clim((min(flatten(zrangs)), max(flatten(zrangs))))
+    forw = lambda x: np.arcsinh(x)
+    inve = lambda x: np.sinh(x)
+    norm = mpl.colors.FuncNorm(
+        (forw, inve), vmin=min(flatten(zrangs)), vmax=max(flatten(zrangs))
+    )
+    cmap.set_norm(norm)
+
     cbr = fig.colorbar(
         cmap,
         location="right",
@@ -764,7 +775,7 @@ def abundance_compar_z(
         for l in range(len(zrangs)):
             zrang, vs = zs[l]
             ivs = izs[l]
-            cl = cmap.to_rgba(np.mean(zrang))
+            cl = cmap.to_rgba(np.min(zrang))
             valss = []
             for k in range(len(valrangs)):
                 so, db = vs[k]
@@ -794,9 +805,9 @@ def abundance_compar_z(
                     zv = [db[0][0]] * len(v)
                     zm = [db[1][0]] * len(v)
                     zerr = [[db[2][0][0]] * len(v), [db[2][1][0]] * len(v)]
-                    axs[i].plot(zv, v, ls="", marker="D", c=cl)
+                    axs[i].plot(zv, v, ls="", marker="D", ms=4, c=cl)
                     axs[i].errorbar(
-                        zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=5, alpha=0.5
+                        zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=4, alpha=0.5
                     )
                     yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
                     xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
@@ -1172,11 +1183,12 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Sulphur_new,
-        title="Sulphur abundance in medium resolution\n via different calibrations",
+        # title="Sulphur abundance in medium resolution\n via different calibrations",
+        title="Sulphur abundance evolution in\nphotometric mass and redshift",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim=[5.55,7.65],
+        lim=[5.55, 7.65],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1186,11 +1198,12 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Nitrogen_new,
-        title="Nitrogen abundance in medium resolution\n via different calibrations",
+        # title="Nitrogen abundance in medium resolution\n via different calibrations",
+        title="Nitrogen abundance evolution in\nphotometric mass and redshift",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim = [-2.2,0.1],
+        lim=[-2.2, 0.1],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1200,14 +1213,15 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund=ac.Oxygen_new,
-        title="Oxygen abundance in medium resolution via different calibrations",
+        # title="Oxygen abundance in medium resolution via different calibrations",
+        title="Oxygen abundance evolution in\nphotometric mass and redshift",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_cal_z_mass_new.pdf",
         zval_name="Redshift $z$",
-        lim = [7.25,8.65],
+        lim=[7.25, 8.75],
         indso=ffmu,
     )
-    
+
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1215,11 +1229,12 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund={"S Direct": ac.S_Dir},
-        title="Sulphur abundance in medium resolution\n via direct method",
+        # title="Sulphur abundance in medium resolution\n via direct method",
+        title="Sulphur abundance evolution in\nphotometric mass and redshift",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         save="../Plots/abund/sulphur_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim=[5.55,7.65],
+        lim=[5.55, 7.65],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1229,11 +1244,12 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund={"N Direct": ac.N_Dir},
-        title="Nitrogen abundance in medium resolution\n via direct method",
+        # title="Nitrogen abundance in medium resolution\n via direct method",
+        title="Nitrogen abundance evolution in\nphotometric mass and redshift",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         save="../Plots/abund/nitrogen_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim = [-2.2,0.1],
+        lim=[-2.2, 0.1],
         indso=ffmu,
     )
     abundance_in_val_z(
@@ -1243,14 +1259,15 @@ if __name__ == "__main__":
         val="_pmass",
         val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
         abund={"O Direct": ac.O_Dir},
-        title="Oxygen abundance in medium resolution\n via direct method",
+        # title="Oxygen abundance in medium resolution\n via direct method",
+        title="Oxygen abundance evolution in\nphotometric mass and redshift",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         save="../Plots/abund/oxygen_dir_z_mass.pdf",
         zval_name="Redshift $z$",
-        lim = [7.25,8.65],
+        lim=[7.25, 8.75],
         indso=ffmu,
     )
-    
+
     abundance_compar_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1260,7 +1277,8 @@ if __name__ == "__main__":
         xmetr=ac.S_Dir,
         abund=ac.Sulphur_new,
         save="../Plots/abund/sulphur_com_z_mass_new.pdf",
-        title="Sulphur abundance in medium resolution\n via direct method and strong lines",
+        # title="Sulphur abundance in medium resolution\n via direct method and strong lines",
+        title="Sulphur abundance inferred via\nstrong lines and direct method",
         yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
         zval_name="Redshift $z$",
         lim=[5.55, 7.65],
@@ -1275,7 +1293,8 @@ if __name__ == "__main__":
         xmetr=ac.N_Dir,
         abund=ac.Nitrogen_new,
         save="../Plots/abund/nitrogen_com_z_mass_new.pdf",
-        title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
+        # title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
+        title="Nitrogen abundance inferred via\nstrong lines and direct method",
         yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
         zval_name="Redshift $z$",
         lim=[-2.2, 0.1],
@@ -1290,10 +1309,11 @@ if __name__ == "__main__":
         xmetr=ac.O_Dir,
         abund=ac.Oxygen_new,
         save="../Plots/abund/oxygen_com_z_mass_new.pdf",
-        title="Oxygen abundance in medium resolution\n via direct method and strong lines",
+        # title="Oxygen abundance in medium resolution\n via direct method and strong lines",
+        title="Oxygen abundance inferred via\nstrong lines and direct method",
         yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
         zval_name="Redshift $z$",
-        lim=[7.25, 8.65],
+        lim=[7.25, 8.75],
         indso=ffmu,
     )
     """

@@ -98,12 +98,17 @@ def plot_zstacks(
     print("")
     print([len(s) for s in ahfr])
     rmap = mpl.cm.ScalarMappable(cmap="inferno")
-    rmap.set_clim((min(np.arcsinh(flatten(zrangs))), max(np.arcsinh(flatten(zrangs)))))
+    forw = lambda x: np.arcsinh(x)
+    inve = lambda x: np.sinh(x)
+    norm = mpl.colors.FuncNorm(
+        (forw, inve), vmin=min(flatten(zrangs)), vmax=max(flatten(zrangs))
+    )
+    rmap.set_norm(norm)
     for k, sours in enumerate(ahfr):
         if len(sours) != 0:
             c = colors[k % len(colors)]
             if cred:
-                c = rmap.to_rgba(np.arcsinh(np.mean(zrangs[k])))
+                c = rmap.to_rgba(np.min(zrangs[k]))
             stacked = []
             for i, rang in enumerate(rangs):
                 if type(resos) is list:
