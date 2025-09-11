@@ -4,6 +4,7 @@ import time
 import astropy.io.fits as fits
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
+from astropy.utils.data import clear_download_cache
 from scipy.ndimage import gaussian_filter1d
 
 glob = dict()
@@ -21,6 +22,8 @@ def get_spectrum_fits(
         flux = x[1].data["flux"]
         # wave, flux = clippint([wave, flux])
         x.close()
+        if "https://" in path:
+            clear_download_cache(hashorurl=path, pkgname="astropy")
         return [wave, flux]
     except:
         return None
@@ -98,7 +101,7 @@ def iden_bad(spectrum, nstd=20, nref=3, nei=3):
     return indb1, [spectrum[0][i] for i in indb1], [spectrum[0], flux1]
 
 
-def iden_bad_e(spectrum, nstd=5, ncou=10):
+def iden_bad_e_legacy(spectrum, nstd=5, ncou=10):
     """Identify and remove noise-dominated edges of spectra"""
     if spectrum is None:
         return None, None, None
@@ -116,6 +119,33 @@ def iden_bad_e(spectrum, nstd=5, ncou=10):
     fluxe = flux0[nnan.max() + 1 - ncou : nnan.max() + 1]
     maske = ((mean + std * nstd) < fluxe) | (fluxe < (mean - std * nstd))
     if maske.any():
+        flux0[nnan.max() + 1 - ncou : nnan.max() + 1] = np.nan
+        indb += list(np.where(maske)[0] + nnan.max() + 1 - ncou)
+    return indb, [spectrum[0][i] for i in indb], [spectrum[0], flux0]
+
+
+def iden_bad_e(spectrum, nstd=5, ncou=10):
+    """Identify and remove noise-dominated edges of spectra"""
+    if spectrum is None:
+        return None, None, None
+    flux0 = np.copy(spectrum[1])
+    nnan = np.where(np.isfinite(flux0))[0]
+    nn50 = nnan[(np.percentile(nnan, 25) < nnan) & (nnan < np.percentile(nnan, 75))]
+    ce50 = flux0[nn50]
+    mean = np.nanmean(ce50)
+    std = np.nanstd(ce50)
+
+    indb = []
+    fluxs = flux0[nnan.min() : nnan.min() + ncou]
+    masks = ((mean + std * nstd) < fluxs) | (fluxs < (mean - std * nstd))
+    if sum(masks) > ncou / 2 and np.mean(fluxs) - np.std(fluxs) < mean < np.mean(
+        fluxs
+    ) + np.std(fluxs):
+        flux0[nnan.min() : nnan.min() + ncou] = np.nan
+        indb += list(np.where(masks)[0] + nnan.min())
+    fluxe = flux0[nnan.max() + 1 - ncou : nnan.max() + 1]
+    maske = ((mean + std * nstd) < fluxe) | (fluxe < (mean - std * nstd))
+    if sum(maske) > ncou / 2:
         flux0[nnan.max() + 1 - ncou : nnan.max() + 1] = np.nan
         indb += list(np.where(maske)[0] + nnan.max() + 1 - ncou)
     return indb, [spectrum[0][i] for i in indb], [spectrum[0], flux0]
@@ -238,7 +268,11 @@ def pixel_at(spectrum, wav, source=None):
     }
     wavr = np.array(spectrum[0])
     mind = np.argmin(np.abs(wavr - wav))
-    if source is not None and source.get("grat_orig") in mpx.keys():
+    if (
+        source is not None
+        and source.get("grat_orig") in mpx.keys()
+        and source["grat"][-1] == "m"
+    ):
         return mpx[source["grat_orig"]]
     if mind + 1 < wavr.size:
         return wavr[mind + 1] - wavr[mind]

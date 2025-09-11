@@ -108,11 +108,11 @@ core_lines = {
 }
 
 
-def S_S23(sources, new=False, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_S_S23" + "_n" * new in sources[0].keys():
+def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_S_S23" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_S23" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"S2_67", "S3_95", "H1_b"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"S2_67", "S3_95", "H1_b"}, cal_red=cal_red, **kwargs
     )
     fsii = sum(flx["S2_67"].values())
     fsiii = sum(flx["S3_95"].values())
@@ -124,11 +124,11 @@ def S_S23(sources, new=False, cal_red=None, **kwargs):
         return [S23], []
 
 
-def N_N2(sources, new=False, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_N_N2" + "_n" * new in sources[0].keys():
+def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_N_N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_a"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_a"}, cal_red=cal_red, **kwargs
     )
     fnii = flx["H1_a"]["N2_6584A"]
     fhal = flx["H1_a"]["H1r_6563A"]
@@ -139,11 +139,11 @@ def N_N2(sources, new=False, cal_red=None, **kwargs):
         return [N2], []
 
 
-def N_N2O2(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_N_N2O2" + "_n" * new in sources[0].keys():
+def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_N_N2O2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2O2" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_a", "O2_37"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_a", "O2_37"}, cal_red=cal_red, **kwargs
     )
     fnii = flx["H1_a"]["N2_6584A"]
     foii = sum(flx["O2_37"].values())
@@ -157,10 +157,12 @@ def N_N2O2(sources, new=True, cal_red=None, **kwargs):
         return [N2O2], []
 
 
-def N_N2S2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_N_N2S2" + "_n" * new in sources[0].keys():
+def N_N2S2(sources, new=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_N_N2S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2S2" + "_n" * new]
-    N2S2 = O_N2(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
+    N2S2 = (
+        O_N2(sources, rec=rec, **kwargs)[0][0] - O_S2(sources, rec=rec, **kwargs)[0][0]
+    )
     if np.isfinite(N2S2):
         if new:
             return [N2S2], [1.12 * N2S2 - 0.93]
@@ -170,11 +172,11 @@ def N_N2S2(sources, new=True, **kwargs):
         return [N2S2], []
 
 
-def O_R2(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_O_R2" + "_n" * new in sources[0].keys():
+def O_R2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_R2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R2" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_b", "O2_37"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_b", "O2_37"}, cal_red=cal_red, **kwargs
     )
     foii = sum(flx["O2_37"].values())
     fhbe = sum(flx["H1_b"].values())
@@ -200,11 +202,11 @@ def O_R2(sources, new=True, cal_red=None, **kwargs):
         return [R2], []
 
 
-def O_R3(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_O_R3" + "_n" * new in sources[0].keys():
+def O_R3(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_R3" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R3" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_b", "O3_50"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_b", "O3_50"}, cal_red=cal_red, **kwargs
     )
     foiii = sum(flx["O3_50"].values())
     fhbe = sum(flx["H1_b"].values())
@@ -230,10 +232,12 @@ def O_R3(sources, new=True, cal_red=None, **kwargs):
         return [R3], []
 
 
-def O_O3O2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3O2" + "_n" * new in sources[0].keys():
+def O_O3O2(sources, new=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_O3O2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3O2" + "_n" * new]
-    O3O2 = O_R3(sources, **kwargs)[0][0] - O_R2(sources, **kwargs)[0][0]
+    O3O2 = (
+        O_R3(sources, rec=rec, **kwargs)[0][0] - O_R2(sources, rec=rec, **kwargs)[0][0]
+    )
     if np.isfinite(O3O2):
         if new:
             p = [0.697 - O3O2, -1.245, -0.869]
@@ -255,11 +259,11 @@ def O_O3O2(sources, new=True, **kwargs):
         return [O3O2], []
 
 
-def O_R23(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_O_R23" + "_n" * new in sources[0].keys():
+def O_R23(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_R23" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R23" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_b", "O3_50", "O2_37"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_b", "O3_50", "O2_37"}, cal_red=cal_red, **kwargs
     )
     foiii = sum(flx["O3_50"].values())
     foii = sum(flx["O2_37"].values())
@@ -286,11 +290,11 @@ def O_R23(sources, new=True, cal_red=None, **kwargs):
         return [R23], []
 
 
-def O_Rh(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_Rh" + "_n" * new in sources[0].keys():
+def O_Rh(sources, new=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_Rh" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_Rh" + "_n" * new]
-    or3 = O_R3(sources, **kwargs)[0][0]
-    or2 = O_R2(sources, **kwargs)[0][0]
+    or3 = O_R3(sources, rec=rec, **kwargs)[0][0]
+    or2 = O_R2(sources, rec=rec, **kwargs)[0][0]
     Rh = 0.47 * or2 + 0.88 * or3
     if np.isfinite(Rh):
         p = [0.779 - Rh, 0.263, -0.849, -0.493]
@@ -304,11 +308,11 @@ def O_Rh(sources, new=True, **kwargs):
         return [Rh], []
 
 
-def O_N2(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_O_N2" + "_n" * new in sources[0].keys():
+def O_N2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_N2" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_a"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_a"}, cal_red=cal_red, **kwargs
     )
     fnii = flx["H1_a"]["N2_6584A"]
     fhal = flx["H1_a"]["H1r_6563A"]
@@ -334,10 +338,12 @@ def O_N2(sources, new=True, cal_red=None, **kwargs):
         return [N2], []
 
 
-def O_O3N2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3N2" + "_n" * new in sources[0].keys():
+def O_O3N2(sources, new=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_O3N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3N2" + "_n" * new]
-    O3N2 = O_R3(sources, **kwargs)[0][0] - O_N2(sources, **kwargs)[0][0]
+    O3N2 = (
+        O_R3(sources, rec=rec, **kwargs)[0][0] - O_N2(sources, rec=rec, **kwargs)[0][0]
+    )
     if np.isfinite(O3N2):
         if new:
             p = [2.294 - O3N2, -1.411, -3.077]
@@ -359,11 +365,11 @@ def O_O3N2(sources, new=True, **kwargs):
         return [O3N2], []
 
 
-def O_S2(sources, new=True, cal_red=None, **kwargs):
-    if len(sources) == 1 and "rec_O_S2" + "_n" * new in sources[0].keys():
+def O_S2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_S2" + "_n" * new]
     T, n, flx = tem_den_red(
-        sources, temp=False, lines={"H1_a", "S2_67"}, cal_red=cal_red, **kwargs
+        sources, temp=temp, lines={"H1_a", "S2_67"}, cal_red=cal_red, **kwargs
     )
     fsii = sum(flx["S2_67"].values())
     fhal = flx["H1_a"]["H1r_6563A"]
@@ -389,10 +395,12 @@ def O_S2(sources, new=True, cal_red=None, **kwargs):
         return [S2], []
 
 
-def O_O3S2(sources, new=True, **kwargs):
-    if len(sources) == 1 and "rec_O_O3S2" + "_n" * new in sources[0].keys():
+def O_O3S2(sources, new=True, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_O3S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3S2" + "_n" * new]
-    O3S2 = O_R3(sources, **kwargs)[0][0] - O_S2(sources, **kwargs)[0][0]
+    O3S2 = (
+        O_R3(sources, rec=rec, **kwargs)[0][0] - O_S2(sources, rec=rec, **kwargs)[0][0]
+    )
     if np.isfinite(O3S2):
         if new:
             p = [1.997 - O3S2, -1.981]
@@ -414,11 +422,11 @@ def O_O3S2(sources, new=True, **kwargs):
         return [O3S2], []
 
 
-def O_RS32(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_O_RS32" + "_n" * new in sources[0].keys():
+def O_RS32(sources, new=False, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_RS32" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_RS32" + "_n" * new]
-    or3 = O_R3(sources, **kwargs)[0][0]
-    os2 = O_S2(sources, **kwargs)[0][0]
+    or3 = O_R3(sources, rec=rec, **kwargs)[0][0]
+    os2 = O_S2(sources, rec=rec, **kwargs)[0][0]
     RS32 = np.log10(10 ** (or3) + 10 ** (os2))
     if np.isfinite(RS32):
         p = [-0.054 - RS32, -2.546, -1.970, 0.082, 0.222]
@@ -432,33 +440,36 @@ def O_RS32(sources, new=False, **kwargs):
         return [RS32], []
 
 
-def S_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_S_Dir" + "_n" * new in sources[0].keys():
+def S_Dir(sources, new=False, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_S_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
 
-def N_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_N_Dir" + "_n" * new in sources[0].keys():
+def N_Dir(sources, new=False, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_N_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_Dir" + "_n" * new]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
 
-def O_Dir(sources, new=False, **kwargs):
-    if len(sources) == 1 and "rec_O_Dir" + "_n" * new in sources[0].keys():
+def O_Dir(sources, new=False, rec=False, **kwargs):
+    if len(sources) == 1 and "rec_O_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["O"]]] * 2
 
 
 def SFR(O_ab, H_a, z):
     """This will only work if slit loss correction is done."""
-    Z = 0.014 * 10 ** (O_ab - 8.69)
-    C = -40.26 + 0.89 * np.log(Z) + 0.14 * np.log(Z) ** 2
-    dist = cosm.luminosity_distance(z).to("m").value
-    L_a = H_a * 4 * np.pi * dist**2 * 10**7
-    M_0 = 1
-    SFR = M_0 * 10**C * L_a
-    return SFR
+    if O_ab is not None and H_a is not None and z is not None:
+        Z = 0.014 * 10 ** (O_ab - 8.69)
+        C = -40.26 + 0.89 * np.log(Z) + 0.14 * np.log(Z) ** 2
+        dist = cosm.luminosity_distance(z).to("m").value
+        L_a = H_a * 4 * np.pi * dist**2 * 10**7
+        M_0 = 1
+        SFR = M_0 * 10**C * L_a
+        return SFR
+    else:
+        return None
 
 
 def abundances(sources, cal_red=None, N_over_O=True, hsh=True, **kwargs):
@@ -506,7 +517,7 @@ def get_core_fluxes(sources, ilines=None, temp=True, cal_red=0, **kwargs):
 def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
     flx, finfo = get_core_fluxes(sources, ilines=lines, temp=temp, **kwargs)
     z = np.mean([v for s in sources if (v := s.get("z")) is not None])
-    t = {k: 12000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}
+    t = {k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}
     n = 40 * (1 + z) ** 1.5
     if not temp:
         cHbeta = red_const(flx, t=t, n=n) if cal_red is None else cal_red
@@ -529,7 +540,7 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
         return t, n, flc
 
 
-def tem_den(fluxes, n0=500, t0={k: 12000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
+def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
     fluxec = dict()
     for v in fluxes.values():
         fluxec.update(v)
@@ -624,7 +635,7 @@ def tem_den(fluxes, n0=500, t0={k: 12000 for k in ["TO3", "TO2", "TS3", "TS2", "
             t["TO2"] = (
                 10**4
                 * (1.2 + 0.002 * n + 4.2 / n)
-                / (10**4 / t["T03"] + 0.08 + 0.003 * n + 2.5 / n)
+                / (10**4 / t["TO3"] + 0.08 + 0.003 * n + 2.5 / n)
             )
         if np.isnan(t["TO3"]) and not np.isnan(t["TO2"]):
             t["TO3"] = 1 / (2 / t["TO2"] - 0.8 / 10**4)
@@ -642,7 +653,7 @@ def tem_den(fluxes, n0=500, t0={k: 12000 for k in ["TO3", "TO2", "TS3", "TS2", "
             t["TO3"] = 1 / (1.85 / t["TN2"] - 0.72 / 10**4)
 
     for v in t:
-        t[v] = t0[v] if np.isnan(t[v]) else t[v]
+        t[v] = t0[v] if np.isnan(t[v]) or t[v] < 100 else t[v]
     n = n if np.isfinite(n) else n0
     return t, n
 
@@ -835,7 +846,7 @@ def abunds(fluxes, t, den, N_over_O=True):
 
 
 def red_const(
-    flxs, t={k: 12000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}, n=500, **kwargs
+    flxs, t={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}, n=500, **kwargs
 ):
 
     if not np.isnan(t["TO3"]):

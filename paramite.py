@@ -453,7 +453,7 @@ def calculate_indiv_lines(sources, new=True, direct=True):
     if direct:
         abun["direct"] = ac.abundances
     for k, f in abun.items():
-        values[k] = ac.indiv_stat(f, uniq, calib=None)
+        values[k] = ac.indiv_stat(f, uniq, calib=None, rec=True)
     skeys = list(values.keys())[:-1] if direct else values.keys()
     for i in range(len(uniq)):
         for k in skeys:

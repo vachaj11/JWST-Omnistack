@@ -47,26 +47,27 @@ typefloat_c = {
     "sn50": "sn50",
     "flux50": "flux50",
     "err50": "err50",
-    "wmin": "wmin",
-    "wmax": "wmax",
-    "Lya": "line_lya",
-    "SII": "line_sii",
-    "Ha": "line_ha",
-    "OII": "line_oii",
-    "OIII": "line_oiii",
-    "SIII_63": "line_siii_6314",
-    "SIII_90": "line_siii_9068",
-    "NII_65": "line_nii_6549",
-    "NII_66": "line_nii_6584",
+    "spec_Lya": "line_lya",
+    "spec_SII": "line_sii",
+    "spec_Ha": "line_ha",
+    "spec_Hb": "line_hb",
+    "spec_OII": "line_oii",
+    "spec_OIII": "line_oiii",
+    "spec_SIII_63": "line_siii_6314",
+    "spec_SIII_90": "line_siii_9068",
+    "spec_NII_65": "line_nii_6549",
+    "spec_NII_66": "line_nii_6584",
+    "phot_z": "z_phot",
     "phot_Av": "phot_Av",
     "phot_mass": "phot_mass",
     "phot_restU": "phot_restU",
     "phot_restV": "phot_restV",
     "phot_restJ": "phot_restJ",
-    "z_phot": "z_phot",
-    "phot_LHa": "phot_LHa",
-    "phot_LOIII": "phot_LOIII",
-    "phot_LOII": "phot_LOII",
+    "phot_Ha": "phot_LHa",
+    "phot_OIII": "phot_LOIII",
+    "phot_OII": "phot_LOII",
+    "phot_radius": "phot_flux_radius",
+    "phot_correction": "phot_correction",
 }
 typestr_c = {
     "file": "file",
@@ -178,33 +179,40 @@ def download_spectra():
 '''
 
 
-def downloadall(sources, start_in=0):
+def download_all(sources, start_in=0, in_proc=20, **kwargs):
     a = sources
     proc = cpu_count()
     active = []
-    latest = start_in - 1
-    while latest < len(a) - 1 or len(active) > 0:
-        pr_no = min(proc, len(a) - 1 - latest)
-        if len(active) < pr_no:
-            for i in range(pr_no - len(active)):
-                latest += 1
-                args = (a[latest],)
-                t = Process(target=download, args=args)
+    cnext = start_in
+    while cnext < len(a) or len(active) > 0:
+        if cnext < len(a):
+            for i in range(
+                min(proc - len(active), max(-((-len(a) + cnext) // in_proc), 0))
+            ):
+                args = (a[cnext : cnext + in_proc],)
+                t = Process(target=download, args=args, kwargs=kwargs)
                 t.start()
-                print(f"\rRunning spectra {latest} \tout of {len(a)-1}", end="")
+                print(
+                    f"\r\033[KRunning spectra {cnext}-{cnext+in_proc} out of {len(a)-1}",
+                    end="",
+                )
                 active.append(t)
+                cnext += in_proc
         for t in active:
             if not t.is_alive():
                 t.terminate()
                 active.remove(t)
-        time.sleep(0.5)
+        time.sleep(0.01)
 
 
-def download(source):
-    sp = spectr.get_spectrum_fits(
-        source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
-    )
-    spectr.save_npy(source, sp, base="../Data/Npy/")
+def download(sources, baso="../Data/Npy/", rewrite=False):
+    for source in sources:
+        spex = spectr.get_spectrum(source, base=baso)
+        if spex is None and rewrite:
+            sp = spectr.get_spectrum_fits(
+                source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
+            )
+            spectr.save_npy(source, sp, base=baso)
 
 
 def move_around():
@@ -296,19 +304,32 @@ def add_post_hoc(sources, pathp="../dja_msaexp_2.csv", values=None):
         else:
             for v in values:
                 source[v] = None
-        print(f"\r{i} {type(g)}", end="")
+        print(f"\r\033[K{i} {type(g)}", end="")
     return sources
 
 
-def trim_edges(sources, bi="../Data/Npy_legacy/", bo="../Data/Npy/", **kwargs):
+def trim_edges(
+    sources, bi="../Data/Npy_legacy/", bo="../Data/Npy/", return_comp=False, **kwargs
+):
     vss = []
     for l, s in enumerate(sources):
         sp0 = spectr.get_spectrum(s, base=bi)
-        i, w, spr = spectr.iden_bad_e(sp0, **kwargs)
-        if i:
-            vss.append([w, sp0, spr])
-            spectr.save_npy(s, spr, base=bo)
-        print("\r" + str(l), end="")
+        if sp0 is not None:
+            sz0 = np.sum(np.isfinite(sp0[1]))
+            if not sz0:
+                continue
+            szi = 1
+            i = True
+            while i and szi / szi > 0.7:
+                i, w, sp0 = spectr.iden_bad_e(sp0, **kwargs)
+                szi = np.sum(np.isfinite(sp0[1]))
+                if i and return_comp:
+                    vss.append([w, sp0, spr])
+            spectr.save_npy(s, sp0, base=bo)
+            print(
+                f"\r\033[K{l} out of {len(sources)}, left with {szi/sz0*100:.2f}%",
+                end="",
+            )
     return vss
 
 
@@ -330,7 +351,7 @@ def degrade_high(sources, bi="../Data/Npy/", bo="../Data/Npy_med/"):
     }
     adj = 0
     for l, s in enumerate(sources):
-        print("\r" + str(l), end="")
+        print("\r\033[K" + str(l), end="")
         if s["grat"][-1] == "h":
             sp0 = spectr.get_spectrum(s, base=bi)
             if sp0 is not None:
@@ -342,3 +363,25 @@ def degrade_high(sources, bi="../Data/Npy/", bo="../Data/Npy_med/"):
         elif "grat_orig" not in s.keys():
             s["grat_orig"] = s["grat"]
     print("\n" + str(adj))
+
+
+def mini_reduction(path, patho, sind=0):
+    f = construct_dict_n(path)
+    for s in f:
+        s["grat"] = s["grat"].lower()
+    # match_cosmos(f)
+    # extract_cosmos(f)
+    download_all(f, baso="../Data/Npy_tmp/", start_in=sind)
+    trim_edges(f, bi="../Data/Npy_tmp/", bo="../Data/Npy_tmp_trim/")
+    # degrade_high(f, bi="../Data/Npy_tmp_trim/", bo="../Data/Npy_tmp_conv/")
+    update_ranges(f, base="../Data/Npy_tmp_trim/")
+    fo = catalog.fetch_json("../catalog_v3.json")["sources"]
+    for s in f:
+        if (c := s["comment"]) and "Redshift matches":
+            com = c[17:].split(" z=")[0]
+            for so in fo:
+                if com in so["file"]:
+                    s["old_comment"] = so["comment"]
+                    s["old_z"] = so["z"]
+                    s["old_grade"] = so["grade"]
+    catalog.save_as_json({"sources": f}, patho)

@@ -94,11 +94,16 @@ def rm_bad(sources, ppxf=False, agn=False):
     for source in sources:
         sn = source["sn50"]
         gr = source["grade"]
-        cm = str(source["comment"])
-        ha = source["Ha"]
+        cm = str(source["comment"]) + str(source.get("old_comment"))
+        ha = source.get("spec_Ha")
         cont = source.get("cont_diff")
         agn = source.get("AGN_cand")
         n2 = source.get("N2")
+        print(sn)
+        print(gr)
+        print(cm)
+        print(ppxf)
+        print(n2)
         if (
             sn is not None
             and sn > 0
@@ -123,7 +128,13 @@ quasars = [
     ["jades-gdn2-v", "1181_954.spec.fits"],
     ["rubies-egs61-v", "4233_55604.spec.fits"],
     ["rubies-egs63-v", "4233_42803.spec.fits"],
-    ["rubies-egs63-v", " 4233_49140.spec.fits"],
+    ["rubies-egs63-v", "4233_49140.spec.fits"],
+    ["egs-mason-v", "4287_62859.spec.fits"],
+    ["excels-uds03-v", "3543_70639.spec.fits"],
+    ["rubies-egs52-v", "4233_37124.spec.fits"],
+    ["rubies-uds42-v", "4233_807469.spec.fits"],
+    ["valentino-cosmos04-v", "3567_47567.spec.fits"],
+    ["rubies-uds42-v", "4233_36171.spec.fits"],
 ]
 
 

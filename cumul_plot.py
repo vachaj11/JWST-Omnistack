@@ -349,6 +349,7 @@ if __name__ == "__main__":
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
     afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
+    afm = [s for s in af if s["grat"][0] == "g"]
     path0 = "../Plots/"
     srs = {"medium": afm, "high": afh, "prism": afp}
     sources = {

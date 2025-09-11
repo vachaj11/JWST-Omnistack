@@ -847,7 +847,7 @@ def abundance_compar_z(
 if __name__ == "__main__":
     f = catalog.fetch_json("../catalog_fn.json")["sources"]
     ff = catalog.rm_bad(f)
-    ffm = [s for s in ff if s["grat"][0] == "g" and s["grat"][-1] == "m"]
+    ffm = [s for s in ff if s["grat"][0] == "g"]
     ffmu = catalog.fetch_json("../catalog_indiv2.json")["sources"]
     for s in f:
         s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
