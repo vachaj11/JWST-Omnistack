@@ -8,9 +8,11 @@ Instructions bellow assume standard Linux/bash and IPython sessions. Total run t
 
 ##### Install required libraries
 
-(assuming standard `python3` installation with packages managed by `pip`.)
+Assuming standard `python3` installation with packages managed by `pip`.
 
     $ pip install numpy, scipy, astropy, matplotlib, pyneb, ppxf, 
+
+The plotting code also pressumes an existing latex instalation in the environment (alike e.g. TeX Live).
 
 ##### Constructing folders and fetching data
 
@@ -58,7 +60,7 @@ Open local catalogue, filter it for medium resolution and quality spectra, calcu
 (This is not essential step to the results and can be skipped. Requires about ~10 hours.)
 
     >>> import ppxf_fit as pf
-    >>>
+    >>> ...
 
 ##### Calculated and plot results presented in internship summary
 
@@ -66,5 +68,7 @@ Import relevant librarie, run main plotting functions (this will create relevant
 
     >>> import joint_fit as jf
     >>> import cumul_plot as cp
+    >>> import joint_par as jp
     >>> jf.main()
     >>> cp.main()
+    >>> jp.main()
