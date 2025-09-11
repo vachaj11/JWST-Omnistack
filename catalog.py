@@ -99,11 +99,6 @@ def rm_bad(sources, ppxf=False, agn=False):
         cont = source.get("cont_diff")
         agn = source.get("AGN_cand")
         n2 = source.get("N2")
-        print(sn)
-        print(gr)
-        print(cm)
-        print(ppxf)
-        print(n2)
         if (
             sn is not None
             and sn > 0
@@ -221,7 +216,7 @@ def inbins(sources, value, nbin=10):
 
 
 def getffm():
-    f = fetch_json("../catalog_z.json")["sources"]
+    f = fetch_json("../catalog_v4.json")["sources"]
     ff = rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]
     return ffm

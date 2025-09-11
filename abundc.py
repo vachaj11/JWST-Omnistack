@@ -923,7 +923,7 @@ def fit_lines(
     lines,
     mline,
     reso=300,
-    base="../Data/Npy/",
+    base="../Data/Npy_v4/",
     typ="median",
     dwidth=8,
     manual=False,

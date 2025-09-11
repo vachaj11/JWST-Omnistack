@@ -29,7 +29,7 @@ def get_spectrum_fits(
         return None
 
 
-def get_spectrum(source, base="../Data/Npy/"):
+def get_spectrum(source, base="../Data/Npy_v4/"):
     path = base + source["root"] + "/" + source["file"]
     path = path[:-5] + ".npy"
     try:
@@ -44,7 +44,7 @@ def get_spectrum(source, base="../Data/Npy/"):
         return None
 
 
-def save_npy(source, spectrum, base="../Data/Npy/"):
+def save_npy(source, spectrum, base="../Data/Npy_v4/"):
     path = base + source["root"] + "/"
     if not os.path.exists(path):
         os.makedirs(path)

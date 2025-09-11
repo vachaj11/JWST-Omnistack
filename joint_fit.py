@@ -844,11 +844,11 @@ def abundance_compar_z(
     plt.close(fig)
 
 
-if __name__ == "__main__":
-    f = catalog.fetch_json("../catalog_fn.json")["sources"]
+def main():
+    f = catalog.fetch_json("../catalog_v4.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]
-    ffmu = catalog.fetch_json("../catalog_indiv2.json")["sources"]
+    ffmu = catalog.fetch_json("../catalog_indiv4.json")["sources"]
     for s in f:
         s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
     for s in ffmu:
@@ -1175,7 +1175,7 @@ if __name__ == "__main__":
         #manual=True,
         indso=ffmu,
     )
-    
+    """
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1316,4 +1316,7 @@ if __name__ == "__main__":
         lim=[7.25, 8.75],
         indso=ffmu,
     )
-    """
+
+
+if __name__ == "__main__":
+    main()

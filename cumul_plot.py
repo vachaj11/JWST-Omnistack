@@ -226,7 +226,7 @@ def plot_stacks(
     fit=False,
     typ="median",
     ratios=None,
-    **kwargs
+    **kwargs,
 ):
     fig = plt.figure()
     gs = fig.add_gridspec(3, 5, hspace=0)
@@ -238,7 +238,7 @@ def plot_stacks(
         z = [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]]
     else:
         z = zrang
-    bases = ["../Data/Npy/", "../Data/Subtracted/", "../Data/Subtracted_b/"]
+    bases = ["../Data/Npy_v4/", "../Data/Subtracted_v4/", "../Data/Subtracted_v4_b/"]
     for i, l in enumerate(keys):
         lin = lines[l]
         rangs = [[l - lin[1] * l / narrow, l + lin[1] * l / narrow]]
@@ -254,7 +254,7 @@ def plot_stacks(
                 axis=axs[b, i],
                 fits=fits,
                 typ=typ,
-                **kwargs
+                **kwargs,
             )
             if b != 2:
                 axs[b, i].get_legend().remove()
@@ -342,8 +342,8 @@ def plot_mz(sources, title=None, save=None, **kwargs):
         plt.show()
 
 
-if __name__ == "__main__":
-    a = catalog.fetch_json("../catalog_fn.json")["sources"]
+def main():
+    a = catalog.fetch_json("../catalog_v4.json")["sources"]
     af = catalog.rm_bad(a)
     af = catalog.rm_quasars(af)
     afp = [s for s in af if s["grat"] == "prism"]
@@ -352,14 +352,10 @@ if __name__ == "__main__":
     afm = [s for s in af if s["grat"][0] == "g"]
     path0 = "../Plots/"
     srs = {"medium": afm, "high": afh, "prism": afp}
-    sources = {
-        "npy": "../Data/Npy/",
-        "ppxf": "../Data/Subtracted/",
-        "smoo": "../Data/Subtracted_b/",
-    }
     stack_type = "median"
     '''
     for i in range(2):
+        """
         plot_stacks(
             afp,
             lines_C,
@@ -371,6 +367,7 @@ if __name__ == "__main__":
             title=f"Stack of lines in prism ({i} of 1)",
             typ=stack_type,
         )
+        """
         plot_stacks(
             afm,
             lines_C,
@@ -395,8 +392,9 @@ if __name__ == "__main__":
             typ=stack_type,
         )
         """
-    
+    '''
     for i in range(3):
+        """
         plot_stacks(
             afp,
             core_lines,
@@ -408,6 +406,7 @@ if __name__ == "__main__":
             ratios = core_ratios,
             cred=True,
         )
+        """
         plot_stacks(
             afm,
             core_lines,
@@ -416,7 +415,7 @@ if __name__ == "__main__":
             narrow=700,
             # title=f"Stack of lines in medium resolution ({i} of 2)",
             typ=stack_type,
-            ratios = core_ratios,
+            ratios=core_ratios,
             cred=True,
         )
         """
@@ -431,10 +430,12 @@ if __name__ == "__main__":
             cred=True,
         )
         """
-    
+    '''
+    """
     plot_mz(
         afp, title="Mass vs Redshift for prism", save="../Plots/lines4/mz_prism.pdf"
     )
+    """
     plot_mz(
         afm,
         title="Mass vs Redshift for medium resolution",
@@ -443,7 +444,8 @@ if __name__ == "__main__":
     """
     plot_mz(afh, title='Mass vs Redshift for high resolution', save='../Plots/lines4/mz_high.pdf')
     """
-    
+    '''
+    """
     plot_histograms(
         afp,
         core_lines,
@@ -452,6 +454,7 @@ if __name__ == "__main__":
         ymax=3350,
         narrow=100,
     )
+    """
     plot_histograms(
         afm,
         core_lines,
@@ -470,7 +473,7 @@ if __name__ == "__main__":
         narrow=2500,
     )
     """
-    
+    """
     plot_lines(
         afp,
         core_lines,
@@ -479,6 +482,7 @@ if __name__ == "__main__":
         narrow=100,
         ratios=core_ratios,
     )
+    """
     plot_lines(
         afm,
         core_lines,
@@ -497,4 +501,7 @@ if __name__ == "__main__":
         ratios = core_ratios,
     )
     """
-    '''
+
+
+if __name__ == "__main__":
+    main()

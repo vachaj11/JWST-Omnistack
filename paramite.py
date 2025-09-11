@@ -3,7 +3,15 @@ from multiprocessing import Manager, Process, cpu_count
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.sparse import coo_array, csc_array, csr_array, load_npz, save_npz
+from scipy.sparse import (
+    coo_array,
+    csc_array,
+    csr_array,
+    dok_array,
+    lil_array,
+    load_npz,
+    save_npz,
+)
 from scipy.sparse.linalg import LinearOperator, eigsh
 
 import abundc as ac
@@ -103,25 +111,25 @@ def ded_params(sources, method, no=50, sbin=5, nwg=0.3, ite=None):
         ite -= 1
 
 
-def pro_fluxes(sources, lt, r_lis, vals, **kwargs):
-    for i, s_inds in r_lis:
-        srs = [sources[l] for l in s_inds]
-        val = ac.fit_lines(
-            srs, lt[1], lt[0], dwidth=lt[2], typ="mean", cal_red=0.0, **kwargs
-        )
-        vals[i] = val
+def pro_fluxes(sources, lt, r_lis, M, vals, **kwargs):
+    for i in range(len(r_lis)):
+        row = M[i].todok()
+        srs = [sources[k] for k in row.keys()]
+        val = ac.fit_lines(srs, lt[1], lt[0], dwidth=lt[2], typ="mean", **kwargs)
+        vals[r_lis[i]] = val
 
 
-def cal_fluxes(sources, l_tuple, M_lis, **kwargs):
+def cal_fluxes(sources, l_tuple, M, **kwargs):
     manag = Manager()
     vals = manag.dict()
     proc = cpu_count()
     prls = [[] for i in range(proc)]
-    for i, d in enumerate(M_lis):
-        prls[i % len(prls)].append([i, d])
+    for i in range(M.shape[0]):
+        prls[i % len(prls)].append(i)
+    srs = []
     active = []
     for p in prls:
-        args = (sources, l_tuple, p, vals)
+        args = (sources, l_tuple, p, M[p], vals)
         t = Process(target=pro_fluxes, args=args, kwargs=kwargs)
         t.start()
         active.append(t)
@@ -130,11 +138,11 @@ def cal_fluxes(sources, l_tuple, M_lis, **kwargs):
             if not t.is_alive():
                 t.terminate()
                 active.remove(t)
-        print(f"\r\033[KFinished {len(vals)} out of {len(M_lis)}.", end="")
+        print(f"\r\033[KFinished {len(vals)} out of {M.shape[0]}.", end="")
         time.sleep(0.01)
     j_vals = {k: [] for k in l_tuple[0].keys()}
     for k in l_tuple[0].keys():
-        for i in range(len(M_lis)):
+        for i in range(M.shape[0]):
             j_vals[k].append(vals[i][k])
     return j_vals
 
@@ -146,28 +154,24 @@ def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, save=None, **kwargs):
     sources = catalog.filter_zranges(sources, [[min(l_tuple[1]), max(l_tuple[1])]])
     n_sou = len(sources)
     n_sam = n_sou * 2 if n_sam is None else n_sam
-    M_lis = []
-    for i in range(n_sam):
-        M_lis.append(np.random.choice(n_sou, size=n_one, replace=False))
-        """
-        new = 0
-        while not new:
-            comb = np.sort(np.random.choice(n_sou, size=n_one, replace=False))
-            if comb not in M_lis:
-                M_lis.append(comb)
-                new += 1
-        """
-    data = []
-    row_ind = []
+    M = lil_array((n_sam, n_sou), dtype="uint8")
     col_ind = []
-    for i, r in enumerate(M_lis):
-        data += [1 for l in range(len(r))]
-        row_ind += [i for l in range(len(r))]
-        col_ind += list(r)
+    for i in range(n_sam):
+        col_ind += list(np.random.choice(n_sou, size=n_one, replace=False))
+        print(f"\r\033[K{i} out of {n_sam}", end="")
+
+    data = [1] * (n_one * n_sam)
+    row_ind = []
+    for i in range(n_sam):
+        row_ind += [i] * n_one
     M = coo_array(
         (data, (row_ind, col_ind)), shape=(n_sam, n_sou), dtype="uint8"
     ).tocsr()
-    fluxes = cal_fluxes(sources, l_tuple, M_lis, **kwargs)
+    del row_ind
+    del col_ind
+    del data
+    fluxes = cal_fluxes(sources, l_tuple, M, **kwargs)
+
     flubs = dict()
     for k, v in fluxes.items():
         flux = v.copy()

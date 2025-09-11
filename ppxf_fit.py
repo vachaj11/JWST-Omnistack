@@ -169,7 +169,7 @@ def ppxf_fitting_single(n=0):
     ppxf_process(source, silent=False, plot=True)
 
 
-def ppxf_fitting_multi(sources, start_in=0):
+def ppxf_fitting_multi(sources, start_in=0, **kwargs):
     a = sources
     manag = Manager()
     proc = cpu_count()
@@ -181,7 +181,7 @@ def ppxf_fitting_multi(sources, start_in=0):
             for i in range(pr_no - len(active)):
                 latest += 1
                 args = (a[latest],)
-                kwargs = {"silent": True}
+                kwargs = {"silent": True, **kwargs}
                 t = Process(target=ppxf_process, args=args, kwargs=kwargs)
                 t.start()
                 print(f"\rRunning spectra {latest} \tout of {len(a)-1}", end="")
@@ -190,11 +190,13 @@ def ppxf_fitting_multi(sources, start_in=0):
             if not t.is_alive():
                 t.terminate()
                 active.remove(t)
-        time.sleep(0.5)
+        time.sleep(0.1)
 
 
-def ppxf_process(source, save=True, **kwargs):
-    spectrum = spectr.get_spectrum(source)
+def ppxf_process(
+    source, bi="../Data/Npy_v4/", bo="../Continuum_v4/", bs=None, **kwargs
+):
+    spectrum = spectr.get_spectrum(source, base=bi)
     try:
         pp = ppxf_fit(source, spectrum, **kwargs)
         z = source["z"]
@@ -217,16 +219,17 @@ def ppxf_process(source, save=True, **kwargs):
     except:
         print(f'Spectrum of {source["srcid"]} not subtracted.')
         return None
-    if save:
-        base = "../Data/Continuum/"
+    if bo:
+        base = bo
         spectr.save_npy(source, [wav, bestfit], base=base)
+    if bs:
+        continuum(source, bi=bo, bo=bs)
     return pp
 
 
 def continuum(
     source,
     nconv=5,
-    save=True,
     plot=False,
     bi="../Data/Continuum/",
     bo="../Data/Subtracted/",
@@ -258,7 +261,7 @@ def continuum(
         plt.plot(resac[0], resac[1])
         # plt.plot(subtc[0],subtc[1])
         plt.show()
-    if save:
+    if bo:
         spectr.save_npy(source, subtc, base=bo)
     return subtc
 
@@ -266,10 +269,10 @@ def continuum(
 def smooth_to_cont(
     source,
     nconv=40,
-    save=True,
     plot=False,
-    bi="../Data/Npy/",
-    bo="../Data/Continuum_b/",
+    bi="../Data/Npy_v4/",
+    bo="../Data/Continuum_v4_b/",
+    bs=None,
 ):
     spectrum = spectr.get_spectrum(source)
     if spectrum is None:
@@ -297,8 +300,10 @@ def smooth_to_cont(
         plt.plot(resac[0], resac[1])
         plt.plot(resa[0], resa[1])
         plt.show()
-    if save:
+    if bo:
         spectr.save_npy(source, resa, base=bo)
+    if bs:
+        continuum(source, bi=bo, bo=bs, convolv=False)
     return resa
 
 

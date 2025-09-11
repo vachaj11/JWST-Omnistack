@@ -18,9 +18,9 @@ flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") els
 colors = ["b", "g", "r", "c", "m", "y"]
 
 
-def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
+def plot_zstack(rangs, resos, norm=False, base="../Data/Npy_v4/", save=None):
     """legacy plot of stacks in two redshift bins separated by z=2.5 ."""
-    a = catalog.fetch_json("../catalog_z.json")["sources"]
+    a = catalog.fetch_json("../catalog_v4.json")["sources"]
     # plots.histogram_in(catalog.rm_bad(a), 'z')
     ah = catalog.filter_zranges(a, rangs)
     ahf = catalog.rm_bad(ah)
@@ -52,7 +52,7 @@ def plot_zstack(rangs, resos, norm=False, base="../Data/Npy/", save=None):
         plt.show()
 
 
-def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy/", save=None):
+def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy_v4/", save=None):
     """Plots stack for sources covering a specified range."""
     fig, axs = plt.subplots()
     sources = catalog.filter_zranges(sources, rangs)
@@ -237,7 +237,7 @@ def hist_in_z(sources, value, zrangs, range=None, save=None, norm=False):
 
 def plot_all_lines():
     """Plots large set of various diagnostic plots for lines of interest."""
-    a = catalog.fetch_json("../catalog_z.json")["sources"]
+    a = catalog.fetch_json("../catalog_v4.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]

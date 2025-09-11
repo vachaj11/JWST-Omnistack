@@ -205,7 +205,7 @@ def download_all(sources, start_in=0, in_proc=20, **kwargs):
         time.sleep(0.01)
 
 
-def download(sources, baso="../Data/Npy/", rewrite=False):
+def download(sources, baso="../Data/Npy_v4/", rewrite=False):
     for source in sources:
         spex = spectr.get_spectrum(source, base=baso)
         if spex is None and rewrite:
@@ -219,7 +219,7 @@ def move_around():
     a = catalog.fetch_json("../catalog.json")["sources"]
     for s in a:
         spectrum = spectr.get_spectrum(s)
-        base = "../Data/Npy/"
+        base = "../Data/Npy_v4/"
         spectr.save_npy(s, spectrum, base=base)
         spectr.rm_npy(s)
 
@@ -372,16 +372,17 @@ def mini_reduction(path, patho, sind=0):
     # match_cosmos(f)
     # extract_cosmos(f)
     download_all(f, baso="../Data/Npy_tmp/", start_in=sind)
-    trim_edges(f, bi="../Data/Npy_tmp/", bo="../Data/Npy_tmp_trim/")
+    trim_edges(f, bi="../Data/Npy_tmp/", bo="../Data/Npy_v4/")
     # degrade_high(f, bi="../Data/Npy_tmp_trim/", bo="../Data/Npy_tmp_conv/")
-    update_ranges(f, base="../Data/Npy_tmp_trim/")
-    fo = catalog.fetch_json("../catalog_v3.json")["sources"]
-    for s in f:
-        if (c := s["comment"]) and "Redshift matches":
-            com = c[17:].split(" z=")[0]
-            for so in fo:
-                if com in so["file"]:
-                    s["old_comment"] = so["comment"]
-                    s["old_z"] = so["z"]
-                    s["old_grade"] = so["grade"]
+    update_ranges(f, base="../Data/Npy_v4/")
+    if os.path.isfile("../catalog_v3.json"):
+        fo = catalog.fetch_json("../catalog_v3.json")["sources"]
+        for s in f:
+            if (c := s["comment"]) and "Redshift matches":
+                com = c[17:].split(" z=")[0]
+                for so in fo:
+                    if com in so["file"]:
+                        s["old_comment"] = so["comment"]
+                        s["old_z"] = so["z"]
+                        s["old_grade"] = so["grade"]
     catalog.save_as_json({"sources": f}, patho)
