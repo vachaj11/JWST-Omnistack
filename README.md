@@ -10,7 +10,7 @@ Instructions bellow assume standard Linux/bash and IPython sessions. Total run t
 
 Assuming standard `python3` installation with packages managed by `pip`.
 
-    $ pip install numpy, scipy, astropy, matplotlib, pyneb, ppxf, 
+    $ pip install numpy, scipy, astropy, matplotlib, pyneb, ppxf
 
 The plotting code also pressumes an existing latex instalation in the environment (alike e.g. TeX Live).
 
@@ -36,7 +36,7 @@ Enter `Code` folder and fetch Git project (assuming the repository is public - w
 
 ##### Downloading and preparing spectra
 
-Import relevant libraries, construct local representation of the catalogue (`../catalog_v4.json`), download and process (e.g. trim noisy edges) all spectral data:
+Import relevant modules, construct local representation of the catalogue (`../catalog_v4.json`), download and process (e.g. trim noisy edges) all spectral data:
 
     >>> import download as dl
     >>> import paramite as pr
@@ -45,6 +45,7 @@ Import relevant libraries, construct local representation of the catalogue (`../
 
 ##### Calculating line fluxes and abundances for individual sources
 
+(This process is very memory intensive and usually consumes up to ~10 GB of RAM while running.)
 Open local catalogue, filter it for medium resolution and quality spectra, calculate/reconstruct line fluxes for individual spectra, calculate abundances for individual spectra, save local catalogue and its subset with individual sources information:
 
     >>> f = catalog.fetch_json("../catalog_v4.json")["sources"]
@@ -57,14 +58,16 @@ Open local catalogue, filter it for medium resolution and quality spectra, calcu
 
 ##### Calculating continuum-subtracted spectra
 
-(This is not essential step to the results and can be skipped. Requires about ~10 hours.)
+(This step is essential only to plotting in `cumul_plot.py`, otherwise can be skipped. Requires about ~10 hours.)
+Imports ppxf fitting module, calculate ppxf fits and related continua, calculate continua approximated through iterative clipping, subtract continua from spectral data:
 
     >>> import ppxf_fit as pf
-    >>> ...
+    >>> pf.ppxf_fitting_multi(f, bi = "../Data/Npy_v4/", bo = "../Data/Continuum_v4/", bs = "../Data/Subtracted_v4/")
+    >>> _ = pf.smooth_to_cont(f, bi = "../Data/Npy_v4/", bo = "../Data/Continuum_v4_b/", bs = "../Data/Subtracted_v4_b/")
 
 ##### Calculated and plot results presented in internship summary
 
-Import relevant librarie, run main plotting functions (this will create relevant `.pdf` plots in `../Plots/`):
+Import relevant modules, run main plotting functions (this will create relevant `.pdf` plots in `../Plots/`):
 
     >>> import joint_fit as jf
     >>> import cumul_plot as cp
