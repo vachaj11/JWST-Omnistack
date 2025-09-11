@@ -36,18 +36,19 @@ Enter `Code` folder and fetch Git project (assuming the repository is public - w
 
 ##### Downloading and preparing spectra
 
-Import relevant modules, construct local representation of the catalogue (`../catalog_v4.json`), download and process (e.g. trim noisy edges) all spectral data:
+Import relevant module, construct local representation of the catalogue (`../catalog_v4.json`), download and process (e.g. trim noisy edges) all spectral data:
 
     >>> import download as dl
-    >>> import paramite as pr
-    >>> import catalog
     >>> dl.mini_reduction("../dja_msaexp_emission_lines_v4.4.csv", "../catalog_v4.json")
 
 ##### Calculating line fluxes and abundances for individual sources
 
 (This process is very memory intensive and usually consumes up to ~10 GB of RAM while running.)
-Open local catalogue, filter it for medium resolution and quality spectra, calculate/reconstruct line fluxes for individual spectra, calculate abundances for individual spectra, save local catalogue and its subset with individual sources information:
 
+Import relevant modules, open local catalogue, filter it for medium resolution and quality spectra, calculate/reconstruct line fluxes for individual spectra, calculate abundances for individual spectra, save local catalogue and its subset with individual sources information:
+
+    >>> import paramite as pr
+    >>> import catalog
     >>> f = catalog.fetch_json("../catalog_v4.json")["sources"]
     >>> ff = catalog.rm_bad(f)
     >>> ffm = [s for s in ffm if s["grat"][0]=="g"]
@@ -59,6 +60,7 @@ Open local catalogue, filter it for medium resolution and quality spectra, calcu
 ##### Calculating continuum-subtracted spectra
 
 (This step is essential only to plotting in `cumul_plot.py`, otherwise can be skipped. Requires about ~10 hours.)
+
 Imports ppxf fitting module, calculate ppxf fits and related continua, calculate continua approximated through iterative clipping, subtract continua from spectral data:
 
     >>> import ppxf_fit as pf
