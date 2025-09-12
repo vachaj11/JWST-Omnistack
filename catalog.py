@@ -194,7 +194,7 @@ def value_range(sources, value, rang):
     for source in sources:
         if (v := source.get(value)) is not None and rang[0] < v < rang[1]:
             sourn.append(source)
-        else:
+        elif v is None:
             print(f"Value {value} not found for source {source['srcid']}.")
     return sourn
 

@@ -345,13 +345,10 @@ def plot_mz(sources, title=None, save=None, **kwargs):
 def main():
     a = catalog.fetch_json("../catalog_v4.json")["sources"]
     af = catalog.rm_bad(a)
-    af = catalog.rm_quasars(af)
     afp = [s for s in af if s["grat"] == "prism"]
     afm = [s for s in af if s["grat"][-1] == "m" and s["grat"][0] == "g"]
     afh = [s for s in af if s["grat"][-1] == "h" and s["grat"][0] == "g"]
     afm = [s for s in af if s["grat"][0] == "g"]
-    path0 = "../Plots/"
-    srs = {"medium": afm, "high": afh, "prism": afp}
     stack_type = "median"
     '''
     for i in range(2):

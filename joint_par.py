@@ -1,3 +1,10 @@
+"""Holds methods for plotting diagnostic results related to individual fluxes reconstruction.
+
+Attributes:
+    flatten (function): Small function to recursively flatten whatever iterable provided into a 1D list
+
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import load_npz
@@ -20,6 +27,7 @@ flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") els
 def reconst_comparison(
     xdata, ydata, line, yax=None, xax=None, lim=None, title="_", save=None
 ):
+    """Plot direct source-by-source comparison between two reconstruction methods from the passed data arrays."""
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
 
@@ -53,71 +61,74 @@ def reconst_comparison(
     plt.close(fig)
 
 
-def get_I_R(sources, nam):
+def get_I_R(sources, nam, snam=None):
+    """Reconstruct individual fluxes values for spectra in provided catalogue, using 4 different reconstruction algorithm and direct Gaussian fitting."""
     tup = ac.core_lines[nam]
+    if snam is not None:
+        for k in list(tup[0].keys()):
+            if k != snam:
+                tup[0].pop(k)
     M, fl, so = pr.art_fluxes(sources, tup, n_one=200, n_sam=250000)
     I = dict()
     R = dict()
-    for n, m in {"OSEM": pr.OSEM, "MART": pr.MART, "FIST": pr.FIST}.items():
+    for n, m in {
+        "OSEM": pr.OSEM,
+        "MART": pr.MART,
+        "MLEM": pr.MLEM,
+        "FIST": pr.FIST,
+    }.items():
         R[n] = m(M, fl, t_f=1800)
-    """
-    Ind = ac.indiv_stat(
-        lambda x: ac.core_fit(x, nam, cal_red=0, indiv=False), so, calib=None
-    )
-    for n in tup[0]:
-        vls = [s[n] for s in Ind]
-        I[n] = vls
-    """
     I = pr.ind_fluxes(so, tup)
     return I, R
 
 
 def main():
+    """Central plotting function, with different plots specified in individual function calls hidden/chosen for plotting with block comments."""
     f = catalog.fetch_json("../catalog_v4.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]
 
-    I, R = get_I_R(ffm, "H1_a")
+    I, R = get_I_R(ffm, "H1_a", snam="N2_6584A")
 
     reconst_comparison(
-        R["FIST"],
+        R["OSEM"],
         I,
         "N2_6584A",
         save="../Plots/recon/compar_INDI.pdf",
-        title="Comparison of fluxes reconstructed via \\textit{FISTA}\nand from un-stacked measurements",
-        xax="\\textit{FISTA} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
+        title="Comparison of fluxes reconstructed via \\textit{OSEM}\nand from un-stacked measurements",
+        xax="\\textit{OSEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
         yax="Un-stacked $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
-        lim=[0, 5 * 10 ** (-16)],
+        lim=[0, 5 * 10 ** (-20)],
     )
     reconst_comparison(
-        R["FIST"],
         R["OSEM"],
+        R["FIST"],
         "N2_6584A",
-        save="../Plots/recon/compar_OSEM.pdf",
-        title="Comparison of fluxes reconstructed via \\textit{FISTA}\nand via \\textit{OSEM}",
-        xax="\\textit{FISTA} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
-        yax="\\textit{OSEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
-        lim=[0, 5 * 10 ** (-16)],
+        save="../Plots/recon/compar_FIST.pdf",
+        title="Comparison of fluxes reconstructed via \\textit{OSEM}\nand via \\textit{FISTA}",
+        xax="\\textit{OSEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
+        yax="\\textit{FISTA} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
+        lim=[0, 5 * 10 ** (-20)],
     )
     reconst_comparison(
-        R["FIST"],
+        R["OSEM"],
         R["MLEM"],
         "N2_6584A",
         save="../Plots/recon/compar_MLEM.pdf",
-        title="Comparison of fluxes reconstructed via \\textit{FISTA}\nand via \\textit{MLEM}",
-        xax="\\textit{FISTA} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
+        title="Comparison of fluxes reconstructed via \\textit{OSEM}\nand via \\textit{MLEM}",
+        xax="\\textit{OSEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
         yax="\\textit{MLEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
-        lim=[0, 5 * 10 ** (-16)],
+        lim=[0, 5 * 10 ** (-20)],
     )
     reconst_comparison(
-        R["FIST"],
+        R["OSEM"],
         R["MART"],
         "N2_6584A",
         save="../Plots/recon/compar_MART.pdf",
-        title="Comparison of fluxes reconstructed via \\textit{FISTA}\nand via \\textit{MART}",
-        xax="\\textit{FISTA} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
+        title="Comparison of fluxes reconstructed via \\textit{OSEM}\nand via \\textit{MART}",
+        xax="\\textit{OSEM} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
         yax="\\textit{MART} $[\\mathrm{N}_\\mathrm{II}]\\lambda6585$",
-        lim=[0, 5 * 10 ** (-16)],
+        lim=[0, 5 * 10 ** (-20)],
     )
     """
     M = load_npz('../M_ne.npz')

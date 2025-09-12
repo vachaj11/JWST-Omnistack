@@ -1,20 +1,14 @@
 """Holds methods allowing for ppxf fitting, various estimations of spectra continuum and continuum subtraction."""
 
-import matplotlib
-
-matplotlib.use("qtagg")
-
 import os
 import sys
 import time
 import warnings
-
-warnings.filterwarnings("ignore")
-
 from multiprocessing import Manager, Process, cpu_count
 from pathlib import Path
 from urllib import request
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import ppxf.ppxf_util as util
@@ -25,9 +19,17 @@ from ppxf.ppxf import ppxf
 import catalog
 import spectr
 
+warnings.filterwarnings("ignore")
+mpl.use("qtagg")
+
 
 def ppxf_fit(sources, spectra, silent=True, plot=False):
-    """Despite the list formatisation, will function reliably only with single source/spectra passed."""
+    """For a given catalog item and corresponding spectrum, fits the spectrum with spectral energy distribution templates and infers physical information as available.
+
+    Despite the list formatisation, will function reliably only with single source/spectra passed.
+
+    Most of the code has been adopted from: https://github.com/micappe/ppxf_examples/blob/main/ppxf_example_high_redshift.ipynb
+    """
     if type(sources) is not list:
         sources = [sources]
     if type(spectra) is not list or len(spectra[0]) != 2:
@@ -74,7 +76,8 @@ def ppxf_fit(sources, spectra, silent=True, plot=False):
         FWHM_gal_s = np.concatenate([FWHM_gal_s, FWHM_gal])
     sps_name = "fsps"
     if sps_name in ["fsps", "galaxev"]:
-        w = lam_s < 7400
+        """7400 is the more correct value to use here, but since the reddest value is of interest is ~9500A, a higher limit has to be chosen."""
+        w = lam_s < 9700
         galaxy_s = galaxy_s[w]
         lam_s = lam_s[w]
         velscale_s = velscale_s[w]
@@ -162,42 +165,10 @@ def ppxf_fit(sources, spectra, silent=True, plot=False):
     return pp
 
 
-def ppxf_fitting_single(n=0):
-    a = catalog.fetch_json("../catalog.json")["sources"]
-    af = catalog.rm_bad(a)
-    # af = [s for s in a if s['sn50']>4]
-    # af = [s for s in af if s['grat']!='prism']
-    source = af[n]
-    ppxf_process(source, silent=False, plot=True)
-
-
-def ppxf_fitting_multi(sources, start_in=0, **kwargs):
-    a = sources
-    manag = Manager()
-    proc = cpu_count()
-    active = []
-    latest = start_in - 1
-    while latest < len(a) - 1 or len(active) > 0:
-        pr_no = min(proc, len(a) - 1 - latest)
-        if len(active) < pr_no:
-            for i in range(pr_no - len(active)):
-                latest += 1
-                args = (a[latest],)
-                kwargs = {"silent": True, **kwargs}
-                t = Process(target=ppxf_process, args=args, kwargs=kwargs)
-                t.start()
-                print(f"\rRunning spectra {latest} \tout of {len(a)-1}", end="")
-                active.append(t)
-        for t in active:
-            if not t.is_alive():
-                t.terminate()
-                active.remove(t)
-        time.sleep(0.1)
-
-
 def ppxf_process(
     source, bi="../Data/Npy_v4/", bo="../Continuum_v4/", bs=None, **kwargs
 ):
+    """Single process function which for a given catalogue item 1. obtains its corresponding spectrum, 2. fits the spectrum via ppxf, 3. if requested saves extracted continuum of the fit to a specified location."""
     spectrum = spectr.get_spectrum(source, base=bi)
     try:
         pp = ppxf_fit(source, spectrum, **kwargs)
@@ -229,6 +200,31 @@ def ppxf_process(
     return pp
 
 
+def ppxf_fitting_multi(sources, start_in=0, **kwargs):
+    """For each item in the provided catalogue fits its spectra using ppxf and if specified saves the resulting continuum."""
+    a = sources
+    manag = Manager()
+    proc = cpu_count()
+    active = []
+    latest = start_in - 1
+    while latest < len(a) - 1 or len(active) > 0:
+        pr_no = min(proc, len(a) - 1 - latest)
+        if len(active) < pr_no:
+            for i in range(pr_no - len(active)):
+                latest += 1
+                args = (a[latest],)
+                kwargs = {"silent": True, **kwargs}
+                t = Process(target=ppxf_process, args=args, kwargs=kwargs)
+                t.start()
+                print(f"\rRunning spectra {latest} \tout of {len(a)-1}", end="")
+                active.append(t)
+        for t in active:
+            if not t.is_alive():
+                t.terminate()
+                active.remove(t)
+        time.sleep(0.1)
+
+
 def continuum(
     source,
     nconv=5,
@@ -237,6 +233,7 @@ def continuum(
     bo="../Data/Subtracted/",
     convolv=True,
 ):
+    """For a given catalogue item, 1. obtains its spectrum and continuum approximation, 2. appropriately smooth the continuum approximation, 3. subtract the continuum from the spectra and save the result to specified location."""
     spectrum = spectr.get_spectrum(source)
     continuu = spectr.get_spectrum(source, base=bi)
     if spectrum is None or continuu is None:
@@ -269,47 +266,51 @@ def continuum(
 
 
 def smooth_to_cont(
-    source,
+    sources,
     nconv=40,
     plot=False,
     bi="../Data/Npy_v4/",
     bo="../Data/Continuum_v4_b/",
     bs=None,
 ):
-    spectrum = spectr.get_spectrum(source)
-    if spectrum is None:
-        print(f'Spectrum not available for {source["srcid"]}')
-        return None
-    match source["grat"]:
-        case "prism":
-            R = 100
-        case x if x[-1:] == "h":
-            R = 2700
-        case x if x[-1:] == "m" and x[:1] == "g":
-            R = 1000
-        case _:
-            R = len(spectrum[0])
-    FWHM_conv = np.sqrt(min(spectrum[0]) * max(spectrum[0])) / R
-    convc = sp_conv(spectrum, FWHM_conv * nconv)
-    resac = spectr.resample(convc, spectrum[0])
-    clip = spectr.clipping([spectrum[0], spectrum[1] - resac[1]], sup=3, sdo=3, ite=2)
-    spcl = [spectrum[0], spectrum[1] * np.isfinite(clip[1])]
-    conv = sp_conv(spcl, FWHM_conv * nconv)
-    resa = spectr.resample(conv, spectrum[0])
+    """For each item in the provided catalogue, obtain its spectrum and by iteratively clipping and smoothing it, approximate its continuum. If specified save the result as well as a subtracted version of the original spectra."""
+    for source in sources:
+        spectrum = spectr.get_spectrum(source)
+        if spectrum is None:
+            print(f'Spectrum not available for {source["srcid"]}')
+            return None
+        match source["grat"]:
+            case "prism":
+                R = 100
+            case x if x[-1:] == "h":
+                R = 2700
+            case x if x[-1:] == "m" and x[:1] == "g":
+                R = 1000
+            case _:
+                R = len(spectrum[0])
+        FWHM_conv = np.sqrt(min(spectrum[0]) * max(spectrum[0])) / R
+        convc = sp_conv(spectrum, FWHM_conv * nconv)
+        resac = spectr.resample(convc, spectrum[0])
+        clip = spectr.clipping(
+            [spectrum[0], spectrum[1] - resac[1]], sup=3, sdo=3, ite=2
+        )
+        spcl = [spectrum[0], spectrum[1] * np.isfinite(clip[1])]
+        conv = sp_conv(spcl, FWHM_conv * nconv)
+        resa = spectr.resample(conv, spectrum[0])
 
-    if plot:
-        plt.plot(spectrum[0], spectrum[1])
-        plt.plot(resac[0], resac[1])
-        plt.plot(resa[0], resa[1])
-        plt.show()
-    if bo:
-        spectr.save_npy(source, resa, base=bo)
-    if bs:
-        continuum(source, bi=bo, bo=bs, convolv=False)
-    return resa
+        if plot:
+            plt.plot(spectrum[0], spectrum[1])
+            plt.plot(resac[0], resac[1])
+            plt.plot(resa[0], resa[1])
+            plt.show()
+        if bo:
+            spectr.save_npy(source, resa, base=bo)
+        if bs:
+            continuum(source, bi=bo, bo=bs, convolv=False)
 
 
 def sp_conv(spectrum, fwhm):
+    """Smooth provided spectrum with a Gaussian of specified full width at half maximum."""
     rastr = len(spectrum[0]) * 3
     rang = [min(spectrum[0]), max(spectrum[0])]
     fwno = fwhm / (rang[1] - rang[0]) * rastr
@@ -320,6 +321,7 @@ def sp_conv(spectrum, fwhm):
 
 
 def conv1D(array, fwhm):
+    """Convolve provided uniformly-spaced array with a Gaussian of specified full width at half maximum."""
     sig = fwhm / (2 * np.sqrt(2 * np.log(2)))
     ker = Gaussian1DKernel(sig)
     convolved = convolve(array, ker, boundary="extend")

@@ -1,9 +1,13 @@
-import matplotlib as mpl
+"""Holds various secondary methods for results plotting and related calculations.
 
-mpl.use("qtagg")
+Attributes:
+    colors (list): Specifies order of colors elements of gui are to be drawn with.
+    flatten (function): Small function to recursively flatten whatever iterable provided into a 1D list
+"""
 
 import csv
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -12,22 +16,18 @@ import line_fit as lf
 import plots
 import spectr
 
-flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") else [l]
-
+mpl.use("qtagg")
 
 colors = ["b", "g", "r", "c", "m", "y"]
 
+flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") else [l]
 
-def plot_zstack(rangs, resos, norm=False, base="../Data/Npy_v4/", save=None):
-    """legacy plot of stacks in two redshift bins separated by z=2.5 ."""
-    a = catalog.fetch_json("../catalog_v4.json")["sources"]
-    # plots.histogram_in(catalog.rm_bad(a), 'z')
-    ah = catalog.filter_zranges(a, rangs)
-    ahf = catalog.rm_bad(ah)
+
+def plot_zstack(ahf, rangs, resos, norm=False, base="../Data/Npy_v4/", save=None):
+    """Legacy plot of stacks in two redshift bins separated by z=2.5."""
+    ahf = catalog.filter_zranges(ahf, rangs)
     ahflz = catalog.value_range(ahf, "z", [0, 2.5])
     ahfhz = catalog.value_range(ahf, "z", [2.5, 20])
-    # plots.histogram_in(ahflz, 'z')
-    # plots.histogram_in(ahfhz, 'z')
     print(f"In low z bin:\t{len(ahflz)}\nIn high z bin:\t{len(ahfhz)}")
 
     for sources in [ahflz, ahfhz]:
@@ -53,7 +53,7 @@ def plot_zstack(rangs, resos, norm=False, base="../Data/Npy_v4/", save=None):
 
 
 def plot_simple(sources, rangs, resos, typ="median", base="../Data/Npy_v4/", save=None):
-    """Plots stack for sources covering a specified range."""
+    """Legacy plot of stack for sources covering a specified wavelength range."""
     fig, axs = plt.subplots()
     sources = catalog.filter_zranges(sources, rangs)
     for i, rang in enumerate(rangs):
@@ -87,7 +87,7 @@ def plot_zstacks(
     typ="median",
     cred=False,
 ):
-    """Plots stacks of sources covering specified range in separately in specified redshift bins."""
+    """Plots stacks of sources covering specified wavelength range separately in specified redshift bins."""
     if axis is None:
         fig, axs = plt.subplots()
     else:
@@ -137,7 +137,7 @@ def plot_zstacks(
 
 
 def plot_stacks(sources, rang, reso, save=None):
-    """Plot results of different stacking methods."""
+    """Legacy plot of results of stacking at given wavelength range obtained by different averaging methods."""
     sources = catalog.filter_zranges(a, [rang])
 
     fig, axs = plt.subplots()
@@ -163,7 +163,7 @@ def plot_stacks(sources, rang, reso, save=None):
 
 
 def histograms(sources):
-    """Plots histograms of parameters of provided sources."""
+    """Legacy histograms plot of various parameters of provided sources."""
     plots.histogram_in(sources, "z", bins=20, range=(0, 14))
     plots.histogram_in(sources, "sn50", bins=20, range=(0, 30))
     plots.histogram_in(sources, "Ha", bins=20, range=(-5, 90))
@@ -173,7 +173,7 @@ def histograms(sources):
 
 
 def hist_region(sources, rangs, save=None):
-    """Plots coverage of a given region(s) in redshift among given sources"""
+    """Legacy histogram plot of coverage of a given wavelength region(s) in redshift among given sources"""
     fig, axs = plt.subplots()
     zr = [0, 12]
     aa = catalog.filter_zranges(sources, rangs)
@@ -213,7 +213,7 @@ def hist_region(sources, rangs, save=None):
 
 
 def hist_in_z(sources, value, zrangs, range=None, save=None, norm=False):
-    """Plots histogram of a given value in specified redshift bins."""
+    """Legacy histogram plot of a given value in specified redshift bins among provided sources."""
     fig, axs = plt.subplots()
     for i, zrang in enumerate(zrangs):
         al = [s for s in sources if s["z"] is not None and zrang[0] < s["z"] < zrang[1]]
@@ -236,7 +236,7 @@ def hist_in_z(sources, value, zrangs, range=None, save=None, norm=False):
 
 
 def plot_all_lines():
-    """Plots large set of various diagnostic plots for lines of interest."""
+    """Legacy central method for plotting large set of various diagnostic diagrams related to lines of interest."""
     a = catalog.fetch_json("../catalog_v4.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]
@@ -280,10 +280,10 @@ def plot_all_lines():
 
 
 def cont_diff(source, plot=False):
-    """For a provided single source plots comparison with continuum approximation templates."""
-    spectr1 = spectr.get_spectrum(source, base="../Data/Continuum/")
-    spectr2 = spectr.get_spectrum(source, base="../Data/Continuum_b/")
-    spectro = spectr.get_spectrum(source, base="../Data/Npy/")
+    """Legacy simple plot showing comparison of spectra of passed source with two (assumed) pre-calculated continuum approximation."""
+    spectr1 = spectr.get_spectrum(source, base="../Data/Continuum_v4/")
+    spectr2 = spectr.get_spectrum(source, base="../Data/Continuum_v4_b/")
+    spectro = spectr.get_spectrum(source, base="../Data/Npy_v4/")
     if plot:
         plots.spectras_plot([spectr1, spectr2, spectro])
         plt.show()
@@ -296,5 +296,5 @@ def cont_diff(source, plot=False):
 if __name__ == "__main__":
     # plot_zstack([[0.47, 0.69]], 300)
     # histograms()
-    plot_all_lines()
-    print("")
+    # plot_all_lines()
+    pass

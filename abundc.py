@@ -577,6 +577,8 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
             t = tn
             n = nn
             ite += 1
+        print(f"\r\033[KElectron values: n:{n}, {t}.\n")
+        print(f"\r\033[KFluxes: {flx}.")
         return t, n, flc
 
 
@@ -678,18 +680,18 @@ def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
                 * (1.2 + 0.002 * n + 4.2 / n)
                 / (10**4 / t["TO3"] + 0.08 + 0.003 * n + 2.5 / n)
             )
+        if np.isnan(t["TS3"]) and not np.isnan(t["TO3"]):
+            t["TS3"] = 1.19 * t["TO3"] - 3200
+        if np.isnan(t["TN2"]) and not np.isnan(t["TO3"]):
+            t["TN2"] = 1.85 / (1 / t["TO3"] + 0.72 / 10**4)
         if np.isnan(t["TO3"]) and not np.isnan(t["TO2"]):
             t["TO3"] = 1 / (2 / t["TO2"] - 0.8 / 10**4)
         if np.isnan(t["TS2"]) and not np.isnan(t["TO2"]):
             t["TS2"] = 0.71 * t["TO2"] + 1200
-        if np.isnan(t["TO2"]) and not np.isnan(t["TS2"]):
-            t["TO2"] = (t["TS2"] - 1200) / 0.71
-        if np.isnan(t["TS3"]) and not np.isnan(t["TO3"]):
-            t["TS3"] = 1.19 * t["TO3"] - 3200
         if np.isnan(t["TO3"]) and not np.isnan(t["TS3"]):
             t["TO3"] = (t["TS3"] + 3200) / 1.19
-        if np.isnan(t["TN2"]) and not np.isnan(t["TO3"]):
-            t["TN2"] = 1.85 / (1 / t["TO3"] + 0.72 / 10**4)
+        if np.isnan(t["TO2"]) and not np.isnan(t["TS2"]):
+            t["TO2"] = (t["TS2"] - 1200) / 0.71
         if np.isnan(t["TO3"]) and not np.isnan(t["TN2"]):
             t["TO3"] = 1 / (1.85 / t["TN2"] - 0.72 / 10**4)
 
