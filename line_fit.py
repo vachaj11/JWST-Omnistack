@@ -1,3 +1,5 @@
+"""Holds methods for fitting spectra with multiple-component Gaussian profiles"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.modeling import Fittable1DModel, Parameter
@@ -7,19 +9,25 @@ import line_man as lm
 
 
 class Offset(Fittable1DModel):
+    """AstroPy fittable model instance specifying model of a simple constant offset/value."""
+
     yoff = Parameter()
 
     @staticmethod
     def evaluate(x, yoff):
+        """Evaluate the model."""
         return yoff
 
     @staticmethod
     def fit_deriv(x, yoff):
+        """Evaluate local partial derivatives of the model."""
         d_yoff = np.ones_like(x)
         return [d_yoff]
 
 
 class Gaussian1D(Fittable1DModel):
+    """AstroPy fittable model instance specifying model of a Gaussian profile with variable mean, std and amplitude."""
+
     amplitude = Parameter()
     mean = Parameter()
     stddev = Parameter()
@@ -27,10 +35,12 @@ class Gaussian1D(Fittable1DModel):
 
     @staticmethod
     def evaluate(x, amplitude, mean, stddev):
+        """Evaluate the model."""
         return amplitude * np.exp((-(1 / (2.0 * stddev**2)) * (x - mean) ** 2))
 
     @staticmethod
     def fit_deriv(x, amplitude, mean, stddev):
+        """Evaluate local parial derivatives of the model."""
         d_amplitude = np.exp((-(1 / (stddev**2)) * (x - mean) ** 2))
         d_mean = (
             2
@@ -50,50 +60,16 @@ class Gaussian1D(Fittable1DModel):
 
     @property
     def flux(self):
-        """In W/m^2"""
+        """Evaluate total spectral flux corresponding to the Gaussian model.
+
+        In units of W/m^2.
+        """
         c = 3 * 10**-18
         return self.amplitude * self.stddev * np.sqrt(2 * np.pi) * c / self.mean**2
 
 
-class Gaussian1Dof(Fittable1DModel):
-    amplitude = Parameter()
-    mean = Parameter()
-    stddev = Parameter()
-    yoff = Parameter()
-    stddev.min = 0.0
-
-    @staticmethod
-    def evaluate(x, amplitude, mean, stddev, yoff):
-        return amplitude * np.exp((-(1 / (2.0 * stddev**2)) * (x - mean) ** 2)) + yoff
-
-    @staticmethod
-    def fit_deriv(x, amplitude, mean, stddev, yoff):
-        d_amplitude = np.exp((-(1 / (stddev**2)) * (x - mean) ** 2))
-        d_mean = (
-            2
-            * amplitude
-            * np.exp((-(1 / (stddev**2)) * (x - mean) ** 2))
-            * (x - mean)
-            / (stddev**2)
-        )
-        d_stddev = (
-            2
-            * amplitude
-            * np.exp((-(1 / (stddev**2)) * (x - mean) ** 2))
-            * ((x - mean) ** 2)
-            / (stddev**3)
-        )
-        d_yoff = np.ones_like(x)
-        return [d_amplitude, d_mean, d_stddev, d_yoff]
-
-    @property
-    def flux(self):
-        """In W/m^2"""
-        c = 3 * 10**-14
-        return self.amplitude * self.stddev * np.sqrt(2 * np.pi) * c / self.mean**2
-
-
 def cut_range(spectrum, rang):
+    """Cut out specified range from passed spectra."""
     spectrum = np.array(spectrum)
     wav, flux = spectrum
     imin = np.argwhere(wav > rang[0]).T[0]
@@ -111,12 +87,17 @@ def cut_range(spectrum, rang):
 
 
 def get_closest(spectrum, line):
+    """Get closest value in the spectra to the specified position."""
     wav, flux = spectrum
+    """
     ind = np.argmin(np.abs(wav - line))
     return flux[ind]
+    """
+    return np.interp(line, wav, flux)
 
 
 def line_range(lines, grat="", dwidth=8):
+    """Calculate spectral resolution and relevant wavelength range for fitting specified emission line."""
     if type(grat) is not str:
         R = grat
     else:
@@ -135,6 +116,7 @@ def line_range(lines, grat="", dwidth=8):
 
 
 def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mline=None):
+    """Fit provided spectra with Gaussian profiles (plus a constant offset) at specified positions."""
     rang, R = line_range(lines, grat=grat, dwidth=dwidth)
     spect = cut_range(spectrum, rang)
     yav = np.nanmedian(spect[1])
@@ -168,6 +150,7 @@ def fit_lines(spectrum, lines, delta=None, grat="", dwidth=8, manual=False, mlin
 
 
 def fit_infos(fit):
+    """Extract rudimentary information from an AstroPy fitting model."""
     lines = []
     for g in fit._leaflist[1:]:
         line = dict()
@@ -180,6 +163,7 @@ def fit_infos(fit):
 
 
 def flux_at(fit, line, grat="g140m", std=1):
+    """For specified multi-component fit and line position, decide whether there is large-enough overlap between the position and the components and if yes assign relevant fluxes from the fit to the line."""
     _, R = line_range([line], grat=grat)
     lstd = line / R / 2.35
     lines = fit_infos(fit)
@@ -197,6 +181,7 @@ def flux_at(fit, line, grat="g140m", std=1):
 
 
 def flux_extract(fit, mline, grat="g140m", red=lambda f, l: f):
+    """Extract spectral fluxes at specified line positions from a multi-component AstroPy fittable model."""
     fluxes = dict()
     outd = True
     if type(mline) is not dict:
@@ -214,6 +199,7 @@ def flux_extract(fit, mline, grat="g140m", red=lambda f, l: f):
 
 
 def flux_nan(mline):
+    """Construct a dictionary encoding fluxes at specified line positions, with all fluxes set to nan."""
     outd = True
     if type(mline) is not dict:
         mline = {"_": mline}

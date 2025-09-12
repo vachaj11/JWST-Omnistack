@@ -59,14 +59,16 @@ def get_I_R(sources, nam):
     I = dict()
     R = dict()
     for n, m in {"OSEM": pr.OSEM, "MART": pr.MART, "FIST": pr.FIST}.items():
-        method = (lambda M, f: m(M, f, t_f=1800),)
-        R[n] = method(M, fl)
+        R[n] = m(M, fl, t_f=1800)
+    """
     Ind = ac.indiv_stat(
-        (lambda x: ac.core_fit(x, nam, cal_red=0, indiv=False)), sources, calib=None
+        lambda x: ac.core_fit(x, nam, cal_red=0, indiv=False), so, calib=None
     )
     for n in tup[0]:
         vls = [s[n] for s in Ind]
         I[n] = vls
+    """
+    I = pr.ind_fluxes(so, tup)
     return I, R
 
 

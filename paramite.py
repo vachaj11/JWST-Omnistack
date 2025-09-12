@@ -1,3 +1,5 @@
+"""Holds methods for reconstruction of individual sources line-fluxes and abundances via a sub-sampling and stacking methodology."""
+
 import time
 from multiprocessing import Manager, Process, cpu_count
 
@@ -8,6 +10,7 @@ from scipy.sparse import (
     csc_array,
     csr_array,
     dok_array,
+    eye_array,
     lil_array,
     load_npz,
     save_npz,
@@ -19,6 +22,7 @@ import catalog
 
 
 def sep_inds(ln, no):
+    """Create bin indices for a given number of elements and approximate desired bin size."""
     if ln <= no:
         return [0, ln]
     binn = ln // no
@@ -33,6 +37,7 @@ def sep_inds(ln, no):
 
 
 def par_params(srss, method, nwg=0.3):
+    """Legacy calculation method, saving calculated parameters to individual catalog entries. Which turns out unsuitet for paralizing."""
     nwg = nwg if (0 <= nwg <= 1) else 1
     dicv = [[i, sg] for i, sg in enumerate(srss)]
     manag = Manager()
@@ -69,12 +74,14 @@ def par_params(srss, method, nwg=0.3):
 
 
 def pro_params(isrs, method, vals):
+    """Single-process function called by legacy calculation method."""
     for i, srs in isrs:
         v = method(srs)
         vals[i] = v
 
 
 def ded_params(sources, method, no=50, sbin=5, nwg=0.3, ite=None):
+    """Legacy function preparing inputs for legacy calulation method."""
     defs = []
     nefs = []
     no = min(no, int(len(sources) / 20))
@@ -112,6 +119,7 @@ def ded_params(sources, method, no=50, sbin=5, nwg=0.3, ite=None):
 
 
 def pro_fluxes(sources, lt, r_lis, M, vals, **kwargs):
+    """Calculation method called for each process. Fits lines to given stacks of spectra and saves results."""
     for i in range(len(r_lis)):
         row = M[i].todok()
         srs = [sources[k] for k in row.keys()]
@@ -120,6 +128,7 @@ def pro_fluxes(sources, lt, r_lis, M, vals, **kwargs):
 
 
 def cal_fluxes(sources, l_tuple, M, **kwargs):
+    """Calculates fluxes in a specified region/lines for a provided catalog of spectra and matrix specifying its sub-stacking."""
     manag = Manager()
     vals = manag.dict()
     proc = cpu_count()
@@ -148,6 +157,7 @@ def cal_fluxes(sources, l_tuple, M, **kwargs):
 
 
 def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, save=None, **kwargs):
+    """For a provided catalog of spectra randomly choses subsamples, stacks spectra within them and fit them with lines, and returns all results in joint linear-algebraic format."""
     if type(l_tuple[0]) is not dict:
         l_tuple[0] = {"tmp": l_tuple[0]}
     sources = catalog.rm_bad(sources)
@@ -186,12 +196,14 @@ def art_fluxes(sources, l_tuple, n_one=50, n_sam=None, save=None, **kwargs):
 
 
 def ind_fluxes(sources, l_tuple):
-    M_lis = [[i] for i in range(len(sources))]
-    fluxes = cal_fluxes(sources, l_tuple, M_lis)
+    """Calculate fluxes values in specified region/lines for all sources in passed catalogue."""
+    M = eye_array(len(sources), dtype="uint8", format="csr")
+    fluxes = cal_fluxes(sources, l_tuple, M)
     return fluxes
 
 
 def PART(M, fluxes, c_ite=25, lam=0.05, t_f=None):
+    """Implementation of the Algebraic Reconstruction Technique for solving the linear-algebraic problem fluxes = M @ x."""
     M = M if type(M) is csr_array else csr_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -235,6 +247,7 @@ def PART(M, fluxes, c_ite=25, lam=0.05, t_f=None):
 
 
 def MART(M, fluxes, c_ite=25, lam=0.01, t_f=None):
+    """Implementation of the Multiplicative Algebraic Reconstruction Technique for solving the linear-algebraic problem fluxes = M @ x."""
     M = M if type(M) is csr_array else csr_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -278,6 +291,7 @@ def MART(M, fluxes, c_ite=25, lam=0.01, t_f=None):
 
 
 def MLEM(M, fluxes, c_ite=0.1, t_f=None):
+    """Implementation of the Maximum-Likelihood Expectation-Maximization technique for solving the linear-algebraic problem fluxes = M @ x."""
     M = M if type(M) is csc_array else csc_array(M)
     gval = dict()
     noi = int(M.shape[0] * c_ite)
@@ -320,6 +334,7 @@ def MLEM(M, fluxes, c_ite=0.1, t_f=None):
 
 
 def OSEM(M, fluxes, c_ite=0.1, N=16, t_f=None):
+    """Implementation of the Ordered Subset Expectation-Maximization technique for solving the linear-algebraic problem fluxes = M @ x."""
     M = M if type(M) is csc_array else csc_array(M)
     gval = dict()
     inds = [[] for i in range(N)]
@@ -371,6 +386,7 @@ def OSEM(M, fluxes, c_ite=0.1, N=16, t_f=None):
 
 
 def FIST(M, fluxes, c_ite=0.1, lam=None, t_f=None):
+    """Implementation of the Fast Iterative Shrinkage-Thresholding Algorithm for solving the linear-algebraic problem fluxes = M @ x."""
     M = M if type(M) is csr_array else csr_array(M)
     if lam is None:
         mATA = lambda v: M.T @ (M @ v)
@@ -430,6 +446,7 @@ def calculate_fluxes(
     n_one=200,
     n_sam=250000,
 ):
+    """Centralised function to reconstruct individual line-fluxes covered by the provided spectra. Includes both the steps of calculating fluxes in sub-sampled stacks and subsequent linear-algebraic reconstruction of individual fluxes. Finally saves calculated values as entries of catalogue of spectra."""
     for tup in tups:
         M, fl, so = art_fluxes(sources, tup, n_one=n_one, n_sam=n_sam)
         so_fl = method(M, fl)
@@ -441,6 +458,7 @@ def calculate_fluxes(
 
 
 def calculate_indiv_lines(sources, new=True, direct=True):
+    """For catalogue of spectra with assumed pre-calculated and saved individual fluxes values: 1. identifies unique sources and creates a catalog with combined fluxes values from individual spectra, and 2. for each unique entry in the catalogue calculates all abundance measurements as available."""
     uniq = catalog.unique(sources)
     abun = dict()
     values = dict()

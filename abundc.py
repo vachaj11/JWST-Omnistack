@@ -1,3 +1,23 @@
+"""Holds methods for line fitting and subsequent automatised abundance calculations.
+
+Attributes:
+    glob_hash (dict): Dictionary storing all calculated results by hash of respective calculation inputs, so that the calculations don't have to be repeated.
+    glob_seed (int): Value serving as a global seed, generated at random, to get a different, but still deterministic Generator on each instantiation of the module.
+    H0 (float): Assumed value of Hubble parameter
+    Om0 (float): Assumed cosmological density of matter
+    Od0 (float): Assumed cosmological density of dark energy
+    cosm (astropy.cosmology.LambdaCDM): AstroPy cosmology instance used throughout module for cosmological calculations
+    rc (pyneb.RedCorr): PyNeb galaxy extintion profile used for calculations of dust attenuation 
+    Oxygen (dict): Dictionary holding legacy methods for Oxygen abundance calculations via strong lines.
+    Nitrogen (dict): Dictionary holding legacy methods for Nitrogen abundance calculations via strong lines.
+    Sulphur (dict): Dictionary holding legacy methods for Sulphur abundance calculations via strong lines.
+    Oxygen_new (dict): Dictionary holding updated methods for Oxygen abundance calculations via strong lines.
+    Nitrogen_new (dict): Dictionary holding updated methods for Nitrogen abundance calculations via strong lines.
+    Sulphur_new (dict): Dictionary holding updated methods for Sulphur abundance calculations via strong lines.
+    names (dict): Dictionary holding definitions typeset in Latex for all used strong-line abundance calibrations.
+    core_lines (dict): Dictionary holding definitions of spectral line positions in various regions of interest. 
+"""
+
 import time
 from hashlib import sha1
 from multiprocessing import Manager, Process, cpu_count
@@ -19,20 +39,16 @@ plt.rcParams.update(
     }
 )
 
-# global object storing calculated results so that they are not recalculated later
+
 glob_hash = dict()
-# global seed to get different random Generator on each instance, but still pseudo-random deterministic behaviour within each run
+
 glob_seed = np.random.randint(0, 2**32)
 
-# cosmological parameters from Planck 2018
 H0 = 67.49
 Om0 = 0.315
 Od0 = 0.6847
-
-# astropy cosmology
 cosm = LambdaCDM(H0, Om0, Od0)
 
-# Universal extinction correction class. Instantiated outside other functions for added speed
 rc = pn.RedCorr(law="CCM89")
 
 Oxygen = {
@@ -109,6 +125,7 @@ core_lines = {
 
 
 def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Sulphur abundance via the strong-line S23 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_S_S23" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_S23" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -125,6 +142,7 @@ def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Nitrogen abundance via the strong-line N2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -140,6 +158,7 @@ def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Nitrogen abundance via the strong-line N2O2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2O2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2O2" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -158,6 +177,7 @@ def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def N_N2S2(sources, new=True, rec=False, **kwargs):
+    """Calculates Nitrogen abundance via the strong-line N2S2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2S2" + "_n" * new]
     N2S2 = (
@@ -173,6 +193,7 @@ def N_N2S2(sources, new=True, rec=False, **kwargs):
 
 
 def O_R2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line R2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_R2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R2" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -203,6 +224,7 @@ def O_R2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def O_R3(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line R3 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_R3" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R3" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -233,6 +255,7 @@ def O_R3(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def O_O3O2(sources, new=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line O3O2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_O3O2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3O2" + "_n" * new]
     O3O2 = (
@@ -260,6 +283,7 @@ def O_O3O2(sources, new=True, rec=False, **kwargs):
 
 
 def O_R23(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line R23 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_R23" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_R23" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -291,6 +315,7 @@ def O_R23(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def O_Rh(sources, new=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line Rh calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_Rh" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_Rh" + "_n" * new]
     or3 = O_R3(sources, rec=rec, **kwargs)[0][0]
@@ -309,6 +334,7 @@ def O_Rh(sources, new=True, rec=False, **kwargs):
 
 
 def O_N2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line N2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_N2" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -339,6 +365,7 @@ def O_N2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def O_O3N2(sources, new=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line O3N2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_O3N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3N2" + "_n" * new]
     O3N2 = (
@@ -366,6 +393,7 @@ def O_O3N2(sources, new=True, rec=False, **kwargs):
 
 
 def O_S2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line S2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_S2" + "_n" * new]
     T, n, flx = tem_den_red(
@@ -396,6 +424,7 @@ def O_S2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
 
 
 def O_O3S2(sources, new=True, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line O3S2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_O3S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_O3S2" + "_n" * new]
     O3S2 = (
@@ -423,6 +452,7 @@ def O_O3S2(sources, new=True, rec=False, **kwargs):
 
 
 def O_RS32(sources, new=False, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the strong-line RS32 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_RS32" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_RS32" + "_n" * new]
     or3 = O_R3(sources, rec=rec, **kwargs)[0][0]
@@ -441,25 +471,32 @@ def O_RS32(sources, new=False, rec=False, **kwargs):
 
 
 def S_Dir(sources, new=False, rec=False, **kwargs):
+    """Calculates Sulphur abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_S_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
 
 def N_Dir(sources, new=False, rec=False, **kwargs):
+    """Calculates Nitrogen abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_Dir" + "_n" * new]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
 
 def O_Dir(sources, new=False, rec=False, **kwargs):
+    """Calculates Oxygen abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["O"]]] * 2
 
 
 def SFR(O_ab, H_a, z):
-    """This will only work if slit loss correction is done."""
+    """
+    From passed Oxygen abundance, H_alpha luminosity and redshift calculates SFR estimate of the source.
+
+    This provides meaningful results only if the spectrum is calibrated for stil loss.
+    """
     if O_ab is not None and H_a is not None and z is not None:
         Z = 0.014 * 10 ** (O_ab - 8.69)
         C = -40.26 + 0.89 * np.log(Z) + 0.14 * np.log(Z) ** 2
@@ -473,6 +510,7 @@ def SFR(O_ab, H_a, z):
 
 
 def abundances(sources, cal_red=None, N_over_O=True, hsh=True, **kwargs):
+    """Central method for calculating abundances via the direct method for stack of spectra in passed catalogue."""
     hsh = hsh if len(sources) > 1 else False
     if hsh:
         hax = hashed(sources, "abundances", cal_red, N_over_O, **kwargs)
@@ -487,6 +525,7 @@ def abundances(sources, cal_red=None, N_over_O=True, hsh=True, **kwargs):
 
 
 def get_core_fluxes(sources, ilines=None, temp=True, cal_red=0, **kwargs):
+    """Calculates line fluxes for stack of spectra in provided catalog. The fluxes to be calculated are chosen based on passed specifications."""
     nlines = set(core_lines.keys() if ilines is None else ilines)
     if temp:
         upd = {
@@ -515,6 +554,7 @@ def get_core_fluxes(sources, ilines=None, temp=True, cal_red=0, **kwargs):
 
 
 def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
+    """For stack of spectra in provided catalog calculates relevant line fluxes as well as electron density and temperature."""
     flx, finfo = get_core_fluxes(sources, ilines=lines, temp=temp, **kwargs)
     z = np.mean([v for s in sources if (v := s.get("z")) is not None])
     t = {k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}
@@ -541,6 +581,7 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
 
 
 def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
+    """From the specified line fluxes and initial guesses calculates density and temperatures (for different ions) of electron gas."""
     fluxec = dict()
     for v in fluxes.values():
         fluxec.update(v)
@@ -659,6 +700,7 @@ def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
 
 
 def abunds(fluxes, t, den, N_over_O=True):
+    """From specified line fluxes and electron density and temperatures calculates Sulphur, Nitrogen and Oxygen abundances via direct method/atomic modelling."""
     flx = dict()
     for v in fluxes.values():
         flx.update(v)
@@ -848,7 +890,7 @@ def abunds(fluxes, t, den, N_over_O=True):
 def red_const(
     flxs, t={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}, n=500, **kwargs
 ):
-
+    """Calculates an estimate of the extintion cHbeta value from provided line fluxes and electron gas density and temperatures."""
     if not np.isnan(t["TO3"]):
         T = t["TO3"]
     elif not np.isnan(t["TS3"]):
@@ -885,6 +927,7 @@ def red_const(
 
 
 def fredd(fluxes, flinfo, cal_red):
+    """Calibrates provided value for gas attenuation via specified cHbeta value."""
     fluxca = dict()
     rc.cHbeta = cal_red
     for f in fluxes:
@@ -897,11 +940,13 @@ def fredd(fluxes, flinfo, cal_red):
 
 
 def core_fit(sources, name, cal_red=None, **kwargs):
+    """Convenience function to obtain line fluxes of named region from stack of spectra in passed catalogue."""
     l = core_lines[name]
     return fit_lines(sources, l[1], l[0], dwidth=l[2], cal_red=cal_red, **kwargs)
 
 
 def indiv_extract(source, mline):
+    """Extract requested line fluxes stored in provided catalog entry."""
     outd = True
     if type(mline) is not dict:
         mline = {"0": mline}
@@ -932,6 +977,7 @@ def fit_lines(
     hsh=True,
     **kwargs,
 ):
+    """Stack spectra of sources in passed catalog in specified region, fit the region with Gaussian profiles and extract resulting fluxes."""
     hsh = hsh if len(sources) > 1 else False
     if hsh:
         args = (lines, mline, reso, base, typ, dwidth, R)
@@ -963,6 +1009,7 @@ def fit_lines(
 
 
 def iprocess(funct, srs, calib, zs, vs, it, val, sind, glob, **kwargs):
+    """Single process function calculating specified method for each spectra in the passed catalogue."""
     if glob is not None:
         global glob_hash
         glob_hash = glob
@@ -989,6 +1036,7 @@ def iprocess(funct, srs, calib, zs, vs, it, val, sind, glob, **kwargs):
 
 
 def bprocess(funct, srs, ind, vis, glob, **kwargs):
+    """Single process function calculating specified method for each catalog in passed list."""
     if glob is not None:
         global glob_hash
         glob_hash = glob
@@ -1009,6 +1057,7 @@ def boots_stat(
     seed=glob_seed,
     **kwargs,
 ):
+    """Calculate a specified function for a provided catalogue and by subsampling the catalogue estimate related bootstrapping statistics and errors."""
     if hsh:
         global glob_hash
         hax = hashed(sources, "boots_stat", funct, ite, calib, **kwargs)
@@ -1061,6 +1110,7 @@ def boots_stat(
 
 
 def indiv_stat(funct, sources, val="z", calib=True, hsh=False, **kwargs):
+    """Calculate specified function for each spectra in the passed catalogue. And obtain the statistics related to the set of resulting values."""
     if hsh:
         global glob_hash
         hax = hashed(sources, "indiv_stat", funct, calib, val, **kwargs)
@@ -1125,6 +1175,7 @@ def indiv_stat(funct, sources, val="z", calib=True, hsh=False, **kwargs):
 
 
 def hashed(sources, *args, **kwargs):
+    """Calculate sha1 hash of the provided catalogue, jointly with any other arguments or keyword arguments."""
     hsh = sha1()
     # keys = ['srcid', 'ra', 'dec', 'root', 'file', 'grat','grat_orig', 'comment', 'comment_old']
     keys = ["root", "file", "grat"]
@@ -1139,6 +1190,7 @@ def hashed(sources, *args, **kwargs):
 
 
 def mark_agn(sources):
+    """For each source in the catalogue calculate N2 and R3 calibrations and using BPT diagram note whether they should be flagged as potential AGN candidates."""
     bpt = lambda x: 0.61 / (x - 0.47) + 1.19 if x < 0.47 else -np.inf
     for s in sources:
         if not catalog.rm_bad([s], agn=True) or s["grat"] == "prism":
@@ -1178,6 +1230,7 @@ def mark_agn(sources):
 
 
 def tem_den_legacy(fluxec):
+    """Legacy method for calculating estimations of electron gas density and temperature from passed fluxes."""
     diagn = dict()
     if (fluxec["O3_4959A"] > 0 or fluxec["O3_5007A"] > 0) and fluxec["O3_4363A"] > 0:
         diagn["[OIII] 4363/5007+"] = fluxec["O3_4363A"] / (

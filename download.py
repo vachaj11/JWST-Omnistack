@@ -1,22 +1,28 @@
+"""Holds methods for initial downloading and processing of spectral data as well as creation of local representations of DJA catalogs.
+
+Attributes:
+    typeint (list): Legacy list of data categories of the DJA catalog to be transcribed to its local representation and interpreted as integers.
+    typefroat (list): Legacy list of data categories of the DJA catalog to be transcribed to its local representation and interpreted as floats.
+    typedel (list): Legacy list of data categories of the DJA catalog to be omitted in its local representation.
+    typeint_c (dict): Dictionary stating data categories from the DJA catalog to be transcribed to its local representation as integers and new names assigned to them.
+    typefloat_c (dict): Dictionary stating data categories from the DJA catalog to be transcribed to its local representation as floats and new names assigned to them.
+    typestr_c (dict): Dictionary stating data categories from the DJA catalog to be transcribed to its local representation as text strings and new names assigned to them.
+"""
+
 import csv
 import os
 import time
+import urllib.request
 import warnings
+from multiprocessing import Manager, Process, cpu_count
 
 import astropy.io.fits as fits
 import numpy as np
 
-warnings.filterwarnings("ignore")
-import urllib.request
-from multiprocessing import Manager, Process, cpu_count
-
-"""
-import grizli
-from grizli import utils
-"""
-
 import catalog
 import spectr
+
+warnings.filterwarnings("ignore")
 
 typeint = ["ndup", "uid", "srcid", "nGr", "grade", "nRef"]
 typefloat = [
@@ -78,6 +84,7 @@ typestr_c = {
 
 
 def construct_dict(path):
+    """Legacy method for constructing local spectral catalog representation from a .csv catalog file provided by DJA."""
     fil = open(path, "r")
     cs = csv.DictReader(fil, delimiter=",", quotechar='"')
     gall = []
@@ -98,6 +105,7 @@ def construct_dict(path):
 
 
 def construct_dict_n(path):
+    """Updated method for constructing local spectral catalog representation from a .csv catalog file provided by DJA."""
     fil = open(path, "r")
     cs = csv.DictReader(fil, delimiter=",", quotechar='"')
     gall = []
@@ -123,63 +131,8 @@ def construct_dict_n(path):
     return gall
 
 
-'''
-def download_spectra():
-    BASE_URL = "https://s3.amazonaws.com/msaexp-nirspec/extractions/"
-    PATH_TO_FILE = BASE_URL + "{root}/{file}"
-
-    nrs = utils.read_catalog("../catalog.csv")
-
-    print("By grade:")
-    un = utils.Unique(nrs["grade"])
-
-    print("By source:")
-    root = utils.Unique(nrs["root"])
-
-    print("By SNR:")
-    print("N\t value")
-    print("=\t =====")
-    data = nrs["sn50"].data
-    rang = [(0, 0.5), (0.5, 1), (1, 3), (3, 8), (8, 20), (20, 10**6)]
-    dic = {(-(10**6), 0): 0}
-    for i in rang:
-        dic[i] = 0
-    for i in data:
-        t = False
-        for r in rang:
-            if r[0] < i < r[1]:
-                dic[r] += 1
-                t = True
-                break
-        if not t:
-            dic[(-(10**6), 0)] += 1
-    for v in dic:
-        print(f"{dic[v]}\t {v}")
-
-    ind = 1
-
-    """
-    try:
-        inp1 = int(input("From entry: "))
-    except:
-        inp1 = None
-    try:
-        inp2 = int(input("To entry: "))
-    except:
-        inp2 = None
-    for row in nrs[inp1:inp2]:
-        print(f'\r\033[K ({ind} out of {inp2-inp1}) File: {row["file"]}', end=" ")
-        url = PATH_TO_FILE.format(**row)
-        pathl = "/home/vachaj11/Documents/MPE/2025/Fits/" + str(row["root"] + "/")
-        if not os.path.exists(pathl):
-            os.makedirs(pathl)
-        urllib.request.urlretrieve(url, filename=pathl + str(row["file"]))
-        ind += 1
-    """
-'''
-
-
 def download_all(sources, start_in=0, in_proc=20, **kwargs):
+    """In turn download spectral data for all items in the provided catalog and save extracted 1D spectra from the data as numpy .npy compressed files."""
     a = sources
     proc = cpu_count()
     active = []
@@ -206,6 +159,7 @@ def download_all(sources, start_in=0, in_proc=20, **kwargs):
 
 
 def download(sources, baso="../Data/Npy_v4/", rewrite=False):
+    """Single process function which for each item in the passed catalogue downloads the corresponding DJA .fits file, extracts from it a 1D spectrum and saves the spectrum as a numpy .npy file."""
     for source in sources:
         spex = spectr.get_spectrum(source, base=baso)
         if spex is None and rewrite:
@@ -215,16 +169,8 @@ def download(sources, baso="../Data/Npy_v4/", rewrite=False):
             spectr.save_npy(source, sp, base=baso)
 
 
-def move_around():
-    a = catalog.fetch_json("../catalog.json")["sources"]
-    for s in a:
-        spectrum = spectr.get_spectrum(s)
-        base = "../Data/Npy_v4/"
-        spectr.save_npy(s, spectrum, base=base)
-        spectr.rm_npy(s)
-
-
 def match_cosmos(sources):
+    """Use coordinate matching to link entries in the passed catalogue to data from the Cosmos25 survey. And if such link is found save the relevant Cosmos25 data to sources in the catalog."""
     path = "../COSMOS25.fits"
     x = fits.open(path)
     ins = x[1].data["id"]
@@ -253,18 +199,21 @@ def match_cosmos(sources):
     return matched
 
 
-cosmos_val = {
-    "cos_z": [2, "zfinal", lambda x: float(x)],
-    "cos_age": [2, "age_minchi2", lambda x: float(x)],
-    "cos_mass": [2, "mass_minchi2", lambda x: float(np.exp(x * np.log(10)))],
-    "cos_sfr": [2, "sfr_minchi2", lambda x: float(np.exp(x * np.log(10)))],
-    "cos_mass_2": [4, "mass", lambda x: float(x)],
-    "cos_sfr_2": [4, "sfr_inst", lambda x: float(x)],
-    "cos_met_2": [4, "metallicity", lambda x: float(x)],
-}
-
-
 def extract_cosmos(sources):
+    """For each item in the catalogue if the item has a saved Cosmos25 counterpart, extract relevant parameters from the Cosmos25 catalogue for that counterpart and save them to the item's parameter dictionary.
+
+    Attributes:
+        cosmos_val (dict): Dictionary holding parameters to be transcribed from the Cosmos25 catalog to the local representation of DJA catalog and methods to pass the parameters through.
+    """
+    cosmos_val = {
+        "cos_z": [2, "zfinal", lambda x: float(x)],
+        "cos_age": [2, "age_minchi2", lambda x: float(x)],
+        "cos_mass": [2, "mass_minchi2", lambda x: float(np.exp(x * np.log(10)))],
+        "cos_sfr": [2, "sfr_minchi2", lambda x: float(np.exp(x * np.log(10)))],
+        "cos_mass_2": [4, "mass", lambda x: float(x)],
+        "cos_sfr_2": [4, "sfr_inst", lambda x: float(x)],
+        "cos_met_2": [4, "metallicity", lambda x: float(x)],
+    }
     path = "../COSMOS25.fits"
     x = fits.open(path)
     for s in sources:
@@ -278,6 +227,7 @@ def extract_cosmos(sources):
 
 
 def add_post_hoc(sources, pathp="../dja_msaexp_2.csv", values=None):
+    """Legacy method to post-hoc add items to the local representation of DJA catalogue which weren't included in the initial version."""
     dic = construct_dict(pathp)
     v = [
         "phot_Av",
@@ -311,6 +261,7 @@ def add_post_hoc(sources, pathp="../dja_msaexp_2.csv", values=None):
 def trim_edges(
     sources, bi="../Data/Npy_legacy/", bo="../Data/Npy/", return_comp=False, **kwargs
 ):
+    """For each spectrum in the passed catalogue, iteratively diagnose its edges for dominant noise and trim them if needed."""
     vss = []
     for l, s in enumerate(sources):
         sp0 = spectr.get_spectrum(s, base=bi)
@@ -334,6 +285,7 @@ def trim_edges(
 
 
 def update_ranges(sources, base="../Data/Npy/"):
+    """For each spectrum in passed catalogue, identify its usable wavelength ranges and save them as a property in the catalogue."""
     for s in sources:
         sp = spectr.get_spectrum(s, base=base)
         if sp is not None:
@@ -343,7 +295,8 @@ def update_ranges(sources, base="../Data/Npy/"):
     return sources
 
 
-def degrade_high(sources, bi="../Data/Npy/", bo="../Data/Npy_med/"):
+def degrade_high(sources, bi="../Data/Npy_v4/", bo="../Data/Npy_v4_med/"):
+    """Get all high-resolution spectra in the provided catalogue, degrade them to medium resolution via Gaussian convolution and save the degraded variant at a specified location."""
     mpx = {
         "g140h": 0.00060000,
         "g235h": 0.00100952,
@@ -366,13 +319,14 @@ def degrade_high(sources, bi="../Data/Npy/", bo="../Data/Npy_med/"):
 
 
 def mini_reduction(path, patho, sind=0):
+    """Central convenience function which jointly: 1. constructs local representation of the DJA catalogue, 2. downloads all spectral data it refers to, 3. trims noisy edges of each spectra as needed, 4. updates the local catalogue with post-trimming spectral coverage information and, if available, information from earlier version of the catalogue."""
     f = construct_dict_n(path)
     for s in f:
         s["grat"] = s["grat"].lower()
     # match_cosmos(f)
     # extract_cosmos(f)
-    download_all(f, baso="../Data/Npy_tmp/", start_in=sind)
-    trim_edges(f, bi="../Data/Npy_tmp/", bo="../Data/Npy_v4/")
+    download_all(f, baso="../Data/Npy_v4_tmp/", start_in=sind)
+    trim_edges(f, bi="../Data/Npy_v4_tmp/", bo="../Data/Npy_v4/")
     # degrade_high(f, bi="../Data/Npy_tmp_trim/", bo="../Data/Npy_tmp_conv/")
     update_ranges(f, base="../Data/Npy_v4/")
     if os.path.isfile("../catalog_v3.json"):

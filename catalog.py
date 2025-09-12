@@ -1,3 +1,9 @@
+"""Holds various methods for construction, loading, saving and manipulation of local version of source catalog
+
+Attributes:
+    quasars (list): List of individual sources names which have been identified as LRDs or quasars.
+"""
+
 import json
 
 import numpy as np
@@ -50,7 +56,10 @@ def join_sources(sources, adiff=0.0003):
 
 
 def unique(sources, adiff=0.0003):
-    """Assumes that same "srcid" are assigned only to same sources within catalogs. Otherwise also checks by coordinate matching"""
+    """From a list of spectra constructs a list of unique sources, identified by source id or coordinates.
+
+    Assumes that same "srcid" are assigned only to same sources within catalogs. Otherwise also checks by coordinate matching.
+    """
     sourn = []
     for source in sources:
         new = True
@@ -82,6 +91,7 @@ def unique(sources, adiff=0.0003):
 
 
 def copy_params(s_from, s_to):
+    """Copy specific parameters from one catalog item to another."""
     copynam = ["phot_mass", "z"]
     for k, v in s_from.items():
         if (k[:4] == "rec_" or k in copynam) and s_to.get(k) is None:
@@ -90,6 +100,7 @@ def copy_params(s_from, s_to):
 
 
 def rm_bad(sources, ppxf=False, agn=False):
+    """Create instance of inputted catalog with only sources fulfilling certain criteria."""
     sourn = []
     for source in sources:
         sn = source["sn50"]
@@ -134,6 +145,7 @@ quasars = [
 
 
 def rm_quasars(sources, quasars=quasars):
+    """Remove sources from a catalog, which have been individually identified as LRDs or quasars."""
     sourn = []
     for source in sources:
         fn = source["file"]
@@ -147,6 +159,7 @@ def rm_quasars(sources, quasars=quasars):
 
 
 def check_zrange(source, rang, z_shift=True):
+    """Check whether catalog item falls within given redshift range"""
     if z_shift:
         z = source["z"]
     else:
@@ -160,6 +173,7 @@ def check_zrange(source, rang, z_shift=True):
 
 
 def filter_zrange(sources, rang, z_shift=True):
+    """Filter given catalog for only sources which have full coverage of a given redshift range."""
     sourn = []
     for source in sources:
         if check_zrange(source, rang, z_shift=z_shift):
@@ -168,31 +182,34 @@ def filter_zrange(sources, rang, z_shift=True):
 
 
 def filter_zranges(sources, ranges, z_shift=True):
+    """Filter given catalog for only sources which have full coverage of provided redshift ranges."""
     for rang in ranges:
         sources = filter_zrange(sources, rang, z_shift=z_shift)
     return sources
 
 
 def value_range(sources, value, rang):
+    """Filter given catalog for only sources which have a specified parameter and the parameter's value falls within specified range."""
     sourn = []
     for source in sources:
-        try:
-            if rang[0] < source[value] < rang[1]:
-                sourn.append(source)
-        except:
+        if (v := source.get(value)) is not None and rang[0] < v < rang[1]:
+            sourn.append(source)
+        else:
             print(f"Value {value} not found for source {source['srcid']}.")
     return sourn
 
 
 def value_bins(sources, value, **kwargs):
+    """Divide a provided catalog into binned sub-catalogs on the basis of a given value.
+
+    The bins are created equally spaced in the value range.
+    """
     values = []
     sbins = []
     for source in sources:
-        try:
-            v = source[value]
-            if v is not None:
-                values.append(v)
-        except:
+        if (v := source.get(value)) is not None:
+            values.append(v)
+        else:
             print(f"\r Value {value} not found for source {source['srcid']}.", end="")
     hist, bins = np.histogram(values, **kwargs)
     for i in range(len(bins) - 1):
@@ -201,6 +218,10 @@ def value_bins(sources, value, **kwargs):
 
 
 def inbins(sources, value, nbin=10):
+    """Divide a provided catalog into binned sub-catalogs on the basis of a given value.
+
+    The bins are created such that each hold equal number of sources.
+    """
     sours = []
     for s in sources:
         if value in s.keys() and s[value] is not None:
@@ -216,6 +237,7 @@ def inbins(sources, value, nbin=10):
 
 
 def getffm():
+    """Convenience function to quickly fetch catalog of filtered middle resolution sources."""
     f = fetch_json("../catalog_v4.json")["sources"]
     ff = rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]

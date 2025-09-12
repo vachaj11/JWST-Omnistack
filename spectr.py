@@ -1,3 +1,10 @@
+"""Holds methods for (down)loading, saving, modifying and otherwise manipulating spectral data.
+
+Attributes:
+    glob (dict): Global dictionary holding data of sources which have been already loaded, so that their data can be accessed more quickly.
+    flatten (function): Small function to recursively flatten whatever iterable provided into a 1D list
+"""
+
 import os
 import time
 
@@ -15,6 +22,7 @@ flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") els
 def get_spectrum_fits(
     source, base="https://s3.amazonaws.com/msaexp-nirspec/extractions/"
 ):
+    """Load or download a spectral fits file and extract 1D spectra from it."""
     path = base + source["root"] + "/" + source["file"]
     try:
         x = fits.open(path)
@@ -30,6 +38,7 @@ def get_spectrum_fits(
 
 
 def get_spectrum(source, base="../Data/Npy_v4/"):
+    """Load or download a spectra data for the provided catalog entry from the provided directory."""
     path = base + source["root"] + "/" + source["file"]
     path = path[:-5] + ".npy"
     try:
@@ -45,6 +54,7 @@ def get_spectrum(source, base="../Data/Npy_v4/"):
 
 
 def save_npy(source, spectrum, base="../Data/Npy_v4/"):
+    """Save spectra data for the provided catalog entry and the provided directory."""
     path = base + source["root"] + "/"
     if not os.path.exists(path):
         os.makedirs(path)
@@ -54,6 +64,7 @@ def save_npy(source, spectrum, base="../Data/Npy_v4/"):
 
 
 def rm_npy(source, base="../Data/Fits/"):
+    """Delete spectral file for the provided catalog entry and the provided directory."""
     path = base + source["root"] + "/"
     path = path + source["file"][:-5] + ".npy"
     try:
@@ -63,6 +74,7 @@ def rm_npy(source, base="../Data/Fits/"):
 
 
 def clipping(spectrum, sup=30, sdo=15, ite=1):
+    """Iterativelly clip outlying values of the spectra, replacing them by nan values."""
     flux = spectrum[1]
     mean = np.nanmean(flux)
     std = np.nanstd(flux)
@@ -102,7 +114,10 @@ def iden_bad(spectrum, nstd=20, nref=3, nei=3):
 
 
 def iden_bad_e_legacy(spectrum, nstd=5, ncou=10):
-    """Identify and remove noise-dominated edges of spectra"""
+    """Identify and remove noise-dominated edges of spectra.
+
+    Legacy method based on mean and std of all non-edge spectra data.
+    """
     if spectrum is None:
         return None, None, None
     flux0 = np.copy(spectrum[1])
@@ -125,7 +140,10 @@ def iden_bad_e_legacy(spectrum, nstd=5, ncou=10):
 
 
 def iden_bad_e(spectrum, nstd=5, ncou=10):
-    """Identify and remove noise-dominated edges of spectra"""
+    """Identify and remove noise-dominated edges of spectra.
+
+    Updated method based on mean and std of median 50 % of spectra data.
+    """
     if spectrum is None:
         return None, None, None
     flux0 = np.copy(spectrum[1])
@@ -152,6 +170,7 @@ def iden_bad_e(spectrum, nstd=5, ncou=10):
 
 
 def remove_nan(spectrum):
+    """Return spectra data with all nan-values removed."""
     wav, flux = spectrum
     wavn = []
     fluxn = []
@@ -163,6 +182,7 @@ def remove_nan(spectrum):
 
 
 def resampled_spectra(sources, rang, reso, prin=False, degrade=850, z=None, **kwargs):
+    """Resample spectra into a given rest-frame-wavelenth range and pixel resolution. And if requested also degrade the spectra into a given line-spread-function resolution."""
     spectra = []
     sourn = []
     lws = []
@@ -233,10 +253,12 @@ def join_source(sources):
 
 
 def wave_sp(minw, maxw, points):
+    """Create wavelength grid of given range and number of points"""
     return np.linspace(minw, maxw, points)
 
 
 def useful_range(spectrum):
+    """Identify wavelength ranges at which given spectra has continuous coverage."""
     wav = spectrum[0]
     ins = -1
     inc = False
@@ -254,6 +276,7 @@ def useful_range(spectrum):
 
 
 def useful_sp_parts(spectrum):
+    """Cut given spectra into sections where it has continuous finite coverage."""
     x = np.array(spectrum)
     spectra = np.split(x, np.argwhere(~np.isfinite(x[1])).T[0], axis=1)
     spectran = [s[:, 1:] for s in spectra if s[:, 1:].size > 0]
@@ -261,6 +284,7 @@ def useful_sp_parts(spectrum):
 
 
 def pixel_at(spectrum, wav, source=None):
+    """Find pixel size of the spectra at a given wavelength."""
     mpx = {
         "g140h": 0.00060000,
         "g235h": 0.00100952,
@@ -282,6 +306,10 @@ def pixel_at(spectrum, wav, source=None):
 
 
 def resample_legacy(spectrum, space, z=0.0, normalise=False):
+    """Resample provided spectra into given wavelength space, linearly interpolating any intermediate values.
+
+    Legacy method which is comparatively quite slow.
+    """
     news = []
     flux = spectrum[1]
     for w in space * (1 + z):
@@ -303,6 +331,10 @@ def resample_legacy(spectrum, space, z=0.0, normalise=False):
 
 
 def resample(spectrum, space, z=0.0, normalise=False):
+    """Resample provided spectra into given wavelength space, linearly interpolating any intermediate values.
+
+    Updated fast method which uses build-in numpy function with similar purpose.
+    """
     wav = spectrum[0]
     flux = spectrum[1]
     z_space = space * (1 + z)
@@ -315,6 +347,7 @@ def resample(spectrum, space, z=0.0, normalise=False):
 
 
 def spect_norm(spectrum, frequency=True):
+    """Normalise given spectra to have total flux == 1 in wavelength or frequency space."""
     if not frequency:
         diffwav = np.abs(np.diff(spectrum[0]))
         flux = np.nansum(diffwav * np.array(spectrum[1])[:-1])
@@ -328,6 +361,7 @@ def spect_norm(spectrum, frequency=True):
 
 
 def spects_norm(spectra, frequency=True):
+    """Jointly normalise given list of spectra to have total summed flux == 1 in wavelength or frequency space."""
     if not frequency:
         flux = 0
         for spectrum in spectra:
@@ -345,6 +379,7 @@ def spects_norm(spectra, frequency=True):
 
 
 def degrade_spectrum(spectrum, tpx=0.0005, opx=None, fact=2.2, use_astropy=True):
+    """Degrade a spectrum to target pixel resolution by convolving it with appropriate Gaussian."""
     opxo = spectrum[0][1] - spectrum[0][0]
     opx = opxo if opx is not None else opx
     if tpx < opx:
@@ -362,6 +397,7 @@ def degrade_spectrum(spectrum, tpx=0.0005, opx=None, fact=2.2, use_astropy=True)
 
 
 def relat_diff(spectr1, spectr2, frequency=True):
+    """Calculate relative total flux sizes of two given spectra across regions where they overlap."""
     spect1 = spectr1
     spect2 = resample(spectr2, spectr1[0])
     difspe = [spect2[0], np.abs(spectr1[1] - spect2[1])]
@@ -384,6 +420,7 @@ def relat_diff(spectr1, spectr2, frequency=True):
 
 
 def stack(sp_stack, sources, typ="median", normalise=False):
+    """Stack provided cube of spectra via the specified method and thus obtain a joint 1D spectra"""
     wav = sp_stack[0]
     sp_cube = sp_stack[1]
     if len(sources) != len(sp_cube[0]) and typ not in {"median", "mean"}:
@@ -428,6 +465,7 @@ def stack(sp_stack, sources, typ="median", normalise=False):
 
 
 def combine_spectra(spectra):
+    """Combine spectra assumed to have the same wavelength grid into a joint cube."""
     refer = spectra[0]
     Tspectra = []
     for s in spectra:

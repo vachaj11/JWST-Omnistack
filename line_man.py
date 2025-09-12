@@ -1,3 +1,10 @@
+"""Holds classes and methods specifying a minimalist gui for manual evaluation and adjustments of spectral line fitting.
+
+Attributes:
+    colors (list): Specifies order of colors elements of gui are to be drawn with.
+    fl (function): Small function to recursively flatten whatever iterable provided into a 1D list
+"""
+
 import importlib
 import random
 import sys
@@ -19,8 +26,10 @@ fl = lambda l: sum(map(fl, list(l)), []) if hasattr(l, "__iter__") else [l]
 
 
 class App(QWidget):
+    """A PySide6 QWidget object which specifies meta-window of the gui and its contents."""
 
     def __init__(self, fit, spectrum, mline, grat="g140m", parent=None):
+        """Draws the meta-window and its contents on initialisation."""
         super(App, self).__init__(parent)
 
         self.resize(700, 700)
@@ -33,11 +42,15 @@ class App(QWidget):
         self.setLayout(layout)
 
     def keyPressEvent(self, event):
+        """Registers keystrokes with the window open and sends signal to corresponding function to interpret them."""
         self.canv.update_key(event)
 
 
 class PlotCanvas(FigureCanvas):
+    """A PySide6 FigureCanvas object which draws the spectral visualisation within the gui and allows for interaction with it."""
+
     def __init__(self, fit, spectrum, mline, grat="g140m", parent=None, dpi=100):
+        """On initialisation assigns all passed arguments to appropriate objects and draws the Matplotlib plot making up core of the window."""
         super(PlotCanvas, self).__init__(Figure())
         self.setParent(parent)
         self.fit = fit
@@ -56,6 +69,7 @@ class PlotCanvas(FigureCanvas):
         self.draw()
 
     def plot_lines(self):
+        """When called redraws the visualisation of the desired spectral region with overlayed fitted model and its properties."""
         plots.plot_fit(self.spectrum, self.fit, axis=self.axes, text=True, plot=False)
         for ml in np.array(self.mline).flatten():
             lw = 2.5 if lf.flux_at(self.fit, ml, grat=self.grat) else 1
@@ -105,11 +119,13 @@ class PlotCanvas(FigureCanvas):
             )
 
     def update_plot(self):
+        """When called clears the existing matplotlib axis and redraws it anew."""
         self.axes.cla()
         self.plot_lines()
         self.draw()
 
     def update_key(self, key):
+        """Upon passed keystroke modifies corresponding aspects of the gui or the fitted model and subsequently redraws the central matplotlib plot."""
         mult = 10 if (key.modifiers()._name_ == "ShiftModifier") else 1
         if key.text().isdigit():
             self.sel = int(key.text())
@@ -171,6 +187,7 @@ class PlotCanvas(FigureCanvas):
     }
 )
 def manfit(fit, x, spectrum, mline, grat="g140m", info=True):
+    """Based on passed AstroPy fittable model and spectral data creates and shows a gui window for manual evaluation of the model."""
     if info:
         print(
             "=====\nUse numerical keys to switch between components of the fit\nUse up/down arrow to adjust amplitudes/y-offset\nUse left/right arrows to adjust mean position\nUse B/N keys to adjust distribution width\nUse S key to switch amplitude/y-offset sign\nUse F key to repeat the fitting process\n====="

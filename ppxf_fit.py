@@ -1,3 +1,5 @@
+"""Holds methods allowing for ppxf fitting, various estimations of spectra continuum and continuum subtraction."""
+
 import matplotlib
 
 matplotlib.use("qtagg")
