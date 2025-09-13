@@ -568,7 +568,7 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
         dt = 10000
         dn = 10000
         ite = 0
-        while (dt > 300 or dn > 100) and ite < 10:
+        while (dt > 100 or dn > 10) and ite < 10:
             cHbeta = red_const(flx, t=t, n=n)
             flc = fredd(flx, finfo, cHbeta)
             tn, nn = tem_den(flc, t0=t, n0=n)
@@ -577,12 +577,12 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
             t = tn
             n = nn
             ite += 1
-        print(f"\r\033[KElectron values: n:{n}, {t}.\n")
-        print(f"\r\033[KFluxes: {flx}.")
+        # print(f"\r\033[KElectron values: n:{n}, {t}.\n")
+        # print(f"\r\033[KFluxes: {flx}.")
         return t, n, flc
 
 
-def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
+def tem_den(fluxes, n0=400, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
     """From the specified line fluxes and initial guesses calculates density and temperatures (for different ions) of electron gas."""
     fluxec = dict()
     for v in fluxes.values():
@@ -601,12 +601,22 @@ def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
     v4 = 0.0 if (v := fluxec.get("O2_3729A")) is None else v
     if v1 and v2 and v1 != v2:
         S2 = pn.Atom("S", 2)
-        n = S2.getTemDen(v1 / v2, tem=T0, to_eval="L(6731)/L(6716)")
+        n = S2.getTemDen(v1 / v2, tem=T0, to_eval="L(6716)/L(6731)")
     elif v3 and v4 and v3 != v4:
         O2 = pn.Atom("O", 2)
         n = O2.getTemDen(v3 / v4, tem=T0, to_eval="L(3726)/L(3729)")
     else:
         n = n0
+
+    match n:
+        case _ if n < 20:
+            n = 20
+        case _ if n > 3000:
+            n = 3000
+        case _ if not np.isfinite(n):
+            n = n0
+        case _:
+            pass
 
     t = {"TO3": np.nan, "TO2": np.nan, "TS3": np.nan, "TS2": np.nan, "TN2": np.nan}
 
@@ -696,8 +706,15 @@ def tem_den(fluxes, n0=500, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
             t["TO3"] = 1 / (1.85 / t["TN2"] - 0.72 / 10**4)
 
     for v in t:
-        t[v] = t0[v] if np.isnan(t[v]) or t[v] < 100 else t[v]
-    n = n if np.isfinite(n) else n0
+        match t[v]:
+            case _ if t[v] < 2000:
+                t[v] = 2000
+            case _ if t[v] > 40000:
+                t[v] = 40000
+            case _ if not np.isfinite(t[v]):
+                t[v] = t0[v]
+            case _:
+                pass
     return t, n
 
 

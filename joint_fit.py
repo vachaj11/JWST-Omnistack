@@ -1,3 +1,9 @@
+"""Holds methods for plotting results from abundance calculations and initiating such calculations.
+
+Attributes:
+    flatten (function): Small function to recursively flatten whatever iterable provided into a 1D list 
+"""
+
 import matplotlib as mpl
 
 mpl.use("qtagg")
@@ -21,6 +27,7 @@ flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") els
 
 
 def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
+    """Plots convergence of line flux value obtained by fitting as a function of stack size, where smaller stacks are obtained by random subsampling of the provided catalogue."""
     if axis is None:
         fig, axs = plt.subplots()
     else:
@@ -62,6 +69,7 @@ def abundance_in_z(
     manual=False,
     **kwargs,
 ):
+    """Plots abundance(s) as a function of provided value in which spectra of passed catalogue are binned and stacked. Error statistics are obtained via bootstrapping and plotted."""
     n = int(-(-np.sqrt(len(abund)) // 1))
     indso = sources if indso is None else indso
     fig = plt.figure()
