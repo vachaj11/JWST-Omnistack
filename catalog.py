@@ -242,3 +242,44 @@ def getffm():
     ff = rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]
     return ffm
+
+
+def counts_table(
+    sources,
+    zranges=[[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+    mranges=[[6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12]],
+):
+    """Return LaTeX table detailing numbers of sources in provided catalogue in specified redshift and mass bins."""
+    swm = [s for s in sources if s.get("phot_mass") is not None]
+    for s in swm:
+        s["_pmass"] = np.log10(m) if (m := s.get("phot_mass")) is not None else None
+    mvals = []
+    for mr in mranges:
+        zvals = []
+        for zr in zranges:
+            l = len(
+                [
+                    True
+                    for s in swm
+                    if zr[0] < s["z"] < zr[1] and mr[0] < s["_pmass"] < mr[1]
+                ]
+            )
+            zvals.append(l)
+        mvals.append(zvals)
+    mv = np.array(mvals)
+    mvz = np.vstack([mv, mv.sum(axis=0)])
+    mvh = np.hstack([mvz, np.array([mvz.sum(axis=1)]).T])
+    mvs = mvh.astype(str)
+    trows = [f"{mr[0]}-{mr[1]} & " for mr in mranges] + ["Combined & "]
+    erows = [r"\\\hline" for mr in mranges]
+    erows.insert(-1, r"\\\hline\hline")
+    lines = ["\t\t" + trows[i] + " & ".join(r) + erows[i] for i, r in enumerate(mvs)]
+    sline = "\t" + r"\begin{tabular}{|c||" + "|".join(["c" for i in zranges]) + "||l|}"
+    fline = (
+        "\t\t"
+        + r"\hline\diagbox{$\mathrm{log}(M_\star/M_\odot)$}{$z$} & "
+        + " & ".join([f"{zr[0]}-{zr[1]}" for zr in zranges])
+        + r" & Combined\\\hline\hline"
+    )
+    eline = "\t" + r"\end{tabular}"
+    return "\n".join([sline, fline] + lines + [eline])
