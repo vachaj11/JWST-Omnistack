@@ -27,7 +27,7 @@ flatten = lambda l: sum(map(flatten, list(l)), []) if hasattr(l, "__iter__") els
 
 
 def flux_conv(sources, lines, lind, save=None, axis=None, typ="median"):
-    """Plots convergence of line flux value obtained by fitting as a function of stack size, where smaller stacks are obtained by random subsampling of the provided catalogue."""
+    """Plots convergence of line flux value obtained by Gaussian fitting as a function of stack size, where smaller stacks are obtained by random subsampling of the provided catalogue."""
     if axis is None:
         fig, axs = plt.subplots()
     else:
@@ -159,6 +159,7 @@ def ratios_in_z(
     manual=False,
     **kwargs,
 ):
+    """Plots specified line ratios used for strong-line calibration as a function of provided value. Spectra of passed catalogue are binned and stacked in this value, given line ratios calculated and error statistics obtained via bootstrapping."""
     n = int(-(-np.sqrt(len(abund)) // 1))
     indss = sources if indso is None else indso
     fig = plt.figure()
@@ -257,125 +258,6 @@ def ratios_in_z(
     plt.close(fig)
 
 
-def abundance_calib(
-    sources,
-    xmetr=ac.O_Dir,
-    abund=ac.Oxygen,
-    binval="z",
-    bins=10,
-    save=None,
-    title=None,
-    xax=None,
-    indiv=True,
-    indso=None,
-    manual=False,
-    xbins=None,
-    **kwargs,
-):
-    n = int(-(-np.sqrt(len(abund)) // 1))
-    indss = sources if indso is None else indso
-    fig = plt.figure()
-    gs = fig.add_gridspec(n, n, hspace=0)
-    axes = gs.subplots(sharex="col")
-    xrang = []
-    if n == 1:
-        axs = [axes]
-    else:
-        axs = axes.flatten()
-    if xbins is None:
-        sbins = catalog.inbins(sources, binval, nbin=bins)
-        xbins = []
-        for sb in sbins:
-            xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
-    vbins = []
-    for x in xbins:
-        vs = [l.get(binval) for l in x[0]]
-        vbins.append([min(vs), max(vs)])
-    if indiv:
-        ibins = [
-            [
-                [],
-            ]
-            for v in vbins
-        ]
-        for s in indss:
-            for i, (vl, vh) in enumerate(vbins):
-                if (v := s.get(binval)) is not None and vl < v < vh:
-                    ibins[i][0].append(s)
-        for ib in ibins:
-            if ib[0]:
-                cal_red = ac.red_const(ib[0]) if indso is None else None
-                ib.append(ac.indiv_stat(xmetr, ib[0], cal_red=cal_red, calib=False))
-            else:
-                ib.append([])
-    valss = []
-    for i, (nam, ab) in enumerate(abund.items()):
-        yrang = []
-        for l, sb in enumerate(xbins):
-            sourz = sb[0]
-            if indiv and ibins[l][0]:
-                cal_red = ac.red_const(ibins[l][0]) if indso is None else None
-                indy, _ = ac.indiv_stat(
-                    ab, ibins[l][0], calib=False, cal_red=cal_red, **kwargs
-                )
-                indx, _ = ibins[l][1]
-                x, y = ([], [])
-                for k in range(len(indy[1])):
-                    y += indy[1][k]
-                    x += [indx[1][k][0]] * len(indy[1][k])
-                if x:
-                    axs[i].plot(
-                        x,
-                        y,
-                        ls="",
-                        marker=".",
-                        c="gray",
-                        alpha=0.15,
-                        markersize=2,
-                    )
-            v, m, st = ac.boots_stat(
-                ab, sourz, calib=False, manual=manual, cal_red=None, **kwargs
-            )
-            if v.size:
-                zv = [sb[1][0][0]] * len(v)
-                zm = [sb[1][1][0]] * len(v)
-                zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
-                axs[i].plot(zv, v, ls="", marker="D", ms=4, c="black")
-                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=4)
-                axs[i].set_ylabel(ac.Names[nam], fontsize=11)
-                axs[i].yaxis.set_tick_params(labelsize=11)
-                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
-                xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
-            valss = np.concatenate([valss, v])
-        yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
-        ylims = (np.nanmin(yrang), np.nanmax(yrang))
-        axs[i].set_title(nam, y=0.85)
-        axs[i].set_ylim(
-            ylims[0] - 0.1 * (ylims[1] - ylims[0]),
-            ylims[1] + 0.25 * (ylims[1] - ylims[0]),
-        )
-    for i in range(len(axs) - len(abund)):
-        axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
-
-    xrang = np.nan_to_num(flatten(xrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
-    xlims = (np.nanmin(xrang), np.nanmax(xrang))
-    ranx = xlims[1] - xlims[0]
-    minx = xlims[0] - ranx * 0.1
-    maxx = xlims[1] + ranx * 0.1
-    for i in range(n):
-        axs[-i - 1].set_xlim(minx, maxx)
-        axs[-i - 1].set_xlabel(xax)
-    fig.set_size_inches((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5)
-    fig.suptitle(title)
-    fig.set_layout_engine(layout="tight")
-    if save is not None:
-        fig.savefig(save)
-    else:
-        plt.show()
-    plt.close(fig)
-    return xbins
-
-
 def abundance_compar(
     sources,
     xmetr=ac.O_Dir,
@@ -392,6 +274,7 @@ def abundance_compar(
     xbins=None,
     **kwargs,
 ):
+    """Plots comparison of abundances obtained by specified strong-line calibrations and direct method. Spectra in provided catalogue are binned and stacked in specified value, for each bin abundance is calculated via both methods and results plotted on axes with equal scales."""
     n = int(-(-np.sqrt(len(abund)) // 1))
     indss = sources if indso is None else indso
     xax = yax if xax is None else xax
@@ -501,8 +384,128 @@ def abundance_compar(
     return xbins
 
 
+def abundance_calib(
+    sources,
+    xmetr=ac.O_Dir,
+    abund=ac.Oxygen,
+    binval="z",
+    bins=10,
+    save=None,
+    title=None,
+    xax=None,
+    indiv=True,
+    indso=None,
+    manual=False,
+    xbins=None,
+    **kwargs,
+):
+    """Plots line ratios used for provided strong-line calibrations as a function of abundance obtained via direct method. Spectra in provided catalogue are binned and stacked in specified value, and for each stack given line ratio and abundance via direct method are calculated and plotted."""
+    n = int(-(-np.sqrt(len(abund)) // 1))
+    indss = sources if indso is None else indso
+    fig = plt.figure()
+    gs = fig.add_gridspec(n, n, hspace=0)
+    axes = gs.subplots(sharex="col")
+    xrang = []
+    if n == 1:
+        axs = [axes]
+    else:
+        axs = axes.flatten()
+    if xbins is None:
+        sbins = catalog.inbins(sources, binval, nbin=bins)
+        xbins = []
+        for sb in sbins:
+            xbins.append((sb, ac.boots_stat(xmetr, sb, manual=manual, **kwargs)))
+    vbins = []
+    for x in xbins:
+        vs = [l.get(binval) for l in x[0]]
+        vbins.append([min(vs), max(vs)])
+    if indiv:
+        ibins = [
+            [
+                [],
+            ]
+            for v in vbins
+        ]
+        for s in indss:
+            for i, (vl, vh) in enumerate(vbins):
+                if (v := s.get(binval)) is not None and vl < v < vh:
+                    ibins[i][0].append(s)
+        for ib in ibins:
+            if ib[0]:
+                cal_red = ac.red_const(ib[0]) if indso is None else None
+                ib.append(ac.indiv_stat(xmetr, ib[0], cal_red=cal_red, calib=False))
+            else:
+                ib.append([])
+    valss = []
+    for i, (nam, ab) in enumerate(abund.items()):
+        yrang = []
+        for l, sb in enumerate(xbins):
+            sourz = sb[0]
+            if indiv and ibins[l][0]:
+                cal_red = ac.red_const(ibins[l][0]) if indso is None else None
+                indy, _ = ac.indiv_stat(
+                    ab, ibins[l][0], calib=False, cal_red=cal_red, **kwargs
+                )
+                indx, _ = ibins[l][1]
+                x, y = ([], [])
+                for k in range(len(indy[1])):
+                    y += indy[1][k]
+                    x += [indx[1][k][0]] * len(indy[1][k])
+                if x:
+                    axs[i].plot(
+                        x,
+                        y,
+                        ls="",
+                        marker=".",
+                        c="gray",
+                        alpha=0.15,
+                        markersize=2,
+                    )
+            v, m, st = ac.boots_stat(
+                ab, sourz, calib=False, manual=manual, cal_red=None, **kwargs
+            )
+            if v.size:
+                zv = [sb[1][0][0]] * len(v)
+                zm = [sb[1][1][0]] * len(v)
+                zerr = [[sb[1][2][0][0]] * len(v), [sb[1][2][1][0]] * len(v)]
+                axs[i].plot(zv, v, ls="", marker="D", ms=4, c="black")
+                axs[i].errorbar(zm, m, xerr=zerr, yerr=st, ls="", c="black", capsize=4)
+                axs[i].set_ylabel(ac.Names[nam], fontsize=11)
+                axs[i].yaxis.set_tick_params(labelsize=11)
+                yrang += [np.nanmin(m - st[0]), np.nanmax(m + st[1])]
+                xrang += [zm[0] - zerr[0][0], zm[0] + zerr[1][0]]
+            valss = np.concatenate([valss, v])
+        yrang = np.nan_to_num(flatten(yrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+        ylims = (np.nanmin(yrang), np.nanmax(yrang))
+        axs[i].set_title(nam, y=0.85)
+        axs[i].set_ylim(
+            ylims[0] - 0.1 * (ylims[1] - ylims[0]),
+            ylims[1] + 0.25 * (ylims[1] - ylims[0]),
+        )
+    for i in range(len(axs) - len(abund)):
+        axs[len(abund) + i].tick_params(axis="y", left=False, labelleft=False)
+
+    xrang = np.nan_to_num(flatten(xrang), nan=np.nan, posinf=np.nan, neginf=np.nan)
+    xlims = (np.nanmin(xrang), np.nanmax(xrang))
+    ranx = xlims[1] - xlims[0]
+    minx = xlims[0] - ranx * 0.1
+    maxx = xlims[1] + ranx * 0.1
+    for i in range(n):
+        axs[-i - 1].set_xlim(minx, maxx)
+        axs[-i - 1].set_xlabel(xax)
+    fig.set_size_inches((max(n, 2) + 0.3) * 2.5, (max(n, 2) + 0.4) * 2.5)
+    fig.suptitle(title)
+    fig.set_layout_engine(layout="tight")
+    if save is not None:
+        fig.savefig(save)
+    else:
+        plt.show()
+    plt.close(fig)
+    return xbins
+
+
 def constr_ax(fig, n):
-    """Legacy overcomplicated method replaceable by two lines of gridspec"""
+    """Legacy overcomplicated method for creating an nxn grid of axes with attached colourbar axis. Replaceable by two lines of mpl.gridspec."""
     inds = np.linspace(1, n**2, n**2).reshape((n, n))
     inds = np.hstack((inds, np.zeros((n, 1))))
     order = np.delete(d := np.flip(inds, axis=0).flatten(), np.where(d == 0))
@@ -553,8 +556,11 @@ def abundance_in_val_z(
     indso=None,
     lim=None,
     manual=False,
+    errorb="boots",
     **kwargs,
 ):
+    """Plots abundance(s) as a function of provided value and redshift in both of which simultaneously spectra of passed catalogue are binned and stacked. Error statistics are obtained via bootstrapping and plotted."""
+
     val_name = val_name if val_name is not None else val
     zval_name = zval_name if zval_name is not None else zval
     n = int(-(-np.sqrt(len(abund)) // 1))
@@ -616,7 +622,7 @@ def abundance_in_val_z(
                 if isourz:
                     cal_red = ac.red_const(isourz) if indso is None else None
                     if indiv:
-                        ind, _ = ac.indiv_stat(
+                        ind, (im, ist) = ac.indiv_stat(
                             ab, isourz, cal_red=cal_red, val=val, **kwargs
                         )
                         x = sum(list(ind[0]), [])
@@ -631,15 +637,29 @@ def abundance_in_val_z(
                                 alpha=0.1,
                                 markersize=1.5,
                             )
+                        if errorb == "indiv" and im.size:
+                            vmean = [(vrang[1] + vrang[0]) / 2] * len(im)
+                            verr = [(vrang[1] - vrang[0]) / 2] * len(im)
+                            axs[i].errorbar(
+                                vmean, im, xerr=verr, ls="", c=cl, capsize=4, alpha=0.3
+                            )
+                            axs[i].errorbar(
+                                vmean, im, yerr=ist, ls="", c=cl, capsize=4, alpha=0.5
+                            )
+                            yrang += [np.nanmin(im - ist[0]), np.nanmax(im + ist[1])]
+                            valss.append([vmean[0]] + list(im))
+
                 if not sourz:
                     continue
+                ite = 200 if errorb == "boots" else 0
                 v, m, st = ac.boots_stat(
-                    ab, sourz, cal_red=None, manual=manual, **kwargs
+                    ab, sourz, cal_red=None, manual=manual, ite=ite, **kwargs
                 )
                 if v.size:
                     vmean = [(vrang[1] + vrang[0]) / 2] * len(v)
-                    verr = [(vrang[1] - vrang[0]) / 2] * len(v)
                     axs[i].plot(vmean, v, ls="", marker="D", ms=4, c=cl)
+                if errorb == "boots" and m.size:
+                    verr = [(vrang[1] - vrang[0]) / 2] * len(v)
                     axs[i].errorbar(
                         vmean, v, xerr=verr, ls="", c=cl, capsize=4, alpha=0.3
                     )
@@ -700,12 +720,15 @@ def abundance_compar_z(
     indiv=True,
     indso=None,
     manual=False,
+    errorb="boots",
     **kwargs,
 ):
+    """Plots comparison of abundances obtained by specified strong-line calibrations and direct method. Spectra in provided catalogue are binned and stacked simultaneously in specified value and redshift, for each bin abundance is calculated via both methods and results plotted on axes with equal scales."""
     xax = yax if xax is None else xax
     yax = xax if yax is None else yax
     indss = sources if indso is None else indso
     zval_name = zval_name if zval_name is not None else zval
+    ite = 200 if errorb == "boots" else 0
     n = int(-(-np.sqrt(len(abund)) // 1))
 
     rat = 15 * n
@@ -763,7 +786,7 @@ def abundance_compar_z(
                 vs.append(
                     (
                         sourz,
-                        ac.boots_stat(xmetr, sourz, manual=manual, **kwargs),
+                        ac.boots_stat(xmetr, sourz, manual=manual, ite=ite, **kwargs),
                     )
                 )
             else:
@@ -790,8 +813,10 @@ def abundance_compar_z(
                 iso, idb = ivs[k]
                 if indiv and iso:
                     cal_red = ac.red_const(iso) if indso is None else None
-                    indy, _ = ac.indiv_stat(ab, iso, cal_red=cal_red, **kwargs)
-                    indx, _ = idb
+                    indy, (imy, isty) = ac.indiv_stat(
+                        ab, iso, cal_red=cal_red, **kwargs
+                    )
+                    indx, (imx, istx) = idb
                     x, y = ([], [])
                     for m in range(len(indy[1])):
                         y += indy[1][m]
@@ -806,14 +831,34 @@ def abundance_compar_z(
                             alpha=0.15,
                             markersize=2,
                         )
+                    if errorb == "indiv" and imx.size and imy.size:
+                        izm = [imx[0]] * len(imy)
+                        izerr = [[istx[0][0]] * len(imy), [istx[1][0]] * len(imy)]
+                        axs[i].errorbar(
+                            izm,
+                            imy,
+                            xerr=izerr,
+                            yerr=isty,
+                            ls="",
+                            c=cl,
+                            capsize=4,
+                            alpha=0.5,
+                        )
+                        yrang += [np.nanmin(imy - isty[0]), np.nanmax(imy + isty[1])]
+                        xrang += [izm[0] - izerr[0][0], izm[0] + izerr[1][0]]
+                        valss.append([izm[0]] + list(imy))
+
                 if not so:
                     continue
-                v, m, st = ac.boots_stat(ab, so, cal_red=None, manual=manual, **kwargs)
+                v, m, st = ac.boots_stat(
+                    ab, so, cal_red=None, manual=manual, ite=ite, **kwargs
+                )
                 if v.size:
                     zv = [db[0][0]] * len(v)
+                    axs[i].plot(zv, v, ls="", marker="D", ms=4, c=cl)
+                if errorb == "boots" and m.size:
                     zm = [db[1][0]] * len(v)
                     zerr = [[db[2][0][0]] * len(v), [db[2][1][0]] * len(v)]
-                    axs[i].plot(zv, v, ls="", marker="D", ms=4, c=cl)
                     axs[i].errorbar(
                         zm, m, xerr=zerr, yerr=st, ls="", c=cl, capsize=4, alpha=0.5
                     )
@@ -853,6 +898,7 @@ def abundance_compar_z(
 
 
 def main():
+    """Central plotting function, with different plots specified in individual function calls hidden/chosen for plotting with block comments."""
     f = catalog.fetch_json("../catalog_v4.json")["sources"]
     ff = catalog.rm_bad(f)
     ffm = [s for s in ff if s["grat"][0] == "g"]
@@ -1184,6 +1230,157 @@ def main():
         indso=ffmu,
     )
     """
+    """
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund=ac.Sulphur_new,
+        # title="Sulphur abundance in medium resolution\n via different calibrations",
+        title="Sulphur abundance evolution in\nphotometric mass and redshift",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        save="../Plots/abund/sulphur_cal_z_mass_inew.pdf",
+        zval_name="Redshift $z$",
+        lim=[5.55, 7.65],
+        indso=ffmu,
+        errorb = 'indiv',
+    )
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund=ac.Nitrogen_new,
+        # title="Nitrogen abundance in medium resolution\n via different calibrations",
+        title="Nitrogen abundance evolution in\nphotometric mass and redshift",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        save="../Plots/abund/nitrogen_cal_z_mass_inew.pdf",
+        zval_name="Redshift $z$",
+        lim=[-2.2, 0.1],
+        indso=ffmu,
+        errorb = 'indiv',
+    )
+    """
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund=ac.Oxygen_new,
+        # title="Oxygen abundance in medium resolution via different calibrations",
+        title="Oxygen abundance evolution in\nphotometric mass and redshift",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        save="../Plots/abund/oxygen_cal_z_mass_inew.pdf",
+        zval_name="Redshift $z$",
+        lim=[7.25, 8.75],
+        indso=ffmu,
+        errorb="indiv",
+    )
+
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"S Direct": ac.S_Dir},
+        # title="Sulphur abundance in medium resolution\n via direct method",
+        title="Sulphur abundance evolution in\nphotometric mass and redshift",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        save="../Plots/abund/sulphur_dir_z_mass_i.pdf",
+        zval_name="Redshift $z$",
+        lim=[5.55, 7.65],
+        indso=ffmu,
+        errorb="indiv",
+    )
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"N Direct": ac.N_Dir},
+        # title="Nitrogen abundance in medium resolution\n via direct method",
+        title="Nitrogen abundance evolution in\nphotometric mass and redshift",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        save="../Plots/abund/nitrogen_dir_z_mass_i.pdf",
+        zval_name="Redshift $z$",
+        lim=[-2.2, 0.1],
+        indso=ffmu,
+        errorb="indiv",
+    )
+    abundance_in_val_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        val_name="$\\mathrm{log} (M_\\star/M_\\odot)$",
+        abund={"O Direct": ac.O_Dir},
+        # title="Oxygen abundance in medium resolution\n via direct method",
+        title="Oxygen abundance evolution in\nphotometric mass and redshift",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        save="../Plots/abund/oxygen_dir_z_mass_i.pdf",
+        zval_name="Redshift $z$",
+        lim=[7.25, 8.75],
+        indso=ffmu,
+        errorb="indiv",
+    )
+
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.S_Dir,
+        abund=ac.Sulphur_new,
+        save="../Plots/abund/sulphur_com_z_mass_inew.pdf",
+        # title="Sulphur abundance in medium resolution\n via direct method and strong lines",
+        title="Sulphur abundance inferred via\nstrong lines and direct method",
+        yax="$12+\\mathrm{log}(\\mathrm{S}/\\mathrm{H})$",
+        zval_name="Redshift $z$",
+        lim=[5.55, 7.65],
+        indso=ffmu,
+        errorb="indiv",
+    )
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.N_Dir,
+        abund=ac.Nitrogen_new,
+        save="../Plots/abund/nitrogen_com_z_mass_inew.pdf",
+        # title="Nitrogen abundance in medium resolution\n via direct method and strong lines",
+        title="Nitrogen abundance inferred via\nstrong lines and direct method",
+        yax="$\\mathrm{log}(\\mathrm{N}/\\mathrm{O})$",
+        zval_name="Redshift $z$",
+        lim=[-2.2, 0.1],
+        indso=ffmu,
+        errorb="indiv",
+    )
+    abundance_compar_z(
+        ffm,
+        [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
+        [[i, i + 1] for i in range(6, 12)],
+        val="_pmass",
+        zval="z",
+        xmetr=ac.O_Dir,
+        abund=ac.Oxygen_new,
+        save="../Plots/abund/oxygen_com_z_mass_inew.pdf",
+        # title="Oxygen abundance in medium resolution\n via direct method and strong lines",
+        title="Oxygen abundance inferred via\nstrong lines and direct method",
+        yax="$12+\\mathrm{log}(\\mathrm{O}/\\mathrm{H})$",
+        zval_name="Redshift $z$",
+        lim=[7.25, 8.75],
+        indso=ffmu,
+        errorb="indiv",
+    )
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],

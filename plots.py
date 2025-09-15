@@ -1,3 +1,5 @@
+"""Holds various simple and lower-level plotting function in turn utilised by other more complex plotting code or quick visualisations."""
+
 import matplotlib
 
 matplotlib.use("qtagg")
@@ -20,6 +22,7 @@ plt.rcParams.update(
 
 
 def spectra_plot(spectra, axis=None, norm=False, **kwargs):
+    """Plots the provided spectra on a specified or newly created axis. With an option to normalise the spectra."""
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -34,6 +37,7 @@ def spectra_plot(spectra, axis=None, norm=False, **kwargs):
 
 
 def spectras_plot(spectra, axis=None, norm=False, label="_", **kwargs):
+    """Plots all spectra in the provided list on a specified or newly created axis. If requested the spectra can be also first individually normalised."""
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -56,6 +60,7 @@ def spectras_plot(spectra, axis=None, norm=False, label="_", **kwargs):
 def histogram_in(
     sources, value, bins=None, range=None, axis=None, label="", norm=False, **kwargs
 ):
+    """Plots a histogram of population of spectra in provided catalogue as a function of specified parameter."""
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -72,6 +77,7 @@ def histogram_in(
 
 
 def plot_values(sources, valx, valy, axis=None, **kwargs):
+    """Plots a scatter plot of two specified parameters (as long as they are available) of spectra in the provided catalogue."""
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -97,6 +103,7 @@ def plot_values(sources, valx, valy, axis=None, **kwargs):
 
 
 def plot_fit(spectra, fit, sources=None, axis=None, text=True, save=None, plot=True):
+    """Plots a provided spectrum overlayed with provided AstroPy fitting model to a specified or newly created axis. Adding information about the model to the plot if requested."""
     if axis is None:
         fig, axs = plt.subplots()
     else:
@@ -120,6 +127,7 @@ def plot_fit(spectra, fit, sources=None, axis=None, text=True, save=None, plot=T
 
 
 def plot_fit_text(fit, axis=None):
+    """Extracts information about a provided fitting model from a provided AstroPy object, converts them to text and places the text to appropriate position on a specified or newly created axis."""
     if axis is None:
         fig = plt.gcf()
         axis = plt.gca()
@@ -143,6 +151,7 @@ def plot_fit_text(fit, axis=None):
 
 
 def ftL(num, d=2):
+    """Renders the provided number in LaTeX syntax and 'scientific' notation."""
     neg = False
     if num == 0:
         return "0.0"
@@ -159,6 +168,7 @@ def ftL(num, d=2):
 
 
 def spectra_resolution(sources):
+    """Plot very simple diagram of spectral element size as a function of redshift for each type of spectra in the passed catalogue."""
     fig = plt.gcf()
     axs = plt.gca()
     gratings = dict()

@@ -1,3 +1,13 @@
+"""Holds plotting methods for various summarising and accompanying plots relevant to sample filtering, stacking and other steps preceding abundance calculations.
+
+Attributes:
+    lines (dict): Legacy dictionary specifying lines of interest to be plotted by the summarising plots.
+    ratios (dict): Dictionary specifying which lines in the above dictionary "lines" are relevant to which strong-line abundance calculations and should be marked as such.
+    core_lines (dict): Dictionary specifying lines of interest to be plotted by the summarising plots. Up to date including lines central to abundance calculations.
+    core_ratios (dict): Dictionary specifying which lines in the above dictionary "core_lines" are relevant to which strong-line or direct method abundance calculations and should be marked as such.
+    lines_C (dict): Legacy dictionary specifying lines and their names relating to a specific paper of interest. 
+"""
+
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,6 +41,12 @@ lines = {
     0.164: ["$\\mathrm{He}_\\mathrm{II} \\mathrm{\\,\\, 1640\\AA}$", 4],
     0.1216: ["$\\mathrm{Ly}_\\mathrm{\\alpha} \\mathrm{\\,\\, 1216\\AA}$", 6],
 }
+ratios = {
+    "Sulphur": ("gold", [0, 1, 5]),
+    "Nitrogen": ("grey", [1, 2, 3, 9]),
+    "Oxygen": ("green", [4, 5, 9]),
+}
+
 core_lines = {
     0.9531: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9531\\AA}$", 4],
     0.9069: ["$\\mathrm{S}_\\mathrm{III} \\mathrm{\\,\\, 9069\\AA}$", 4],
@@ -48,6 +64,17 @@ core_lines = {
     0.4073: ["$\\mathrm{S}_\\mathrm{II} \\mathrm{\\,\\, 4073\\AA}$", 4],
     0.3726: ["$\\mathrm{O}_\\mathrm{II} \\mathrm{\\,\\, 3726\\AA}$", 4],
 }
+core_ratios = {
+    "Sulphur": ("gold", [0, 3, 9], [0, 1, 3, 5]),
+    "Nitrogen": (
+        "grey",
+        [3, 4, 14],
+        [
+            4,
+        ],
+    ),
+    "Oxygen": ("green", [3, 4, 7, 9, 14], [2, 7, 8, 14]),
+}
 
 lines_C = {
     0.5007: ["$\\mathrm{O}_\\mathrm{III} \\mathrm{\\,\\, 5007\\AA}$", 5],
@@ -62,26 +89,9 @@ lines_C = {
     0.1908: ["$\\mathrm{C}_\\mathrm{III} \\mathrm{\\,\\, 1908\\AA}$", 4],
 }
 
-ratios = {
-    "Sulphur": ("gold", [0, 1, 5]),
-    "Nitrogen": ("grey", [1, 2, 3, 9]),
-    "Oxygen": ("green", [4, 5, 9]),
-}
-
-core_ratios = {
-    "Sulphur": ("gold", [0, 3, 9], [0, 1, 3, 5]),
-    "Nitrogen": (
-        "grey",
-        [3, 4, 14],
-        [
-            4,
-        ],
-    ),
-    "Oxygen": ("green", [3, 4, 7, 9, 14], [2, 7, 8, 14]),
-}
-
 
 def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
+    """Plots a summarising diagram showing number of sources in different redshift bins covering specific spectral lines. With option to mark lines used for strong-line or direct method abundance calculations."""
     fig, axs = plt.subplots()
     hists = []
     tickp = []
@@ -174,6 +184,7 @@ def plot_lines(sources, lines, title=None, save=None, narrow=1, ratios=None):
 
 
 def plot_histograms(sources, lines, title=None, save=None, ymax=2600, narrow=1):
+    """Plots a series of histograms showing distribution of sources covering a given spectral feature in redshift."""
     fig = plt.figure()
     gs = fig.add_gridspec(-(-len(lines) // 3), 3, hspace=0, wspace=0)
     axes = gs.subplots(sharex="col", sharey="row")
@@ -228,6 +239,7 @@ def plot_stacks(
     ratios=None,
     **kwargs,
 ):
+    """Plots a grid of 5x3 axes each displaying stack of spectra around a specific spectral feature in different redshift bins and different methods of continuum subtraction."""
     fig = plt.figure()
     gs = fig.add_gridspec(3, 5, hspace=0)
     axs = gs.subplots(sharex="col")
@@ -326,6 +338,7 @@ def plot_stacks(
 
 
 def plot_mz(sources, title=None, save=None, **kwargs):
+    """Plots a very simple diagram displaying distribution of spectra in the provided catalogue in values of photometric mass and redshift."""
     fig, axs = plt.subplots()
     plots.plot_values(sources, "phot_mass", "z", axis=axs, alpha=0.1, **kwargs)
     axs.set_xlim(10**5, 10**12)
@@ -343,6 +356,7 @@ def plot_mz(sources, title=None, save=None, **kwargs):
 
 
 def main():
+    """Central plotting function, with different plots specified in individual function calls hidden/chosen for plotting with block comments."""
     a = catalog.fetch_json("../catalog_v4.json")["sources"]
     af = catalog.rm_bad(a)
     afp = [s for s in af if s["grat"] == "prism"]

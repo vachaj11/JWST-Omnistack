@@ -84,7 +84,7 @@ Nitrogen_new = {
     "N2O2": lambda *args, **kwargs: N_N2O2(*args, **kwargs, new=True),
     "N2S2": lambda *args, **kwargs: N_N2S2(*args, **kwargs, new=True),
 }
-Sulphur_new = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=False)}
+Sulphur_new = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=True)}
 Names = {
     "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
     "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
@@ -135,7 +135,7 @@ def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
     fsiii = sum(flx["S3_95"].values())
     fhbe = sum(flx["H1_b"].values())
     S23 = np.log10((fsii + fsiii) / fhbe)
-    if np.isfinite(S23):
+    if np.isfinite(S23) and -1.05 < S23 < 0.3:
         return [S23], [6.63 + 2.202 * S23 + 1.060 * S23**2]
     else:
         return [S23], []
@@ -151,7 +151,7 @@ def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
     fnii = flx["H1_a"]["N2_6584A"]
     fhal = flx["H1_a"]["H1r_6563A"]
     N2 = np.log10(fnii / fhal)
-    if np.isfinite(N2):
+    if np.isfinite(N2) and -1.8 < N2 < -0.2:
         return [N2], [0.62 * N2 - 0.57]
     else:
         return [N2], []
@@ -168,10 +168,12 @@ def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
     foii = sum(flx["O2_37"].values())
     N2O2 = np.log10(fnii / foii)
     if np.isfinite(N2O2):
-        if new:
+        if new and -1.5 < N2O2 < 0.25:
             return [N2O2], [0.69 * N2O2 - 0.65]
-        else:
+        elif not new and -2 < N2O2 < 0:
             return [N2O2], [0.52 * N2O2 - 0.65]
+        else:
+            return [N2O2], []
     else:
         return [N2O2], []
 
@@ -184,10 +186,12 @@ def N_N2S2(sources, new=True, rec=False, **kwargs):
         O_N2(sources, rec=rec, **kwargs)[0][0] - O_S2(sources, rec=rec, **kwargs)[0][0]
     )
     if np.isfinite(N2S2):
-        if new:
+        if new and -0.6 < N2S2 < 0.3:
             return [N2S2], [1.12 * N2S2 - 0.93]
-        else:
+        elif not new and -0.8 < N2S2 < 0.5:
             return [N2S2], [0.85 * N2S2 - 1.00]
+        else:
+            return [N2S2], []
     else:
         return [N2S2], []
 
@@ -210,7 +214,7 @@ def O_R2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.3 < v < 8.6
             ]
-            return [R2], roots
+            return [R2], sorted(roots)
         else:
             p = [0.435 - R2, -1.362, -5.655, -4.851, -0.478, 0.736]
             roots = [
@@ -218,7 +222,7 @@ def O_R2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [R2], roots
+            return [R2], sorted(roots)
     else:
         return [R2], []
 
@@ -241,7 +245,7 @@ def O_R3(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.3 < v < 8.6
             ]
-            return [R3], roots
+            return [R3], sorted(roots)
         else:
             p = [-0.277 - R3, -3.549, -3.593, -0.981]
             roots = [
@@ -249,7 +253,7 @@ def O_R3(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [R3], roots
+            return [R3], sorted(roots)
     else:
         return [R3], []
 
@@ -269,7 +273,7 @@ def O_O3O2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.3 < v < 8.6
             ]
-            return [O3O2], roots
+            return [O3O2], sorted(roots)
         else:
             p = [-0.691 - O3O2, -2.944, -1.308]
             roots = [
@@ -277,7 +281,7 @@ def O_O3O2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [O3O2], roots
+            return [O3O2], sorted(roots)
     else:
         return [O3O2], []
 
@@ -301,7 +305,7 @@ def O_R23(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.3 < v < 8.6
             ]
-            return [R23], roots
+            return [R23], sorted(roots)
         else:
             p = [0.527 - R23, -1.569, -1.652, -0.421]
             roots = [
@@ -309,7 +313,7 @@ def O_R23(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [R23], roots
+            return [R23], sorted(roots)
     else:
         return [R23], []
 
@@ -328,7 +332,7 @@ def O_Rh(sources, new=True, rec=False, **kwargs):
             for v in np.roots(np.flip(p)) + 8.0
             if np.isreal(v) and 7.3 < v < 8.6
         ]
-        return [Rh], roots
+        return [Rh], list(reversed(sorted(roots)))
     else:
         return [Rh], []
 
@@ -351,7 +355,7 @@ def O_N2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.8 < v < 8.6
             ]
-            return [N2], roots
+            return [N2], sorted(roots)
         else:
             p = [-0.489 - N2, 1.513, -2.554, -5.293, -2.867]
             roots = [
@@ -359,7 +363,7 @@ def O_N2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [N2], roots
+            return [N2], sorted(roots)
     else:
         return [N2], []
 
@@ -379,7 +383,7 @@ def O_O3N2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.8 < v < 8.6
             ]
-            return [O3N2], roots
+            return [O3N2], sorted(roots)
         else:
             p = [0.281 - O3N2, -4.765, -2.268]
             roots = [
@@ -387,7 +391,7 @@ def O_O3N2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [O3N2], roots
+            return [O3N2], sorted(roots)
     else:
         return [O3N2], []
 
@@ -410,7 +414,7 @@ def O_S2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.9 < v < 8.6
             ]
-            return [S2], roots
+            return [S2], sorted(roots)
         else:
             p = [-0.442 - S2, -0.360, -6.271, -8.339, -3.559]
             roots = [
@@ -418,7 +422,7 @@ def O_S2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [S2], roots
+            return [S2], sorted(roots)
     else:
         return [S2], []
 
@@ -438,7 +442,7 @@ def O_O3S2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.0
                 if np.isreal(v) and 7.9 < v < 8.6
             ]
-            return [O3S2], roots
+            return [O3S2], sorted(roots)
         else:
             p = [0.191 - O3S2, -4.292, -2.538, 0.053, 0.332]
             roots = [
@@ -446,7 +450,7 @@ def O_O3S2(sources, new=True, rec=False, **kwargs):
                 for v in np.roots(np.flip(p)) + 8.69
                 if np.isreal(v) and 7.6 < v < 8.9
             ]
-            return [O3S2], roots
+            return [O3S2], sorted(roots)
     else:
         return [O3S2], []
 
@@ -465,26 +469,26 @@ def O_RS32(sources, new=False, rec=False, **kwargs):
             for v in np.roots(np.flip(p)) + 8.69
             if np.isreal(v) and 7.6 < v < 8.9
         ]
-        return [RS32], roots
+        return [RS32], sorted(roots)
     else:
         return [RS32], []
 
 
-def S_Dir(sources, new=False, rec=False, **kwargs):
+def S_Dir(sources, new=True, rec=False, **kwargs):
     """Calculates Sulphur abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_S_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_Dir" + "_n" * new]
     return [[abundances(sources, **kwargs)["S"]]] * 2
 
 
-def N_Dir(sources, new=False, rec=False, **kwargs):
+def N_Dir(sources, new=True, rec=False, **kwargs):
     """Calculates Nitrogen abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_Dir" + "_n" * new]
     return [[abundances(sources, N_over_O=True, **kwargs)["N"]]] * 2
 
 
-def O_Dir(sources, new=False, rec=False, **kwargs):
+def O_Dir(sources, new=True, rec=False, **kwargs):
     """Calculates Oxygen abundance via the direct method for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_O_Dir" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_O_Dir" + "_n" * new]
@@ -965,15 +969,21 @@ def core_fit(sources, name, cal_red=None, **kwargs):
 
 
 def indiv_extract(source, mline):
-    """Extract requested line fluxes stored in provided catalog entry."""
+    """Extract requested line fluxes stored in provided catalogue entry.
+
+    This function imposes threshold >10^(-23.5) on the extracted fluxes, otherwise returns them as nan. This will work correctly only if the stored values have units W/m^2.
+    """
     outd = True
     if type(mline) is not dict:
         mline = {"0": mline}
         outd = False
     fluxes = dict()
     for k, l in mline.items():
-        if f"rec_{k}" in source.keys():
-            fluxes[k] = source[f"rec_{k}"]
+        if (n := f"rec_{k}") in source.keys():
+            if (v := source[n]) is not None and np.isfinite(v) and v > 10 ** (-23.5):
+                fluxes[k] = source[f"rec_{k}"]
+            else:
+                fluxes[k] = np.nan
         else:
             fluxes[k] = np.nan
     if outd:
