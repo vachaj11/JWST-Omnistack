@@ -1,10 +1,12 @@
 # JWST Spectral Stacking Internship
 
-Repository of badly documented and in parts very chaotic code.
+Repository holding code relating to automated analysis, stacking and fitting of NIRSpec spectra, as well as calculation of elemental abundances from results of the said fitting. The code was developed as part of a summer 2025 internship in the GalEv group at the Max Planck Institute for Extraterrestial Physics. 
+
+All module-level functions, classes and attributes have short description of their purpose. (For further help with interpretation/modifications of the code I recommend turning to LLM alike Gemini, which I've found capable of making sense of most of the code's functions.) 
 
 ## Recreating internship results
 
-Instructions bellow assume standard Linux/bash and IPython sessions. Total run time will be probably about ~1 day.
+Instructions bellow assume standard Linux/bash and IPython sessions. Total run time will be probably about ~2 days.
 
 ##### Install required libraries
 
