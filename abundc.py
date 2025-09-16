@@ -136,7 +136,7 @@ def S_S23(
     fhbe = sum(flx["H1_b"].values())
     S23 = np.log10((fsii + fsiii) / fhbe)
     if np.isfinite(S23) and (-1.05 < S23 < 0.3 or not constr):
-        return [S23], []
+        return [S23], [6.63 + 2.202 * S23 + 1.060 * S23**2]
     else:
         return [S23], []
 
