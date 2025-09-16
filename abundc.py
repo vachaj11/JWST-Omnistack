@@ -580,9 +580,12 @@ def tem_den_red(
     flx, finfo = get_core_fluxes(sources, ilines=lines, temp=temp, **kwargs)
     if not temp:
         cHbeta = red_const(flx, t=t, n=n) if cal_red is None else cal_red
-        sflx = {l: flx[l] for l in lines}
-        sfinfo = {l: finfo[l] for l in lines}
-        return t, n, fredd(sflx, sfinfo, cHbeta)
+        if lines is not None:
+            sflx = {l: flx[l] for l in lines}
+            sfinfo = {l: finfo[l] for l in lines}
+            return t, n, fredd(sflx, sfinfo, cHbeta)
+        else:
+            return t, n, fredd(flx, finfo, cHbeta)
     else:
         dt = 10000
         dn = 10000
