@@ -1,8 +1,8 @@
 # JWST Spectral Stacking Project
 
-Repository holding code relating to automated analysis, stacking and fitting of NIRSpec spectra, as well as calculation of elemental abundances from results of the said fitting. The code was developed as part of a summer 2025 internship in the GalEv group at the Max Planck Institute for Extraterrestrial Physics. 
+Repository holding code relating to automated analysis, stacking and fitting of NIRSpec spectra, as well as calculation of elemental abundances from results of said fitting. The code was developed as part of a summer 2025 internship in the GalEv group at the Max Planck Institute for Extraterrestrial Physics. 
 
-All module-level functions, classes and attributes have short description of their purpose. (For further help with interpretation/modifications of the code I recommend turning to LLM alike Gemini, which I've found capable of making sense of most of the code's functions.) 
+All module-level functions, classes and attributes have short description of their purpose included in docstrings. (For further help with interpretation/modifications of the code I recommend turning to LLM alike Gemini, which I've found capable of making sense of most of the code's functions.) 
 
 ## Recreating internship results
 
