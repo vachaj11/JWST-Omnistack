@@ -1,4 +1,4 @@
-# JWST Spectral Stacking Project
+# *JWST-Omnistack* - methodology and calculations from the JWST Stacking Project
 
 Repository holding code relating to automated analysis, stacking and fitting of NIRSpec spectra (reduced by the DJA project), as well as calculation of elemental abundances from results of said fitting. The code was developed as part of a summer 2025 internship in the GalEv group at the Max Planck Institute for Extraterrestrial Physics. 
 
