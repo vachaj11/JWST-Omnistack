@@ -561,10 +561,17 @@ def get_core_fluxes(sources, ilines=None, temp=True, cal_red=0, **kwargs):
     return fluxec, lines
 
 
-def tem_den_red(sources, lines=None, temp=True, cal_red=None, rec=False, **kwargs):
+def tem_den_red(
+    sources, lines=None, temp=True, cal_red=None, rec=False, hsh=True, **kwargs
+):
     """For stack of spectra in provided catalog calculates relevant line fluxes as well as electron density and temperature."""
+    hsh = hsh if len(sources) > 1 else False
+    hax = hashed(sources, "tem_den_red", cal_red, **kwargs) if hsh else None
     if len(sources) == 1 and "rec_tem_den" in sources[0].keys() and not rec:
         t, n = sources[0]["rec_tem_den"]
+        temp = False
+    elif hsh and temp and hax in glob_hash:
+        t, n = glob_hash[hax]
         temp = False
     else:
         z = np.mean([v for s in sources if (v := s.get("z")) is not None])
@@ -591,6 +598,8 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, rec=False, **kwarg
             ite += 1
         # print(f"\r\033[KElectron values: n:{n}, {t}.\n")
         # print(f"\r\033[KFluxes: {flx}.")
+        if hsh:
+            glob_hash[hax] = (t, n)
         return t, n, flc
 
 
