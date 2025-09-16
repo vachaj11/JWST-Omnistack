@@ -88,16 +88,14 @@ Sulphur_new = {"S23": lambda *args, **kwargs: S_S23(*args, **kwargs, new=True)}
 Names = {
     "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6584/\\mathrm{H}_\\alpha)$",
     "R3": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/\\mathrm{H}_\\beta)$",
-    "O3N2": "$\\mathrm{R}3-\\mathrm{N2}$",
-    "O3S2": "$\\mathrm{R}3-\\mathrm{S2}$",
+    "O3N2": "$\\mathrm{R3}-\\mathrm{N2}$",
+    "O3S2": "$\\mathrm{R3}-\\mathrm{S2}$",
     "S2": "$\\mathrm{log}([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731/\\mathrm{H}_\\alpha)$",
     "R2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{II}]\\lambda 3727/\\mathrm{H}_\\beta)$",
     "O3O2": "$\\mathrm{log}([\\mathrm{O}_\\mathrm{III}]\\lambda 5007/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
     "R23": "$\\mathrm{log}(([\\mathrm{O}_\\mathrm{II}]\\lambda 3727+[\\mathrm{O}_\\mathrm{III}]\\lambda 5007)/\\mathrm{H}_\\beta)$",
     "RS32": "$\\mathrm{log}(10^\\mathrm{R3}+10^\\mathrm{S2})$",
-    "O3S2": "$\\mathrm{R3}-\\mathrm{S2}$",
     "N2O2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{O}_\\mathrm{II}]\\lambda 3727)$",
-    "N2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{H}_\\alpha)$",
     "N2S2": "$\\mathrm{log}([\\mathrm{N}_\\mathrm{II}]\\lambda 6585/[\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6717, 6731)$",
     "S23": "$\\mathrm{log}(([\\mathrm{S}_\\mathrm{II}]\\lambda\\lambda 6716, 6731 + [\\mathrm{S}_\\mathrm{III}]\\lambda 9532)/\\mathrm{H}_\\beta)$",
 }
@@ -563,12 +561,16 @@ def get_core_fluxes(sources, ilines=None, temp=True, cal_red=0, **kwargs):
     return fluxec, lines
 
 
-def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
+def tem_den_red(sources, lines=None, temp=True, cal_red=None, rec=False, **kwargs):
     """For stack of spectra in provided catalog calculates relevant line fluxes as well as electron density and temperature."""
+    if len(sources) == 1 and "rec_tem_den" in sources[0].keys() and not rec:
+        t, n = sources[0]["rec_tem_den"]
+        temp = False
+    else:
+        z = np.mean([v for s in sources if (v := s.get("z")) is not None])
+        t = {k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}
+        n = 40 * (1 + z) ** 1.5
     flx, finfo = get_core_fluxes(sources, ilines=lines, temp=temp, **kwargs)
-    z = np.mean([v for s in sources if (v := s.get("z")) is not None])
-    t = {k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}
-    n = 40 * (1 + z) ** 1.5
     if not temp:
         cHbeta = red_const(flx, t=t, n=n) if cal_red is None else cal_red
         sflx = {l: flx[l] for l in lines}
@@ -594,6 +596,11 @@ def tem_den_red(sources, lines=None, temp=True, cal_red=None, **kwargs):
 
 def tem_den(fluxes, n0=400, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "TN2"]}):
     """From the specified line fluxes and initial guesses calculates density and temperatures (for different ions) of electron gas."""
+    min_density = 20
+    max_density = 3000
+    min_temper = 2000
+    max_temper = 40000
+
     fluxec = dict()
     for v in fluxes.values():
         fluxec.update(v)
@@ -619,10 +626,10 @@ def tem_den(fluxes, n0=400, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
         n = n0
 
     match n:
-        case _ if n < 20:
-            n = 20
-        case _ if n > 3000:
-            n = 3000
+        case _ if n < min_density:
+            n = min_density
+        case _ if n > max_density:
+            n = max_density
         case _ if not np.isfinite(n):
             n = n0
         case _:
@@ -717,10 +724,10 @@ def tem_den(fluxes, n0=400, t0={k: 10000 for k in ["TO3", "TO2", "TS3", "TS2", "
 
     for v in t:
         match t[v]:
-            case _ if t[v] < 2000:
-                t[v] = 2000
-            case _ if t[v] > 40000:
-                t[v] = 40000
+            case _ if t[v] < min_temper:
+                t[v] = min_temper
+            case _ if t[v] > max_temper:
+                t[v] = max_temper
             case _ if not np.isfinite(t[v]):
                 t[v] = t0[v]
             case _:
@@ -979,6 +986,8 @@ def indiv_extract(source, mline):
 
     This function imposes threshold >10^(-23.5) on the extracted fluxes, otherwise returns them as nan. This will work correctly only if the stored values have units W/m^2.
     """
+    flux_threshold = 10 ** (-23.5)
+
     outd = True
     if type(mline) is not dict:
         mline = {"0": mline}
@@ -986,7 +995,7 @@ def indiv_extract(source, mline):
     fluxes = dict()
     for k, l in mline.items():
         if (n := f"rec_{k}") in source.keys():
-            if (v := source[n]) is not None and np.isfinite(v) and v > 10 ** (-23.5):
+            if (v := source[n]) is not None and np.isfinite(v) and v > flux_threshold:
                 fluxes[k] = source[f"rec_{k}"]
             else:
                 fluxes[k] = np.nan

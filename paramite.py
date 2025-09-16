@@ -460,6 +460,9 @@ def calculate_fluxes(
 def calculate_indiv_lines(sources, new=True, direct=True):
     """For catalogue of spectra with assumed pre-calculated and saved individual fluxes values: 1. identifies unique sources and creates a catalog with combined fluxes values from individual spectra, and 2. for each unique entry in the catalogue calculates all abundance measurements as available."""
     uniq = catalog.unique(sources)
+    vals = ac.indiv_stat(ac.tem_den_red, uniq, calib=None, rec=True)
+    for i in range(len(uniq)):
+        uniq[i]["rec_tem_den"] = vals[i][:2]
     abun = dict()
     values = dict()
     if new:
