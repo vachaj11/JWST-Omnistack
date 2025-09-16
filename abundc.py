@@ -124,7 +124,9 @@ core_lines = {
 }
 
 
-def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+def S_S23(
+    sources, new=False, cal_red=None, temp=True, rec=False, constr=False, **kwargs
+):
     """Calculates Sulphur abundance via the strong-line S23 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_S_S23" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_S_S23" + "_n" * new]
@@ -135,13 +137,15 @@ def S_S23(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
     fsiii = sum(flx["S3_95"].values())
     fhbe = sum(flx["H1_b"].values())
     S23 = np.log10((fsii + fsiii) / fhbe)
-    if np.isfinite(S23) and -1.05 < S23 < 0.3:
-        return [S23], [6.63 + 2.202 * S23 + 1.060 * S23**2]
+    if np.isfinite(S23) and (-1.05 < S23 < 0.3 or not constr):
+        return [S23], []
     else:
         return [S23], []
 
 
-def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
+def N_N2(
+    sources, new=False, cal_red=None, temp=True, rec=False, constr=False, **kwargs
+):
     """Calculates Nitrogen abundance via the strong-line N2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2" + "_n" * new]
@@ -151,13 +155,15 @@ def N_N2(sources, new=False, cal_red=None, temp=True, rec=False, **kwargs):
     fnii = flx["H1_a"]["N2_6584A"]
     fhal = flx["H1_a"]["H1r_6563A"]
     N2 = np.log10(fnii / fhal)
-    if np.isfinite(N2) and -1.8 < N2 < -0.2:
+    if np.isfinite(N2) and (-1.8 < N2 < -0.2 or not constr):
         return [N2], [0.62 * N2 - 0.57]
     else:
         return [N2], []
 
 
-def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
+def N_N2O2(
+    sources, new=True, cal_red=None, temp=True, rec=False, constr=False, **kwargs
+):
     """Calculates Nitrogen abundance via the strong-line N2O2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2O2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2O2" + "_n" * new]
@@ -168,9 +174,9 @@ def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
     foii = sum(flx["O2_37"].values())
     N2O2 = np.log10(fnii / foii)
     if np.isfinite(N2O2):
-        if new and -1.5 < N2O2 < 0.25:
+        if new and (-1.5 < N2O2 < 0.25 or not constr):
             return [N2O2], [0.69 * N2O2 - 0.65]
-        elif not new and -2 < N2O2 < 0:
+        elif not new and (-2 < N2O2 < 0 or not constr):
             return [N2O2], [0.52 * N2O2 - 0.65]
         else:
             return [N2O2], []
@@ -178,7 +184,7 @@ def N_N2O2(sources, new=True, cal_red=None, temp=True, rec=False, **kwargs):
         return [N2O2], []
 
 
-def N_N2S2(sources, new=True, rec=False, **kwargs):
+def N_N2S2(sources, new=True, rec=False, constr=False, **kwargs):
     """Calculates Nitrogen abundance via the strong-line N2S2 calibration for stack of spectra in passed catalogue."""
     if len(sources) == 1 and "rec_N_N2S2" + "_n" * new in sources[0].keys() and not rec:
         return sources[0]["rec_N_N2S2" + "_n" * new]
@@ -186,9 +192,9 @@ def N_N2S2(sources, new=True, rec=False, **kwargs):
         O_N2(sources, rec=rec, **kwargs)[0][0] - O_S2(sources, rec=rec, **kwargs)[0][0]
     )
     if np.isfinite(N2S2):
-        if new and -0.6 < N2S2 < 0.3:
+        if new and (-0.6 < N2S2 < 0.3 or not constr):
             return [N2S2], [1.12 * N2S2 - 0.93]
-        elif not new and -0.8 < N2S2 < 0.5:
+        elif not new and (-0.8 < N2S2 < 0.5 or not constr):
             return [N2S2], [0.85 * N2S2 - 1.00]
         else:
             return [N2S2], []

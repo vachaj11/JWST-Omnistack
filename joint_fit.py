@@ -1230,7 +1230,7 @@ def main():
         indso=ffmu,
     )
     """
-    """
+
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
@@ -1245,7 +1245,7 @@ def main():
         zval_name="Redshift $z$",
         lim=[5.55, 7.65],
         indso=ffmu,
-        errorb = 'indiv',
+        errorb="indiv",
     )
     abundance_in_val_z(
         ffm,
@@ -1261,9 +1261,8 @@ def main():
         zval_name="Redshift $z$",
         lim=[-2.2, 0.1],
         indso=ffmu,
-        errorb = 'indiv',
+        errorb="indiv",
     )
-    """
     abundance_in_val_z(
         ffm,
         [[0, 1.5], [1.5, 3], [3, 5], [5, 7], [7, 12]],
